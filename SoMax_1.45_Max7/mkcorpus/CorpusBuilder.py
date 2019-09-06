@@ -1,6 +1,7 @@
 from string import split
 import sys, os, importlib
 import logging, settings
+from ops import OpSomaxStandard, OpSomaxHarmonic, OpSomaxMelodic
 
 
 class CorpusBuilder:
@@ -27,52 +28,81 @@ class CorpusBuilder:
 
         self.logger.debug('Corpus name set to {}'.format(self.corpus_name))
 
+        # TODO: Clean up! This could be simplified a lot!
+        # TODO:   If the lambda expression in generate_ops (super ugly) can be removed, ops_filepaths does not have
+        # TODO:   to be global. then self.generate_ops could return ops, i.e. self.ops = self.generate_ops().
         self.ops = dict()  # type: {str: (MetaOp, [str])}
+        self.ops_filepaths = dict()  # type: {str: [str]}
 
+        self.generate_ops(input_path)
+        # self.debug_print_ops()
+
+    def generate_ops(self, input_path):
+        """Generates the dict containing the corresponding `MetaOp`s.
+
+           Always adds OpSomaxStandard, OpSomaxMelodic and OpSomaxHarmonic.
+           Will check the folder for separate files with names _h or _m, if either of those exist, OpSomaxHarmonic
+           and/or OpSomaxMelodic will be generated with these as input files.
+           If they don't exist, the default midi file will be used to generate these.
+        """
         # the CorpusBuilder, at initialization, builds a proposition for the operations to be made.
         # the operation dictionary is a dictionary labelled by suffix containing the files to be analyzed.
         # the operation corresponding to a given suffix will be so executed to whole of the files.
+        # TODO: Move this to the docstring, legacy
         if os.path.isfile(input_path):
             # if a file, scan the current folder to get the files
-            self.ops_keys = self.get_linked_files(self.input_path)
+            self.ops_filepaths = self.get_linked_files(self.input_path)
         elif os.path.isdir(input_path):
             # if a folder, scan the given folder with files in it
-            os.path.walk(input_path, lambda a, d, n: self.browse_folder(a, d, n), input_path)
+            os.path.walk(input_path, lambda a, d, n: self.store_filepaths(a, d, n), input_path)
         else:
+            # TODO: This error should have been caught way eariler.
             self.logger.critical("The corpus file(s) were not found! Terminating script without output.")
             sys.exit(1)
 
-        for key, filepaths in self.ops_keys.iteritems():
+        # Dynamic Generation of SomaxOp objects
+        for key, filepaths in self.ops_filepaths.iteritems():
             op_class = getattr(importlib.import_module("ops"), self.callback_dic[key])
             op_object = op_class(filepaths, self.corpus_name)
-            self.ops[key] = (op_object, filepaths)
+            self.ops[key] = op_object
+            self.logger.debug("Added operator {0} related to file(s) {1}".format(self.callback_dic[key], filepaths))
 
-        self.print_ops_debug()
+        if settings.MELODIC_EXT not in self.ops.keys():
+            standard_filepaths = self.ops[settings.STANDARD_EXT].getFilePaths()
+            self.ops[settings.MELODIC_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
+            self.logger.debug("No _m file found. Added Melodic operator based on standard file(s) ({0})."
+                              .format(standard_filepaths))
+        if settings.HARMONIC_EXT not in self.ops.keys():
+            standard_filepaths = self.ops[settings.STANDARD_EXT].getFilePaths()
+            self.ops[settings.HARMONIC_EXT] = OpSomaxHarmonic(standard_filepaths, self.corpus_name)
+            self.logger.debug("No _h file found. Added Harmonic operator based on based on standard file(s) ({0})."
+                              .format(standard_filepaths))
 
     def build_corpus(self, output_folder):
         """triggers the corpus computation. This is made in two phases to let the user modify the operations if needed.
             # TODO: This docstring is not necessarily complete or correct"""
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        for key, op_and_paths_tuple in self.ops.iteritems():
+        for key, op in self.ops.iteritems():
             if key != settings.STANDARD_EXT:
                 output_file = output_folder + self.corpus_name + '_' + key + '.json'
             else:
                 output_file = output_folder + self.corpus_name + '.json'
-            for path in op_and_paths_tuple[1]:
-                if not os.path.splitext(path)[-1] in op_and_paths_tuple[0].admitted_extensions:
+            for path in op.getFilePaths():
+                if not os.path.splitext(path)[-1] in op.admitted_extensions:
                     # TODO: Handle with logging. Need to cause this error to be able to debug it
                     raise Exception("File " + path + " not understood by operation ", self.callback_dic[key])
             # Run the actual operator
-            op_and_paths_tuple[0].process(output_file)
+            op.process(output_file)
 
-    def print_ops_debug(self):
-        output_string = "The following operations were automatically deduced:\n"
-        for k, v in self.ops.iteritems():
-            output_string += settings.DEBUG_INDENT + '"{0}" for file {1}\n'.format(self.callback_dic[k], v[1])
-        self.logger.debug(output_string)
+    # TODO: Remove
+    # def debug_print_ops(self):
+    #     output_string = "The following operations were automatically deduced:\n"
+    #     for k, v in self.ops.iteritems():
+    #         output_string += settings.DEBUG_INDENT + '"{0}" for file {1}\n'.format(self.callback_dic[k], v)
+    #     self.logger.debug(output_string)
 
-    def browse_folder(self, corpus_path, dirname, names):
+    def store_filepaths(self, corpus_path, dirname, names):
         """function called to build the operation dictionary on every file of a folder."""
         # TODO: This has not been checked (2019-09-06)
         names = filter(lambda x: x[0] != '.', names)  # exclude hidden files
@@ -100,7 +130,7 @@ class CorpusBuilder:
                 elif len(v) > len(file_dict[""]):
                     print "too many object"
 
-        self.ops_keys = file_dict
+        self.ops_filepaths = file_dict
 
     def get_linked_files(self, input_file):
         # TODO: Note: it's currently unclear what the purpose of _h.mid and _m.mid files is. Perhaps, this part could be removed
@@ -125,10 +155,10 @@ class CorpusBuilder:
                 if len(parts) == 1:
                     Op = getattr(importlib.import_module("ops"), self.callback_dic[''])
                     if ext in Op.admitted_extensions:
-                        file_dict[''] = [dir_name + '/' + f]
+                        file_dict[''] = [dir_name + f]
                 else:
                     Op = getattr(importlib.import_module("ops"), self.callback_dic[parts[-1]])
                     if ext in Op.admitted_extensions:
-                        file_dict[parts[-1]] = [dir_name + '/' + f]
+                        file_dict[parts[-1]] = [dir_name + f]
         self.logger.debug("Relevant files found: {}".format(file_dict))
         return file_dict

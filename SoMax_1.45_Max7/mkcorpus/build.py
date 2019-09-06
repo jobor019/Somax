@@ -6,12 +6,13 @@ from CorpusBuilder import CorpusBuilder
 
 
 class Main:
+    """ New build script. Designed without support for interactive mode"""
 
     def __init__(self, input_path, output_folder, is_verbose):
         self.logger = self.init_logger(is_verbose)
         self.logger.debug('Script was initialized with the following parameters:\n'
-                          + settings.DEBUG_INDENT + 'Input file/folder: {0}\n'
-                          + settings.DEBUG_INDENT + 'Output folder: {1}'.format(input_path, output_folder))
+                          + settings.DEBUG_INDENT + 'Input file/folder: {0}\n'.format(input_path)
+                          + settings.DEBUG_INDENT + 'Output folder: {0}'.format(output_folder))
         # TODO: Improve this: Currently only checks if folder is named 'corpus', insufficient verification
         if os.path.normpath(os.path.basename(output_folder)) != settings.CORPUS_FOLDER_NAME:
             self.logger.warn('Output folder is not set to default and will likely not be available inside SoMax, '
@@ -70,11 +71,12 @@ if __name__ == '__main__':
     parser.add_argument("input_file", help="Path to the midi file or folder to parse", type=Main.is_midi_file_or_folder)
     parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
                         default=settings.DEFAULT_CORPUS_PATH)
-    parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=True)
+    parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=False)
 
     args = parser.parse_args()
     input_file = args.input_file
     output_folder = args.output_folder
     verbose = args.verbose
+    # legacy = args.separate
 
     Main(input_file, output_folder, verbose)

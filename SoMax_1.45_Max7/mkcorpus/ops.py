@@ -55,6 +55,9 @@ class SegmentationOp(MetaOp):
     def writeFiles(self, result, output_file):
         print "Writes the results in the given output_file location."
 
+    def getFilePaths(self):
+        return self.file_paths
+
 
 # this is the classic Somax operation, used for the main file.
 class OpSomaxStandard(SegmentationOp):
