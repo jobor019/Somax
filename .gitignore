@@ -219,3 +219,5 @@ dmypy.json
 *.pyc
 *.pyo
 *.DS_Store
+*.json
+*.mid
