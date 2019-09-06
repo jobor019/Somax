@@ -29,7 +29,7 @@ if __name__ == "__main__":
                     print "type s <extension> <parameter> <value> to change an operation parameter"
                     # print "type r <file> to remove a file in the corpus"
                 elif ans == 'o':
-                    builder.print_ops()
+                    builder.print_ops_debug()
                 else:
                     p = ans.split()
                     if len(p) == 3 and p[0] == 'r':
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                                 builder.ops[p[1]][0] = operation
                                 print ""
                                 print "New operations :"
-                                print builder.print_ops()
+                                print builder.print_ops_debug()
                             except:
                                 print "not a valid operation!"
                                 pass
