@@ -8,7 +8,9 @@ class CorpusBuilder:
     """main class to instantiate to achieve corpus construction. Initializes with a path to the files and a corpus name.
         # TODO: Legacy docstring """
 
-    def __init__(self, input_path, corpus_name=None, **kwargs):
+    # TODO: Force fg, bg, mel, harm as default input arguments (will render legacy unable to compile)
+    def __init__(self, input_path, foreground_channels=None, self_bg_channels=None, mel_bg_channels=None,
+                 harm_bg_channels=None, corpus_name=None, **kwargs):
         """ Generates a list of files and operations based on existing files in corpus path required for
             building the corpus.
             # TODO: This documentation is not complete nor necessarily correct """
@@ -34,10 +36,10 @@ class CorpusBuilder:
         self.ops = dict()  # type: {str: (MetaOp, [str])}
         self.ops_filepaths = dict()  # type: {str: [str]}
 
-        self.generate_ops(input_path)
+        self.generate_ops(input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels)
         # self.debug_print_ops()
 
-    def generate_ops(self, input_path):
+    def generate_ops(self, input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels):
         """Generates the dict containing the corresponding `MetaOp`s.
 
            Always adds OpSomaxStandard, OpSomaxMelodic and OpSomaxHarmonic.
@@ -67,16 +69,28 @@ class CorpusBuilder:
             self.ops[key] = op_object
             self.logger.debug("Added operator {0} related to file(s) {1}".format(self.callback_dic[key], filepaths))
 
-        if settings.MELODIC_EXT not in self.ops.keys():
-            standard_filepaths = self.ops[settings.STANDARD_EXT].getFilePaths()
-            self.ops[settings.MELODIC_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
+        if settings.MELODIC_FILE_EXT not in self.ops.keys():
+            standard_filepaths = self.ops[settings.STANDARD_FILE_EXT].getFilePaths()
+            self.ops[settings.MELODIC_FILE_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
             self.logger.debug("No _m file found. Added Melodic operator based on standard file(s) ({0})."
                               .format(standard_filepaths))
-        if settings.HARMONIC_EXT not in self.ops.keys():
-            standard_filepaths = self.ops[settings.STANDARD_EXT].getFilePaths()
-            self.ops[settings.HARMONIC_EXT] = OpSomaxHarmonic(standard_filepaths, self.corpus_name)
+        if settings.HARMONIC_FILE_EXT not in self.ops.keys():
+            standard_filepaths = self.ops[settings.STANDARD_FILE_EXT].getFilePaths()
+            self.ops[settings.HARMONIC_FILE_EXT] = OpSomaxHarmonic(standard_filepaths, self.corpus_name)
             self.logger.debug("No _h file found. Added Harmonic operator based on based on standard file(s) ({0})."
                               .format(standard_filepaths))
+
+        for key, op in self.ops.iteritems():
+            self.set_channels(op, key, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels)
+
+    def set_channels(self, op_object, key, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels):
+        op_object.setFgChannels(foreground_channels)
+        if key == settings.STANDARD_FILE_EXT:
+            op_object.setBgChannels(self_bg_channels)
+        if key == settings.MELODIC_FILE_EXT:
+            op_object.setBgChannels(mel_bg_channels)
+        if key == settings.HARMONIC_FILE_EXT:
+            op_object.setBgChannels(harm_bg_channels)
 
     def build_corpus(self, output_folder):
         """triggers the corpus computation. This is made in two phases to let the user modify the operations if needed.
@@ -84,7 +98,7 @@ class CorpusBuilder:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         for key, op in self.ops.iteritems():
-            if key != settings.STANDARD_EXT:
+            if key != settings.STANDARD_FILE_EXT:
                 output_file = output_folder + self.corpus_name + '_' + key + '.json'
             else:
                 output_file = output_folder + self.corpus_name + '.json'

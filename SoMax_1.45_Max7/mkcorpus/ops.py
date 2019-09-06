@@ -90,6 +90,12 @@ class OpSomaxStandard(SegmentationOp):
             self.readFiles = self.readAudioFiles
             self.readData = self.readAudioData
 
+    def setFgChannels(self, fgChannels):
+        self.fgChannels = fgChannels
+
+    def setBgChannels(self, bgChannels):
+        self.bgChannels = bgChannels
+
     def setParameter(self, parameter, value):
         if parameter == 'bgChannels':
             if type(value) == type([]):

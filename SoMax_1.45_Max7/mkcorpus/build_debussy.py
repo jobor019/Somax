@@ -13,23 +13,23 @@ print builder.ops
 
 # setting the foreground channels as in the interactive mode
 
-# standardOp.fgChannels = [2,3,4]
-# standardOp.bgChannels = [1,2,3,4]
+standardOp.fgChannels = [2,3,4]
+standardOp.bgChannels = [1,2,3,4]
 
 
 
 #adding an operation to the standard built one
-MelOp = OpSomaxMelodic(standardOp.file_paths, standardOp.corpus_name)
+# MelOp = OpSomaxMelodic(standardOp.file_paths, standardOp.corpus_name)
 # MelOp.fgChannels = [1]
-builder.ops['m']= (MelOp, builder.ops[''][1])
+# builder.ops['m']= (MelOp, builder.ops[''][1])
 
-print "1: ", standardOp.file_paths
-print "2: ", standardOp.corpus_name
-print "3: ", builder.ops[''][1]
+# print "1: ", standardOp.file_paths
+# print "2: ", standardOp.corpus_name
+# print "3: ", builder.ops[''][1]
 
-HarmOp = OpSomaxHarmonic(standardOp.file_paths, standardOp.corpus_name)
+# HarmOp = OpSomaxHarmonic(standardOp.file_paths, standardOp.corpus_name)
 # HarmOp.fgChannels = [1]
-builder.ops['h']= (HarmOp, builder.ops[''][1])
+# builder.ops['h']= (HarmOp, builder.ops[''][1])
 
 print builder.ops
 

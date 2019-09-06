@@ -2,17 +2,26 @@ import os
 import argparse
 import logging
 import settings
+import ast
 from CorpusBuilder import CorpusBuilder
 
 
 class Main:
     """ New build script. Designed without support for interactive mode"""
 
-    def __init__(self, input_path, output_folder, is_verbose):
-        self.logger = self.init_logger(is_verbose)
+    def __init__(self, input_path, output_folder, is_verbose, foreground, self_bg, mel_bg, harm_bg):
+        self.logger = Main.init_logger(is_verbose)
+
+        if not os.path.isabs(input_path):
+            input_path = os.path.normpath(os.getcwd() + '/' + input_path)
+
         self.logger.debug('Script was initialized with the following parameters:\n'
                           + settings.DEBUG_INDENT + 'Input file/folder: {0}\n'.format(input_path)
-                          + settings.DEBUG_INDENT + 'Output folder: {0}'.format(output_folder))
+                          + settings.DEBUG_INDENT + 'Output folder: {0}\n'.format(output_folder)
+                          + settings.DEBUG_INDENT + 'Foreground channel(s): {0}\n'.format(foreground)
+                          + settings.DEBUG_INDENT + 'Self Background channel(s): {0}\n'.format(self_bg)
+                          + settings.DEBUG_INDENT + 'Melodic Background channel(s): {0}\n'.format(mel_bg)
+                          + settings.DEBUG_INDENT + 'Harmonic Background channel(s): {0}\n'.format(harm_bg))
         # TODO: Improve this: Currently only checks if folder is named 'corpus', insufficient verification
         if os.path.normpath(os.path.basename(output_folder)) != settings.CORPUS_FOLDER_NAME:
             self.logger.warn('Output folder is not set to default and will likely not be available inside SoMax, '
@@ -20,7 +29,8 @@ class Main:
                              'To ensure correct behaviour, please either run the script directly inside\n'
                              'the folder SoMax/corpus or use the -o option to point to this directory.')
 
-        builder = CorpusBuilder(input_path)
+        builder = CorpusBuilder(input_path, foreground_channels=foreground, self_bg_channels=self_bg,
+                                mel_bg_channels=mel_bg, harm_bg_channels=harm_bg)
         builder.build_corpus(os.path.normpath(output_folder) + '/')
 
     @staticmethod
@@ -49,7 +59,8 @@ class Main:
         else:
             raise argparse.ArgumentTypeError('"{0}" is not a directory file.'.format(path))
 
-    def init_logger(self, is_verbose):
+    @staticmethod
+    def init_logger(is_verbose):
         # TODO: Format logger properly
         logger = logging.getLogger(settings.MAIN_LOGGER)
         ch = logging.StreamHandler()
@@ -64,6 +75,44 @@ class Main:
         logger.addHandler(ch)
         return logger
 
+    @staticmethod
+    def parse_list(arg_name, list_as_string):
+        """ Note: Parsing brackets from command line is fairly complicated, this function will hence attempt to parse
+                  it as a tuple. # TODO: Proper docstring"""
+        try:
+            maybe_list = ast.literal_eval(list_as_string)
+            if isinstance(maybe_list, tuple) and all([isinstance(v, int) for v in maybe_list]):
+                return list(maybe_list)
+            elif isinstance(maybe_list, int):
+                return [maybe_list]
+            else:
+                Main.throw_list_parse_error(arg_name, list_as_string)
+        except (SyntaxError, ValueError) as e:
+            Main.throw_list_parse_error(arg_name, list_as_string)
+
+    @staticmethod
+    def throw_list_parse_error(arg_name, list_as_string):
+        raise argparse.ArgumentTypeError('Error while parsing "{0}": formatting should only be a list of '
+                                         'integers without spaces.\n '
+                                         'Example: 1,2,3,6\n'
+                                         'Your input was: {1}.'.format(arg_name, list_as_string))
+
+    @staticmethod
+    def parse_fg(list_as_string):
+        Main.parse_list("Foreground", list_as_string)
+
+    @staticmethod
+    def parse_sbg(list_as_string):
+        Main.parse_list("Self Background", list_as_string)
+
+    @staticmethod
+    def parse_mbg(list_as_string):
+        Main.parse_list("Melodic Background", list_as_string)
+
+    @staticmethod
+    def parse_hbg(list_as_string):
+        Main.parse_list("Harmonic Background", list_as_string)
+
 
 if __name__ == '__main__':
     # TODO: Handle legacy input arguments -i in a meaningful way
@@ -72,11 +121,23 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
                         default=settings.DEFAULT_CORPUS_PATH)
     parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=False)
+    parser.add_argument("-f", "--foreground", help="Set foreground (output) channel(s). "
+                                                   "Formatting example: 1,2,8",
+                        type=Main.parse_fg, default=settings.DEFAULT_FOREGROUND)
+    parser.add_argument("-sb", "--self_bg", help="Set background listening channel in self mode.",
+                        type=Main.parse_sbg, default=settings.DEFAULT_SELF_BACKGROUND)
+    parser.add_argument("-mb", "--mel_bg", help="Set background listening channel in melodic mode.",
+                        type=Main.parse_mbg, default=settings.DEFAULT_MEL_BACKGROUND)
+    parser.add_argument("-hb", "--harm_bg", help="Set background listening channel in harmonic mode.",
+                        type=Main.parse_hbg, default=settings.DEFAULT_HARM_BACKGROUND)
 
     args = parser.parse_args()
     input_file = args.input_file
     output_folder = args.output_folder
     verbose = args.verbose
-    # legacy = args.separate
+    foreground = args.foreground
+    self_bg = args.self_bg
+    mel_bg = args.mel_bg
+    harm_bg = args.harm_bg
 
-    Main(input_file, output_folder, verbose)
+    Main(input_file, output_folder, verbose, foreground, self_bg, mel_bg, harm_bg)
