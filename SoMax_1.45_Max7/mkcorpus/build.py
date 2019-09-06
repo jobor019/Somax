@@ -1,99 +1,78 @@
-import sys,os, re, importlib, inspect
+import os
+import argparse
+import logging
+import settings
 from CorpusBuilder import CorpusBuilder
 
-if __name__=="__main__":
-    if len(sys.argv)==1:
-        raise Exception("not enough arguments to the script!")
-    elif len(sys.argv)==2:
-        corpus_path = sys.argv[1]
-        builder = CorpusBuilder(corpus_path)
-        builder.build_corpus("./")
-    elif len(sys.argv)==3:
-        option = sys.argv[1]
 
-        # interactive mode
-        if option == "-i":
-            corpus_path = sys.argv[2]
-            builder = CorpusBuilder(corpus_path, verbose=True)
-            print ""
-            print "Do you want to modify an operation? (h for help)"
-            cont = 1
-            while cont:
-                ans = raw_input("? ")
-                if ans=='':
-                    cont = 0
-                elif ans=='h':
-                    print "type o to re-print all the operations"
-                    print "type p <extension> to list the operation's paramaters of the given extension"
-                    print "type r <extension> <op> to replace an operation for the given extension"
-                    print "type s <extension> <parameter> <value> to change an operation parameter"
-                    #print "type r <file> to remove a file in the corpus"
-                elif ans=='o':
-                    builder.print_ops()
-                else:
-                    p = ans.split()
-                    if len(p)==3 and p[0]=='r':
-                        if p[1] in builder.ops.keys():
-                            try:
-                                Op = getattr(importlib.import_module("ops"), p[2])
-                                operation = Op(names, builder.corpus_name)
-                                builder.ops[p[1]][0] = operation
-                                print ""
-                                print "New operations :"
-                                print builder.print_ops()
-                            except:
-                                print "not a valid operation!"
-                                pass
-                        else:
-                            print "The extension has not been found!"
+class Main:
 
-                    elif len(p)>=4 and p[0]=='s':
-                        if p[1] in builder.ops.keys():
-                            res = builder.ops[p[1]][0].setParameter(p[2], p[3:])
-                            if res!='':
-                                print "ERROR:", res
-                        else:
-                            print "The extension has not been found!"
-                    elif len(p)==2 and p[0]=='p':
-                        if p[1] in builder.ops.keys():
-                            builder.ops[p[1]][1].printParams()
-                        else:
-                            print "The extension has not been found!"
+    def __init__(self, input_file, output_folder, is_verbose):
+        self.logger = self.init_logger(is_verbose)
+        self.logger.debug('Script was initialized with the following parameters:\n'
+                          'Input file: {0}\n'
+                          'Output folder: {1}'.format(input_file, output_folder))
+        # TODO: Improve this: Currently only checks if folder is named 'corpus', insufficient verification
+        if os.path.normpath(os.path.basename(output_folder)) != settings.CORPUS_FOLDER_NAME:
+            self.logger.warn('Output folder is not set to default and will likely not be available inside SoMax, '
+                             'is this intentional?\n'
+                             'To ensure correct behaviour, please either run the script directly inside\n'
+                             'the folder SoMax/corpus or use the -o option to point to this directory.')
 
-            cont = 1
+        builder = CorpusBuilder(input_file)
+        builder.build_corpus(output_folder)
 
-            print "Where to output the file? (leave blank for default)"
-            cont = 1
-            while cont:
-                out = raw_input("? ")
-                if out=='':
-                    out = "./../corpus/"
-                    cont = 0
-                elif os.path.exists(out):
-                    cont=0
-                else:
-                    print "the path doesn't exist!"
-            builder.build_corpus(out)
+    @staticmethod
+    def path_if_valid(path):
+        if os.path.exists(path):
+            return path
+        else:
+            raise argparse.ArgumentTypeError('"{0}" is not a valid path'.format(path))
 
-        # verbose mode
-        elif option == '-v':
-            corpus_path = sys.argv[2]
-            builder = CorpusBuilder(corpus_path, verbose=True)
-            builder.build_corpus("./../corpus/")
+    @staticmethod
+    def is_midi_file(path):
+        Main.path_if_valid(path)
+        _, file_ext = os.path.splitext(path)
+        if file_ext in settings.MIDI_FILE:
+            return path
+        else:
+            raise argparse.ArgumentTypeError('"{0}" is not a midi file.'.format(path))
 
-        # output mode
-        elif option == '-o':
-            corpus_path = sys.argv[2]
-            builder = CorpusBuilder(corpus_path)
-            print "Where to output the file? (leave blank for default)"
-            cont = 1
-            while cont:
-                out = raw_input("? ")
-                if out=='':
-                    out = "./../corpus/"
-                    cont = 0
-                elif os.path.exists(out):
-                    cont=0
-                else:
-                    print "the path doesn't exist!"
-            builder.build_corpus(out)
+    @staticmethod
+    def is_folder(path):
+        Main.path_if_valid(path)
+        if os.path.isdir(path):
+            return path
+        else:
+            raise argparse.ArgumentTypeError('"{0}" is not a directory file.'.format(path))
+
+    def init_logger(self, is_verbose):
+        # TODO: Format logger properly
+        logger = logging.getLogger(settings.MAIN_LOG)
+        ch = logging.StreamHandler()
+        if is_verbose:
+            logger.setLevel(logging.DEBUG)
+            ch.setLevel(logging.DEBUG)  # Set output logging level, needs to be set twice (?)
+        else:
+            logger.setLevel(logging.WARNING)
+            ch.setLevel(logging.WARNING)
+        formatter = logging.Formatter('[%(levelname)s]: %(message)s')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+        return logger
+
+
+if __name__ == '__main__':
+    # TODO: Handle legacy input arguments -i in a meaningful way
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_file", help="Path to the midi file to parse", type=Main.is_midi_file)
+    parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
+                        default=settings.DEFAULT_CORPUS_PATH)
+    parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=True)
+
+    args = parser.parse_args()
+    input_file = args.input_file
+    output_folder = args.output_folder
+    verbose = args.verbose
+
+    Main(input_file, output_folder, verbose)
