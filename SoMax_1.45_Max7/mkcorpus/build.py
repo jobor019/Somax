@@ -99,19 +99,19 @@ class Main:
 
     @staticmethod
     def parse_fg(list_as_string):
-        Main.parse_list("Foreground", list_as_string)
+        return Main.parse_list("Foreground", list_as_string)
 
     @staticmethod
     def parse_sbg(list_as_string):
-        Main.parse_list("Self Background", list_as_string)
+        return Main.parse_list("Self Background", list_as_string)
 
     @staticmethod
     def parse_mbg(list_as_string):
-        Main.parse_list("Melodic Background", list_as_string)
+        return Main.parse_list("Melodic Background", list_as_string)
 
     @staticmethod
     def parse_hbg(list_as_string):
-        Main.parse_list("Harmonic Background", list_as_string)
+        return Main.parse_list("Harmonic Background", list_as_string)
 
 
 if __name__ == '__main__':
@@ -121,14 +121,23 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
                         default=settings.DEFAULT_CORPUS_PATH)
     parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=False)
-    parser.add_argument("-f", "--foreground", help="Set foreground (output) channel(s). "
-                                                   "Formatting example: 1,2,8",
+    parser.add_argument("-f", "--foreground",
+                        help="Specify which midi channel(s) that will be used as foreground"
+                             "(output) by Somax. Channels must be specified as a comma separated"
+                             "list without spaces.\n"
+                             "EXAMPLE: 1,2,8 will result in channels 1, 2 and 8 as output channels.",
                         type=Main.parse_fg, default=settings.DEFAULT_FOREGROUND)
-    parser.add_argument("-sb", "--self_bg", help="Set background listening channel in self mode.",
+    parser.add_argument("-sb", "--self_bg",
+                        help="Specify which midi channel(s) Somax will listen to when mode is set to SELF.\n"
+                             "Formatting: see --foreground",
                         type=Main.parse_sbg, default=settings.DEFAULT_SELF_BACKGROUND)
-    parser.add_argument("-mb", "--mel_bg", help="Set background listening channel in melodic mode.",
+    parser.add_argument("-mb", "--mel_bg",
+                        help="Specify which midi channel(s) Somax will listen to when mode is set to MELODIC.\n"
+                             "Formatting: see --foreground",
                         type=Main.parse_mbg, default=settings.DEFAULT_MEL_BACKGROUND)
-    parser.add_argument("-hb", "--harm_bg", help="Set background listening channel in harmonic mode.",
+    parser.add_argument("-hb", "--harm_bg",
+                        help="Specify which midi channel(s) Somax will listen to when mode is set to HARMONIC.\n"
+                             "Formatting: see --foreground",
                         type=Main.parse_hbg, default=settings.DEFAULT_HARM_BACKGROUND)
 
     args = parser.parse_args()

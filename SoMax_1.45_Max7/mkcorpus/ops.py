@@ -5,10 +5,13 @@ from bisect import bisect_left
 import librosa, pickle, numpy, scipy.io
 
 
-# this is the operation model for every corpus operations.
-# this meta-operation is initialized with the name of the corpus
-#   and have a process function, which has to output a file at the output_file location.
-class MetaOp():
+class MetaOp:
+    """ this is the operation model for every corpus operations.
+        this meta-operation is initialized with the name of the corpus
+        and have a process function, which has to output a file at the output_file location.
+        # TODO: Update legacy docstring
+        # TODO: As there are no instances inheriting from only MetaOp, this class is likely redundant (?)"""
+
     def __init__(self, corpus_name):
         self.corpus_name = corpus_name
 
@@ -24,43 +27,59 @@ class MetaOp():
         print "Gives a user feedback of the parameters."
 
 
-# this is a higher level abstraction to formalize the classic operations made on OMax and co. operations
-#	 based on the segmentation of the files in states. This is why the init function requires one more argument,
-#	  which is the paths of the files to analyze.
-
 class SegmentationOp(MetaOp):
+    """ this is a higher level abstraction to formalize the classic operations made on OMax and co. operations
+        based on the segmentation of the files in states. This is why the init function requires one more argument,
+        which is the paths of the files to analyze.
+        # TODO: Update legacy docstring
+        # TODO: As there are no instances inheriting from only SegmentationOp, this class is likely redundant (?) """
+
+    # TODO: Global, static variable. Is this intentional?
     admitted_extensions = []  # contains the file extensions that the operation can read.
 
     def __init__(self, file_paths, corpus_name):
         MetaOp.__init__(self, corpus_name)
         self.file_paths = file_paths
 
-    # for the overload commodity, the process function is divided in three function :
-    #	-- a readFiles function which reads the files to acquire the raw data
-    #   -- a readData function which withdraws the wanted information from the raw data
-    #   -- a writeFiles which writes the acquired data into the final corpus file at output_file location.
-
     def process(self, output_file):
+        """ for the overload commodity, the process function is divided in three function :
+              -- a readFiles function which reads the files to acquire the raw data
+              -- a readData function which withdraws the wanted information from the raw data
+              -- a writeFiles which writes the acquired data into the final corpus file at output_file location.
+            TODO: Update legacy docstring"""
         self.raw_data = self.readFiles(self.file_paths)
         self.result = self.readData(self.raw_data)
         self.writeFiles(self.result, output_file)
 
     def readFiles(self, file_paths):
+        """ # TODO: Proper docstring
+            This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
+            by either readMIDIFiles or readAudioFiles depending on input file format. """
         print "Here is the function reading the corpus files and returning the appropriate data structure."
         return []
 
     def readData(self, data):
+        """ # TODO: Proper docstring
+            This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
+            by either readMIDIData or readAudioData depending on input file format. """
         print "Here is the main process of the operation that will apply to data."
 
     def writeFiles(self, result, output_file):
+        """ # TODO: Proper docstring
+            This function is abstract and overridden in OpSomaxStandard.
+            # TODO: As there are no instances inheriting from only SegmentationOp, this function is likely redundant"""
         print "Writes the results in the given output_file location."
 
     def getFilePaths(self):
         return self.file_paths
 
 
-# this is the classic Somax operation, used for the main file.
+
 class OpSomaxStandard(SegmentationOp):
+    """ # this is the classic Somax operation, used for the main file.
+        # TODO: Update legacy docstring
+    """
+
     admitted_extensions = ['.mid', '.midi', '.wav', '.aif', '.aiff']
 
     def __init__(self, file_paths, corpus_name):
@@ -80,8 +99,8 @@ class OpSomaxStandard(SegmentationOp):
         self.segtypes = ["onsets", "free", "beats"]
         self.usebeats = True
         self.file_inds = []
-        self.hop = 512  # self.hop used in chromagram in samples (has to be 2^n)
-        self.freeInt = 0.5  # interval of the free segmentation in seconds
+        self.hop = 512          # self.hop used in chromagram in samples (has to be 2^n)
+        self.freeInt = 0.5      # interval of the free segmentation in seconds
         ext = os.path.splitext(file_paths[0])
         if ext[-1] == '.mid' or ext[-1] == '.midi':
             self.readFiles = self.readMIDIFiles
@@ -176,16 +195,16 @@ class OpSomaxStandard(SegmentationOp):
 
     def readMIDIData(self, data):
         corpus = dict()
-        fgMatrix, bgMatrix = tools.splitMatrixByChannel(data, self.fgChannels,
-                                                        self.bgChannels)  # de-interlacing information
-        corpus["name"] = self.corpus_name  # a changer
+        # de-interlacing information
+        fgMatrix, bgMatrix = tools.splitMatrixByChannel(data, self.fgChannels, self.bgChannels)
+        corpus["name"] = self.corpus_name       # a changer
         corpus["typeID"] = 'MIDI'
         corpus["type"] = 3
         corpus["size"] = 1
         corpus["data"] = []
 
         # creating a first state, not really used except for
-        corpus["data"].append({"state": 0, "time": [0, 0], "seg": [1, 0], "beat": [0.0, 0.0, 0, 0], \
+        corpus["data"].append({"state": 0, "time": [0, 0], "seg": [1, 0], "beat": [0.0, 0.0, 0, 0],
                                "extras": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                                "slice": [140, 0.0], "notes": dict()})
 
@@ -305,6 +324,7 @@ class OpSomaxStandard(SegmentationOp):
                 1]) <= lastSliceDuration):
                 if (corpus["data"][stateNb]["notes"][k]["time"][0] < 0):
                     corpus["data"][stateNb]["notes"][k]["note"][1] = 0
+                    # TODO: Remove print statement or fix as debug message
                     print "setting velocity of note", k, "of state", stateNb, "to 0"
                     corpus["data"][stateNb]["notes"][k]["time"][0] = int(
                         corpus["data"][stateNb]["notes"][k]["time"][1]) + int(
@@ -431,6 +451,7 @@ class OpSomaxStandard(SegmentationOp):
     def writeFiles(self, data, output_file):
         with open(output_file, 'wb') as fp:
             json.dump(data, fp)
+        # TODO: Change to proper log message
         print output_file, 'file outputted.'
         return 0
 
@@ -544,6 +565,7 @@ class OpSomaxHarmonic(OpSomaxStandard):
                             <= previousSliceDuration):  # note-off went off during the previous slice
                         if (corpus["data"][stateNb - 1]["notes"][k]["time"][0] < 0):
                             corpus["data"][stateNb - 1]["notes"][k]["note"][1] = 0
+                            # TODO: Remove print statement or fix as debug message
                             print "setting velocity of note", k, "of state", stateNb - 1, "to 0"
                             corpus["data"][stateNb - 1]["notes"][k]["time"][0] = int(
                                 corpus["data"][stateNb - 1]["notes"][k]["time"][1]) + int(
@@ -593,6 +615,7 @@ class OpSomaxHarmonic(OpSomaxStandard):
                 1]) <= lastSliceDuration):
                 if (corpus["data"][stateNb]["notes"][k]["time"][0] < 0):
                     corpus["data"][stateNb]["notes"][k]["note"][1] = 0
+                    # TODO: Remove print statement or fix as debug message
                     print "setting velocity of note", k, "of state", stateNb, "to 0"
                     corpus["data"][stateNb]["notes"][k]["time"][0] = int(
                         corpus["data"][stateNb]["notes"][k]["time"][1]) + int(

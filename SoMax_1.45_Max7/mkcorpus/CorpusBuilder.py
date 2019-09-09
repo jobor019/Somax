@@ -69,6 +69,7 @@ class CorpusBuilder:
             self.ops[key] = op_object
             self.logger.debug("Added operator {0} related to file(s) {1}".format(self.callback_dic[key], filepaths))
 
+        # Adding harmonic and melodic output files if no matching midi files are foudn
         if settings.MELODIC_FILE_EXT not in self.ops.keys():
             standard_filepaths = self.ops[settings.STANDARD_FILE_EXT].getFilePaths()
             self.ops[settings.MELODIC_FILE_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
@@ -80,6 +81,7 @@ class CorpusBuilder:
             self.logger.debug("No _h file found. Added Harmonic operator based on based on standard file(s) ({0})."
                               .format(standard_filepaths))
 
+        # Setting the channel values for each operator according to input specification
         for key, op in self.ops.iteritems():
             self.set_channels(op, key, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels)
 
