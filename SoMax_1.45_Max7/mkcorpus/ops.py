@@ -3,6 +3,19 @@ import readMidi as midi
 from numpy import floor, ceil, arange, array, zeros, argwhere, asarray, concatenate
 from bisect import bisect_left
 import librosa, pickle, numpy, scipy.io
+import logging
+import settings
+
+
+class MatrixIdx:
+    POSITION_TICK = 0
+    DUR_TICK = 1
+    CHANNEL = 2
+    NOTE = 3
+    VEL = 4
+    POSITION_MS = 5
+    DUR_MS = 6
+    TEMPO = 7
 
 
 class MetaOp:
@@ -14,6 +27,7 @@ class MetaOp:
 
     def __init__(self, corpus_name):
         self.corpus_name = corpus_name
+        self.logger = logging.getLogger(settings.MAIN_LOGGER)
 
     def process(self, output_file, **args):
         print "this is a meta class for the SoMax corpus operations."
@@ -213,7 +227,7 @@ class OpSomaxStandard(SegmentationOp):
         fgMatrix, bgMatrix = tools.splitMatrixByChannel(data, self.fgChannels, self.bgChannels)
         corpus["name"] = self.corpus_name  # a changer
         corpus["typeID"] = 'MIDI'
-        corpus["type"] = 3
+        corpus["type"] = 3  # TODO: What is this '3'? Change to static variable
         corpus["size"] = 1
         corpus["data"] = []
 
@@ -223,9 +237,9 @@ class OpSomaxStandard(SegmentationOp):
                                "slice": [140, 0.0], "notes": dict()})
 
         current_phrase = 1
-        tmpListOfPitches = []
+        pitchesInState = []
 
-        if (len(bgMatrix) != 0):
+        if len(bgMatrix) != 0:
             hCtxt, tRef = tools.computePitchClassVector(bgMatrix, self.tStep)
         else:
             print("Warning: no notes in background channels. Computing harmonic context with foreground channels")
@@ -233,132 +247,137 @@ class OpSomaxStandard(SegmentationOp):
 
         lastNoteOnset = -1 - self.tolerance
         lastSliceOnset = lastNoteOnset
-        stateNb = 0
+        next_state_idx = 0
         globalTime = 0
-        tmp = dict()
+        nextState = dict()
 
-        for i in range(0, len(fgMatrix)):  # on parcourt les notes de la matrice
-            if (fgMatrix[i][5] > (
-                    lastSliceOnset + self.tolerance)):  # la note n'est pas consideree dans la slice courante
-                if stateNb > 0:
-                    tmpListOfPitches = tools.getPitchContent(corpus["data"], stateNb,
-                                                             self.legato)  # on obtient l'etiquette de la slice precedente
-                    l = len(tmpListOfPitches)
-                    if l == 0:
-                        corpus["data"][stateNb]["slice"][0] = 140  # repos
-                    if l == 1:
-                        corpus["data"][stateNb]["slice"][0] = int(tmpListOfPitches[0])
+        for i in range(len(fgMatrix)):
+            # The note is not a part of the current slice: create a new state
+            if fgMatrix[i][MatrixIdx.POSITION_MS] > (lastSliceOnset + self.tolerance):
+                if next_state_idx > 0:
+                    # get content of the previous state
+                    pitchesInState = tools.getPitchContent(corpus["data"], next_state_idx, self.legato)
+                    num_pitches = len(pitchesInState)
+
+                    if num_pitches == 0:
+                        slice_value = 140  # repos TODO Handle magic number
+                    elif num_pitches == 1:
+                        slice_value = int(pitchesInState[0])
                     else:
-                        virtualfunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-                        corpus["data"][stateNb]["slice"][0] = int(128 + virtualfunTmp % 12)
+                        virtualfunTmp = virfun.virfun(pitchesInState, 0.293)
+                        slice_value = int(128 + virtualfunTmp % 12)
 
                     if self.mod12:
-                        corpus["data"][stateNb]["slice"][0] %= 12
-                if self.verbose:
-                    print "slice is over, finalizing it"
-                    for k in range(0, len(corpus["data"])):
-                        print corpus["data"][k]
-                        print ""
-                        print "----------------------------------------"
-                        print ""
+                        slice_value %= 12
+
+                    corpus["data"][next_state_idx]["slice"][0] = slice_value
+
+                # Old debug statement: too much output to be meaningful
+                # self.logger.debug(''.join([str(row) + '\n' for row in corpus["data"]]))
 
                 # create new state
-                stateNb += 1
-                globalTime = float(fgMatrix[i][5])
-                tmp = dict()
-                tmp["state"] = int(stateNb)
-                tmp["time"] = list([globalTime, fgMatrix[i][6]])
-                tmp["seg"] = list([bisect_left(self.file_inds, i), current_phrase])
-                tmp["beat"] = list([fgMatrix[i][0], fgMatrix[i][7], 0, 0])
-                frameNbTmp = tools.ceil((fgMatrix[i][5] + self.tDelay - tRef) / self.tStep)
+                next_state_idx += 1
+                globalTime = float(fgMatrix[i][MatrixIdx.POSITION_MS])
+                nextState = dict()
+                nextState["state"] = int(next_state_idx)
+                nextState["time"] = list([globalTime, fgMatrix[i][MatrixIdx.DUR_MS]])
+                nextState["seg"] = list([bisect_left(self.file_inds, i), current_phrase])
+                nextState["beat"] = list([fgMatrix[i][MatrixIdx.POSITION_TICK], fgMatrix[i][MatrixIdx.TEMPO], 0, 0])
+                frameNbTmp = tools.ceil((fgMatrix[i][MatrixIdx.POSITION_MS] + self.tDelay - tRef) / self.tStep)
                 if frameNbTmp <= 0:
-                    tmp["extras"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
+                    nextState["extras"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
                 else:
-                    tmp["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
-                tmp["slice"] = [0, 0.0]
-                tmp["notes"] = []
+                    nextState["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+                nextState["slice"] = [0, 0.0]
+                nextState["notes"] = []
 
-                previousSliceDuration = fgMatrix[i][5] - lastSliceOnset
-                corpus["data"][stateNb - 1]["time"][1] = previousSliceDuration
+                previousSliceDuration = fgMatrix[i][MatrixIdx.POSITION_MS] - lastSliceOnset
+                corpus["data"][next_state_idx - 1]["time"][1] = previousSliceDuration
 
-                nbNotesInPreviousSlice = len(corpus["data"][stateNb - 1]["notes"])
-                for k in range(0, nbNotesInPreviousSlice):
-                    if ((corpus["data"][stateNb - 1]["notes"][k]["time"][0] +
-                         corpus["data"][stateNb - 1]["notes"][k]["time"][1]) \
-                            <= previousSliceDuration):  # note-off went off during the previous slice
-                        if (corpus["data"][stateNb - 1]["notes"][k]["time"][0] < 0):
-                            corpus["data"][stateNb - 1]["notes"][k]["note"][1] = 0
-                            # print "setting velocity of note", k, "of state", stateNb, "to 0"
-                            corpus["data"][stateNb - 1]["notes"][k]["time"][0] = float(
-                                corpus["data"][stateNb - 1]["notes"][k]["time"][1]) + float(
-                                corpus["data"][stateNb - 1]["notes"][k]["time"][0])
-                    else:  # note continues ; if still in current slice, add it to the current slice and modify the previous one
+                numNotesInPreviousSlice = len(corpus["data"][next_state_idx - 1]["notes"])
+                for k in range(0, numNotesInPreviousSlice):
+                    # note-off went off during the previous slice
+                    timePrevSlice = corpus["data"][next_state_idx - 1]["notes"][k]["time"]
+                    if ((timePrevSlice[0] + timePrevSlice[1]) <= previousSliceDuration):
+                        if timePrevSlice[0] < 0:
+                            corpus["data"][next_state_idx - 1]["notes"][k]["note"][1] = 0
+                            corpus["data"][next_state_idx - 1]["notes"][k]["time"][0] = \
+                                float(timePrevSlice[1]) + float(timePrevSlice[0])
+                    # note continues; if still in current slice, add it to the current slice and modify the previous one
+                    else:
                         # add it
-                        nbNotesInSlice = len(tmp["notes"])
-                        tmp["notes"].append(dict())
-                        tmp["notes"][nbNotesInSlice]["note"] = list(corpus["data"][stateNb - 1]["notes"][k]["note"])
-                        tmp["notes"][nbNotesInSlice]["time"] = list(corpus["data"][stateNb - 1]["notes"][k]["time"])
-                        tmp["notes"][nbNotesInSlice]["time"][0] -= previousSliceDuration
+                        numNotesInSlice = len(nextState["notes"])
+                        nextState["notes"].append(dict())
+                        nextState["notes"][numNotesInSlice]["note"] = \
+                            list(corpus["data"][next_state_idx - 1]["notes"][k]["note"])
+                        nextState["notes"][numNotesInSlice]["time"] = \
+                            list(corpus["data"][next_state_idx - 1]["notes"][k]["time"])
+                        nextState["notes"][numNotesInSlice]["time"][0] -= previousSliceDuration
 
                         # modify it
-                        corpus["data"][stateNb - 1]["notes"][k]["time"][1] = 0
+                        corpus["data"][next_state_idx - 1]["notes"][k]["time"][1] = 0
 
                 # add the new note
-                nbNotesInSlice = len(tmp["notes"])
-                tmp["notes"].append(dict())
-                tmp["notes"][nbNotesInSlice]["note"] = [fgMatrix[i][3], fgMatrix[i][4], fgMatrix[i][2]]
-                tmp["notes"][nbNotesInSlice]["time"] = [0, fgMatrix[i][6]]
-                corpus["data"].append(dict(tmp))
+                numNotesInSlice = len(nextState["notes"])
+                nextState["notes"].append(dict())
+                nextState["notes"][numNotesInSlice]["note"] = [fgMatrix[i][MatrixIdx.NOTE],
+                                                               fgMatrix[i][MatrixIdx.VEL],
+                                                               fgMatrix[i][MatrixIdx.CHANNEL]]
+                nextState["notes"][numNotesInSlice]["time"] = [0, fgMatrix[i][MatrixIdx.DUR_MS]]
+                corpus["data"].append(dict(nextState))
 
                 # update variables used during the slicing process
-                lastNoteOnset = array(fgMatrix[i][5])
-                lastSliceOnset = array(fgMatrix[i][5])
+                lastNoteOnset = array(fgMatrix[i][MatrixIdx.POSITION_MS])
+                lastSliceOnset = array(fgMatrix[i][MatrixIdx.POSITION_MS])
 
-            # note in current slice ; updates current slice
+            # note in current slice; updates current slice
             else:
-                nbNotesInSlice = len(corpus["data"][stateNb]["notes"])
-                offset = fgMatrix[i][5] - corpus["data"][stateNb]["time"][0]
-                tmp = dict()
-                tmp["note"] = [fgMatrix[i][3], fgMatrix[i][4], fgMatrix[i][2]]
-                tmp["time"] = [offset, fgMatrix[i][6]]
+                numNotesInSlice = len(corpus["data"][next_state_idx]["notes"])
+                offset = fgMatrix[i][MatrixIdx.POSITION_MS] - corpus["data"][next_state_idx]["time"][0]
+                nextState = dict()
+                nextState["note"] = [fgMatrix[i][MatrixIdx.NOTE],
+                                     fgMatrix[i][MatrixIdx.VEL],
+                                     fgMatrix[i][MatrixIdx.CHANNEL]]
+                nextState["time"] = [offset, fgMatrix[i][MatrixIdx.DUR_MS]]
 
-                corpus["data"][stateNb]["notes"].append(tmp)
+                corpus["data"][next_state_idx]["notes"].append(nextState)
 
-                if ((fgMatrix[i][6] + offset) > corpus["data"][stateNb]["time"][1]):
-                    corpus["data"][stateNb]["time"][1] = fgMatrix[i][6] + int(offset)
+                if ((fgMatrix[i][6] + offset) > corpus["data"][next_state_idx]["time"][1]):
+                    corpus["data"][next_state_idx]["time"][1] = fgMatrix[i][6] + int(offset)
 
-                lastNoteOnset = array(fgMatrix[i][5])
+                lastNoteOnset = array(fgMatrix[i][MatrixIdx.POSITION_MS])
 
-        # on finalise la slice courante
-        globalTime = fgMatrix[i][5]
-        lastSliceDuration = corpus["data"][stateNb]["time"][1]
-        nbNotesInLastSlice = len(corpus["data"][stateNb]["notes"])
-        for k in range(0, nbNotesInLastSlice):
-            if ((corpus["data"][stateNb]["notes"][k]["time"][0] + corpus["data"][stateNb]["notes"][k]["time"][
-                1]) <= lastSliceDuration):
-                if (corpus["data"][stateNb]["notes"][k]["time"][0] < 0):
-                    corpus["data"][stateNb]["notes"][k]["note"][1] = 0
+        # Finalize the current slice
+        globalTime = fgMatrix[i][MatrixIdx.POSITION_MS]
+        lastSliceDuration = corpus["data"][next_state_idx]["time"][1]
+        numNotesInLastSlice = len(corpus["data"][next_state_idx]["notes"])
+        for k in range(0, numNotesInLastSlice):
+            timeCurrentSlice = corpus["data"][next_state_idx]["notes"][k]["time"]
+            if (timeCurrentSlice[0] + timeCurrentSlice[1]) <= lastSliceDuration:
+                if timeCurrentSlice[0] < 0:
+                    corpus["data"][next_state_idx]["notes"][k]["note"][1] = 0
                     # TODO: Remove print statement or fix as debug message
-                    print "setting velocity of note", k, "of state", stateNb, "to 0"
-                    corpus["data"][stateNb]["notes"][k]["time"][0] = int(
-                        corpus["data"][stateNb]["notes"][k]["time"][1]) + int(
-                        corpus["data"][stateNb]["notes"][k]["time"][0])
-        tmpListOfPitches = tools.getPitchContent(corpus["data"], stateNb, self.legato)
-        if len(tmpListOfPitches) == 0:
-            corpus["data"][stateNb]["slice"][0] = 140
-        elif len(tmpListOfPitches) == 1:
-            corpus["data"][stateNb]["slice"][0] = int(tmpListOfPitches[0])
+
+                    # self.logger.debug("Setting velocity of note {0} of state {1} to 0".format(k, next_state_idx))
+                    corpus["data"][next_state_idx]["notes"][k]["time"][0] = \
+                        int(corpus["data"][next_state_idx]["notes"][k]["time"][1]) \
+                        + int(corpus["data"][next_state_idx]["notes"][k]["time"][0])
+        pitchesInState = tools.getPitchContent(corpus["data"], next_state_idx, self.legato)
+        if len(pitchesInState) == 0:
+            corpus["data"][next_state_idx]["slice"][0] = 140
+        elif len(pitchesInState) == 1:
+            corpus["data"][next_state_idx]["slice"][0] = int(pitchesInState[0])
         else:
-            virtualFunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-            corpus["data"][stateNb]["slice"][0] = int(128 + virtualFunTmp % 12)
+            virtualFunTmp = virfun.virfun(pitchesInState, 0.293)
+            corpus["data"][next_state_idx]["slice"][0] = int(128 + virtualFunTmp % 12)
 
         frameNbTmp = tools.ceil((fgMatrix[i][5] + self.tDelay - tRef) / self.tStep)
         if (frameNbTmp <= 0):
-            corpus["data"][stateNb]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            corpus["data"][next_state_idx]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][stateNb]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+            corpus["data"][next_state_idx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
 
-        corpus["size"] = stateNb + 1
+        corpus["size"] = next_state_idx + 1
 
         return dict(corpus)
 
@@ -529,25 +548,25 @@ class OpSomaxHarmonic(OpSomaxStandard):
 
         lastNoteOnset = -1 - self.tolerance
         lastSliceOnset = lastNoteOnset
-        stateNb = 0
+        stateIdx = 0
         nbNotes = cd.size
         globalTime = 0
-        tmp = dict()
+        nextState = dict()
         matrix = asarray(matrix)
         for i in range(0, matrix.shape[0]):  # on parcourt les notes de la matrice
             if (matrix[i][5] > lastSliceOnset + self.tolerance):  # la note n'est pas consideree dans la slice courante
 
-                if stateNb > 0:
-                    tmpListOfPitches = tools.getPitchContent(corpus["data"], stateNb,
+                if stateIdx > 0:
+                    tmpListOfPitches = tools.getPitchContent(corpus["data"], stateIdx,
                                                              self.legato)  # on obtient l'etiquette de la slice precedente
                     l = len(tmpListOfPitches)
                     if l == 0:
-                        corpus["data"][stateNb]["slice"][0] = 140  # repos
+                        corpus["data"][stateIdx]["slice"][0] = 140  # repos
                     if l == 1:
-                        corpus["data"][stateNb]["slice"][0] = int(tmpListOfPitches[0])
+                        corpus["data"][stateIdx]["slice"][0] = int(tmpListOfPitches[0])
                     else:
                         virtualfunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-                        corpus["data"][stateNb]["slice"][0] = int(128 + virtualfunTmp % 12)
+                        corpus["data"][stateIdx]["slice"][0] = int(128 + virtualfunTmp % 12)
                 if self.verbose:
                     print "slice is over, finalizing it"
                     for k in range(0, len(corpus["data"])):
@@ -557,52 +576,52 @@ class OpSomaxHarmonic(OpSomaxStandard):
                         print ""
 
                 # create new state
-                stateNb += 1
-                tmp = dict()
+                stateIdx += 1
+                nextState = dict()
                 globalTime = matrix[i][5]
-                tmp["state"] = int(stateNb)
-                tmp["time"] = [globalTime, matrix[i][6]]
-                tmp["seg"] = [bisect_left(self.file_inds, i), current_phrase]
-                tmp["beat"] = [matrix[i][0], matrix[i][7], 0, 0]
+                nextState["state"] = int(stateIdx)
+                nextState["time"] = [globalTime, matrix[i][6]]
+                nextState["seg"] = [bisect_left(self.file_inds, i), current_phrase]
+                nextState["beat"] = [matrix[i][0], matrix[i][7], 0, 0]
                 frameNbTmp = tools.ceil((matrix[i][5] + self.tDelay - tRef) / self.tStep)
                 if frameNbTmp <= 0:
-                    tmp["extras"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
+                    nextState["extras"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
                 else:
-                    tmp["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1] - 1)].tolist()
-                tmp["slice"] = [0, 0.0]
-                tmp["notes"] = []
+                    nextState["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1] - 1)].tolist()
+                nextState["slice"] = [0, 0.0]
+                nextState["notes"] = []
                 previousSliceDuration = matrix[i][5] - lastSliceOnset
-                nbNotesInPreviousSlice = len(corpus["data"][stateNb - 1]["notes"])
-                for k in range(0, nbNotesInPreviousSlice):
-                    if ((corpus["data"][stateNb - 1]["notes"][k]["time"][0] +
-                         corpus["data"][stateNb - 1]["notes"][k]["time"][1]) \
+                numNotesInPreviousSlice = len(corpus["data"][stateIdx - 1]["notes"])
+                # TODO: Code duplication from OpSomaxStandard
+                for k in range(0, numNotesInPreviousSlice):
+                    if ((corpus["data"][stateIdx - 1]["notes"][k]["time"][0] +
+                         corpus["data"][stateIdx - 1]["notes"][k]["time"][1]) \
                             <= previousSliceDuration):  # note-off went off during the previous slice
-                        if (corpus["data"][stateNb - 1]["notes"][k]["time"][0] < 0):
-                            corpus["data"][stateNb - 1]["notes"][k]["note"][1] = 0
-                            # TODO: Remove print statement or fix as debug message
-                            print "setting velocity of note", k, "of state", stateNb - 1, "to 0"
-                            corpus["data"][stateNb - 1]["notes"][k]["time"][0] = int(
-                                corpus["data"][stateNb - 1]["notes"][k]["time"][1]) + int(
-                                corpus["data"][stateNb - 1]["notes"][k]["time"][0])
+                        if (corpus["data"][stateIdx - 1]["notes"][k]["time"][0] < 0):
+                            corpus["data"][stateIdx - 1]["notes"][k]["note"][1] = 0
+
+                            # self.logger.debug("Setting velocity of note {0} of state {1} to 0.".format(k, stateIdx - 1))
+                            corpus["data"][stateIdx - 1]["notes"][k]["time"][0] = int(
+                                corpus["data"][stateIdx - 1]["notes"][k]["time"][1]) + int(
+                                corpus["data"][stateIdx - 1]["notes"][k]["time"][0])
                     else:  # note continues ; if still in current slice, add it to the current slice and modify the previous one
                         # add it
-                        nbNotesInSlice = len(tmp["notes"])
-                        tmp["notes"].append(dict())
-                        # TODO: This line throws an error for single-channel midi files when compiling harmonic
-                        #       either fix the error or print an instructive error message
-                        tmp["notes"][nbNotesInSlice]["note"] = dict(corpus["data"][stateNb - 1]["notes"][k]["note"])
-                        tmp["notes"][nbNotesInSlice]["time"] = dict(corpus["data"][stateNb - 1]["notes"][k]["time"])
-                        tmp["notes"][nbNotesInSlice]["time"][0] -= previousSliceDuration
+                        numNotesInSlice = len(nextState["notes"])
+                        nextState["notes"].append(dict())
+                        # (2019-09-09) Removed dict instruction from previous implementation
+                        nextState["notes"][numNotesInSlice]["note"] = corpus["data"][stateIdx - 1]["notes"][k]["note"]
+                        nextState["notes"][numNotesInSlice]["time"] = corpus["data"][stateIdx - 1]["notes"][k]["time"]
+                        nextState["notes"][numNotesInSlice]["time"][0] -= previousSliceDuration
 
                         # modify it
-                        corpus["data"][stateNb - 1]["notes"][k]["time"][1] = 0
+                        corpus["data"][stateIdx - 1]["notes"][k]["time"][1] = 0
 
                 # add the new note
-                nbNotesInSlice = len(tmp["notes"])
-                tmp["notes"].append(dict())
-                tmp["notes"][nbNotesInSlice]["note"] = [matrix[i][3], matrix[i][4], matrix[i][2]]
-                tmp["notes"][nbNotesInSlice]["time"] = [0, matrix[i][6]]
-                corpus["data"].append(dict(tmp))
+                numNotesInSlice = len(nextState["notes"])
+                nextState["notes"].append(dict())
+                nextState["notes"][numNotesInSlice]["note"] = [matrix[i][3], matrix[i][4], matrix[i][2]]
+                nextState["notes"][numNotesInSlice]["time"] = [0, matrix[i][6]]
+                corpus["data"].append(dict(nextState))
 
                 # update variables used during the slicing process
                 lastNoteOnset = matrix[i][5]
@@ -610,48 +629,47 @@ class OpSomaxHarmonic(OpSomaxStandard):
 
             # note in current slice ; updates current slice
             else:
-                nbNotesInSlice = len(corpus["data"][stateNb]["notes"])
-                offset = matrix[i][5] - corpus["data"][stateNb]["time"][0]
-                tmp = dict()
-                tmp["note"] = [matrix[i][3], matrix[i][4], matrix[i][2]]
-                tmp["time"] = [offset, matrix[i][6]]
+                numNotesInSlice = len(corpus["data"][stateIdx]["notes"])
+                offset = matrix[i][5] - corpus["data"][stateIdx]["time"][0]
+                nextState = dict()
+                nextState["note"] = [matrix[i][3], matrix[i][4], matrix[i][2]]
+                nextState["time"] = [offset, matrix[i][6]]
 
-                corpus["data"][stateNb]["notes"].append(tmp)
+                corpus["data"][stateIdx]["notes"].append(nextState)
 
-                if ((matrix[i][6] + offset) > corpus["data"][stateNb]["time"][1]):
-                    corpus["data"][stateNb]["time"][1] = matrix[i][6] + offset
+                if ((matrix[i][6] + offset) > corpus["data"][stateIdx]["time"][1]):
+                    corpus["data"][stateIdx]["time"][1] = matrix[i][6] + offset
                 lastNoteOnset = matrix[i][5]
 
         # on finalise la slice courante
         globalTime = matrix[i][5]
-        lastSliceDuration = float(corpus["data"][stateNb]["time"][1])
-        nbNotesInLastSlice = len(corpus["data"][stateNb]["notes"])
+        lastSliceDuration = float(corpus["data"][stateIdx]["time"][1])
+        nbNotesInLastSlice = len(corpus["data"][stateIdx]["notes"])
         for k in range(0, nbNotesInLastSlice):
-            if ((corpus["data"][stateNb]["notes"][k]["time"][0] + corpus["data"][stateNb]["notes"][k]["time"][
+            if ((corpus["data"][stateIdx]["notes"][k]["time"][0] + corpus["data"][stateIdx]["notes"][k]["time"][
                 1]) <= lastSliceDuration):
-                if (corpus["data"][stateNb]["notes"][k]["time"][0] < 0):
-                    corpus["data"][stateNb]["notes"][k]["note"][1] = 0
-                    # TODO: Remove print statement or fix as debug message
-                    print "setting velocity of note", k, "of state", stateNb, "to 0"
-                    corpus["data"][stateNb]["notes"][k]["time"][0] = int(
-                        corpus["data"][stateNb]["notes"][k]["time"][1]) + int(
-                        corpus["data"][stateNb]["notes"][k]["time"][0])
-        tmpListOfPitches = tools.getPitchContent(corpus["data"], stateNb, self.legato)
+                if (corpus["data"][stateIdx]["notes"][k]["time"][0] < 0):
+                    corpus["data"][stateIdx]["notes"][k]["note"][1] = 0
+                    # self.logger.debug("Setting velocity of note", k, "of state", stateIdx, "to 0"
+                    corpus["data"][stateIdx]["notes"][k]["time"][0] = int(
+                        corpus["data"][stateIdx]["notes"][k]["time"][1]) + int(
+                        corpus["data"][stateIdx]["notes"][k]["time"][0])
+        tmpListOfPitches = tools.getPitchContent(corpus["data"], stateIdx, self.legato)
         if len(tmpListOfPitches) == 0:
-            corpus["data"][stateNb]["slice"][0] = 140
+            corpus["data"][stateIdx]["slice"][0] = 140
         elif len(tmpListOfPitches) == 1:
-            corpus["data"][stateNb]["slice"][0] = int(tmpListOfPitches[0])
+            corpus["data"][stateIdx]["slice"][0] = int(tmpListOfPitches[0])
         else:
             virtualFunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-            corpus["data"][stateNb]["slice"][0] = int(128 + virtualFunTmp % 12)
+            corpus["data"][stateIdx]["slice"][0] = int(128 + virtualFunTmp % 12)
 
         frameNbTmp = tools.ceil((matrix[i][5] + self.tDelay - tRef) / self.tStep)
         if (frameNbTmp <= 0):
-            corpus["data"][stateNb]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            corpus["data"][stateIdx]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][stateNb]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+            corpus["data"][stateIdx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
 
-        corpus["size"] = stateNb + 1
+        corpus["size"] = stateIdx + 1
         return dict(corpus)
 
 
