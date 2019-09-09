@@ -3,7 +3,6 @@ import argparse
 import logging
 import settings
 import ast
-import re
 from CorpusBuilder import CorpusBuilder
 from melodic_from_json import MelJsonGenerator
 
@@ -25,12 +24,13 @@ class Main:
                           + settings.DEBUG_INDENT + 'Self Background channel(s): {0}\n'.format(self_bg)
                           + settings.DEBUG_INDENT + 'Melodic Background channel(s): {0}\n'.format(mel_bg)
                           + settings.DEBUG_INDENT + 'Harmonic Background channel(s): {0}\n'.format(harm_bg))
+
         # TODO: Improve this: Currently only checks if folder is named 'corpus', insufficient verification
         if os.path.normpath(os.path.basename(output_folder)) != settings.CORPUS_FOLDER_NAME:
             self.logger.warn('Output folder is not set to default and will likely not be available inside SoMax, '
                              'is this intentional?\n'
                              'To ensure correct behaviour, please either run the script directly inside\n'
-                             'the folder SoMax/corpus or use the -o option to point to this directory.')
+                             'the corpus folder of SoMax or use the -o option to point to this directory.')
 
         builder = CorpusBuilder(input_path, foreground_channels=foreground, self_bg_channels=self_bg,
                                 mel_bg_channels=mel_bg, harm_bg_channels=harm_bg)

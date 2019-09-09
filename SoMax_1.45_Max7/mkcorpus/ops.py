@@ -74,7 +74,6 @@ class SegmentationOp(MetaOp):
         return self.file_paths
 
 
-
 class OpSomaxStandard(SegmentationOp):
     """ # this is the classic Somax operation, used for the main file.
         # TODO: Update legacy docstring
@@ -99,8 +98,8 @@ class OpSomaxStandard(SegmentationOp):
         self.segtypes = ["onsets", "free", "beats"]
         self.usebeats = True
         self.file_inds = []
-        self.hop = 512          # self.hop used in chromagram in samples (has to be 2^n)
-        self.freeInt = 0.5      # interval of the free segmentation in seconds
+        self.hop = 512  # self.hop used in chromagram in samples (has to be 2^n)
+        self.freeInt = 0.5  # interval of the free segmentation in seconds
         ext = os.path.splitext(file_paths[0])
         if ext[-1] == '.mid' or ext[-1] == '.midi':
             self.readFiles = self.readMIDIFiles
@@ -170,6 +169,19 @@ class OpSomaxStandard(SegmentationOp):
         print "Use beats : ", self.usebeats
 
     def readMIDIFiles(self, file_paths):
+        """ Reads midi files and return a matrix with the input formatted according to below.
+
+        :param file_paths:
+        :return N-by-8 np.ndarray, where each row represent a note event and each column represent the following values:
+            0: Position of note on event in ticks
+            1: Duration of note event in ticks (duration until note off)
+            2: channel (first channel is 1)
+            3: note value (0-127)
+            4: velocity (0-127)
+            5: Position of note on event in milliseconds
+            6: Duration of note event in milliseconds (duration until note off)
+            7: tempo
+        """
         matrix = []
         file_inds = []
         for f in file_paths:
@@ -179,16 +191,18 @@ class OpSomaxStandard(SegmentationOp):
             if matrix == []:
                 matrix = array(parser.get_matrix())
             else:
+                # TODO: When is this ever called? "If matrix is empty, add these columns to each other...?"
                 tBeatRef, tMsRef = ceil(matrix[-1][0] + matrix[-1][1]), matrix[-1][5] + matrix[-1][6]
                 newMatrix = array(parser.get_matrix())
                 newMatrix[:, 0] += tBeatRef
                 newMatrix[:, 5] += tMsRef
                 matrix = concatenate((matrix, newMatrix), 0)
             file_inds.append(matrix.shape[0])
+        # TODO: Handle with logging
         if self.verbose:
             for i in range(0, len(matrix)):
                 print matrix[i]
-        self.file_inds = []
+        self.file_inds = []  # TODO: Is this intentional?
         mat = numpy.array(matrix)
         scipy.io.savemat('noteMatrix.mat', mdict={'notes': mat})
         return matrix
@@ -197,7 +211,7 @@ class OpSomaxStandard(SegmentationOp):
         corpus = dict()
         # de-interlacing information
         fgMatrix, bgMatrix = tools.splitMatrixByChannel(data, self.fgChannels, self.bgChannels)
-        corpus["name"] = self.corpus_name       # a changer
+        corpus["name"] = self.corpus_name  # a changer
         corpus["typeID"] = 'MIDI'
         corpus["type"] = 3
         corpus["size"] = 1
@@ -574,6 +588,8 @@ class OpSomaxHarmonic(OpSomaxStandard):
                         # add it
                         nbNotesInSlice = len(tmp["notes"])
                         tmp["notes"].append(dict())
+                        # TODO: This line throws an error for single-channel midi files when compiling harmonic
+                        #       either fix the error or print an instructive error message
                         tmp["notes"][nbNotesInSlice]["note"] = dict(corpus["data"][stateNb - 1]["notes"][k]["note"])
                         tmp["notes"][nbNotesInSlice]["time"] = dict(corpus["data"][stateNb - 1]["notes"][k]["time"])
                         tmp["notes"][nbNotesInSlice]["time"][0] -= previousSliceDuration
