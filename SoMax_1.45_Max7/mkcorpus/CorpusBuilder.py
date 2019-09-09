@@ -97,6 +97,7 @@ class CorpusBuilder:
     def build_corpus(self, output_folder):
         """triggers the corpus computation. This is made in two phases to let the user modify the operations if needed.
             # TODO: This docstring is not necessarily complete or correct"""
+        output_files = []
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         for key, op in self.ops.iteritems():
@@ -110,13 +111,8 @@ class CorpusBuilder:
                     raise Exception("File " + path + " not understood by operation ", self.callback_dic[key])
             # Run the actual operator
             op.process(output_file)
-
-    # TODO: Remove
-    # def debug_print_ops(self):
-    #     output_string = "The following operations were automatically deduced:\n"
-    #     for k, v in self.ops.iteritems():
-    #         output_string += settings.DEBUG_INDENT + '"{0}" for file {1}\n'.format(self.callback_dic[k], v)
-    #     self.logger.debug(output_string)
+            output_files.append(output_file)
+        return output_files
 
     def store_filepaths(self, corpus_path, dirname, names):
         """function called to build the operation dictionary on every file of a folder."""

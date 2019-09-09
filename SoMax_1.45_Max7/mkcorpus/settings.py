@@ -20,3 +20,4 @@ HARMONIC_FILE_EXT = 'h'
 MAIN_LOGGER = 'main_log'
 DEBUG_INDENT = ' ' * 9
 CRITICAL_INDENT = ' ' * 12
+INFO_INDENT = ' ' * 8
