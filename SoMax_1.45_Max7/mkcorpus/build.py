@@ -142,32 +142,37 @@ class Main:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("inputfile", help="Path to the midi file or folder to parse", type=Main.is_midi_audio_or_folder)
+    parser.add_argument("inputfile",
+                        help="Path to the midi file, audio file  or folder to parse (relative or absolute).",
+                        type=Main.is_midi_audio_or_folder)
     parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
                         default=settings.DEFAULT_CORPUS_PATH)
     parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=False)
     parser.add_argument("-f", "--foreground",
-                        help="Specify which midi channel(s) that will be used as foreground"
-                             "(output) by Somax. Channels must be specified as a comma separated"
-                             "list without spaces.\n"
+                        help="When using a midi file as input, this argument specifies which midi channel(s) that will "
+                             "be used as foreground (output) by Somax. Channels must be specified as a comma separated "
+                             "list without spaces. \n"
                              "EXAMPLE: 1,2,8 will result in channels 1, 2 and 8 as output channels.",
                         type=Main.parse_fg, default=settings.DEFAULT_FOREGROUND)
-    parser.add_argument("-sb", "--self_bg",
-                        help="Specify which midi channel(s) Somax will listen to when mode is set to SELF.\n"
+    parser.add_argument("-s", "--self_bg",
+                        help="When using a midi file as input, this argument specifies which midi channel(s) Somax "
+                             "will listen to when mode is set to SELF. \n"
                              "Formatting: see --foreground",
                         type=Main.parse_sbg, default=settings.DEFAULT_SELF_BACKGROUND)
-    parser.add_argument("-mb", "--mel_bg",
-                        help="Specify which midi channel(s) Somax will listen to when mode is set to MELODIC.\n"
+    parser.add_argument("-m", "--mel_bg",
+                        help="When using a midi file as input, this argument specifies which midi channel(s) Somax "
+                             "will listen to when mode is set to MELODIC. \n"
                              "Formatting: see --foreground",
                         type=Main.parse_mbg, default=settings.DEFAULT_MEL_BACKGROUND)
-    parser.add_argument("-hb", "--harm_bg",
-                        help="Specify which midi channel(s) Somax will listen to when mode is set to HARMONIC.\n"
+    parser.add_argument("-b", "--harm_bg",
+                        help="When using a midi file as input, this argument specifies which midi channel(s) Somax "
+                             "will listen to when mode is set to HARMONIC. \n"
                              "Formatting: see --foreground",
                         type=Main.parse_hbg, default=settings.DEFAULT_HARM_BACKGROUND)
     parser.add_argument("--melodic-from-json",
-                        help="Run the script melodic_from_json on the generated content to generate the melodic json "
-                             "file. Note that setting this flag will override any other setting defined for melodic "
-                             "content.",
+                        help="When using a midi file as input: if this flag is set, the script melodic_from_json "
+                             "will be run to generate the melodic json file from the standard file. "
+                             "Note that setting this flag will override any other setting defined for melodic content.",
                         action='store_true', default=False)
     parser.add_argument("--melodic-are-held",
                         help="Recommended flag for --melodic-from-json. If set, takes into account notes even if "
