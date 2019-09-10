@@ -5,15 +5,12 @@ from ops import OpSomaxStandard, OpSomaxHarmonic, OpSomaxMelodic
 
 
 class CorpusBuilder:
-    """main class to instantiate to achieve corpus construction. Initializes with a path to the files and a corpus name.
-        # TODO: Legacy docstring """
+    """ Main class to instantiate to achieve corpus construction. """
 
-    # TODO: Force fg, bg, mel, harm as default input arguments (will render legacy unable to compile)
     def __init__(self, input_path, foreground_channels=None, self_bg_channels=None, mel_bg_channels=None,
-                 harm_bg_channels=None, corpus_name=None, **kwargs):
-        """ Generates a list of files and operations based on existing files in corpus path required for
-            building the corpus.
-            # TODO: This documentation is not complete nor necessarily correct """
+                 harm_bg_channels=None, corpus_name=None, uses_legacy_parser=False, **kwargs):
+        """ Generates a list of files and operations (legacy: based on existing files in corpus path) required for
+            building the corpus but does not create the actual files."""
 
         self.logger = logging.getLogger(settings.MAIN_LOGGER)
         if 'callback_dic' in kwargs.keys():
@@ -31,34 +28,43 @@ class CorpusBuilder:
         self.logger.debug('Corpus name set to {}'.format(self.corpus_name))
 
         # TODO: Clean up! This could be simplified a lot!
-        # TODO:   If the lambda expression in generate_ops (super ugly) can be removed, ops_filepaths does not have
-        # TODO:   to be global. then self.generate_ops could return ops, i.e. self.ops = self.generate_ops().
+        #       If the very ugly lambda expression in generate_ops can be removed, ops_filepaths does not have
+        #       to be global. then self.generate_ops could return ops, i.e. self.ops = self.generate_ops().
         self.ops = dict()  # type: {str: (MetaOp, [str])}
         self.ops_filepaths = dict()  # type: {str: [str]}
 
-        self.generate_ops(input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels)
+        self.generate_ops(input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels,
+                          uses_legacy_parser)
         # self.debug_print_ops()
 
-    def generate_ops(self, input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels):
+    def generate_ops(self, input_path, foreground_channels, self_bg_channels, mel_bg_channels, harm_bg_channels,
+                     uses_legacy_parser):
         """Generates the dict containing the corresponding `MetaOp`s.
 
            Always adds OpSomaxStandard, OpSomaxMelodic and OpSomaxHarmonic.
-           Will check the folder for separate files with names _h or _m, if either of those exist, OpSomaxHarmonic
-           and/or OpSomaxMelodic will be generated with these as input files.
-           If they don't exist, the default midi file will be used to generate these.
+           If legacy flag: Will check the folder for separate files with names _h.mid or _m.mid, if either of
+                            those exist, OpSomaxHarmonic and/or OpSomaxMelodic will be generated with these as input
+                            files.
+           If legacy flag is not set or the above mentioned files do not exist: the default midi file will be used to
+           generate these
+
+           (Old docstring: the CorpusBuilder, at initialization, builds a proposition for the operations to be made.
+                           the operation dictionary is a dictionary labelled by suffix containing the files to be
+                           analyzed. the operation corresponding to a given suffix will be so executed to whole of the
+                           files.)
         """
-        # the CorpusBuilder, at initialization, builds a proposition for the operations to be made.
-        # the operation dictionary is a dictionary labelled by suffix containing the files to be analyzed.
-        # the operation corresponding to a given suffix will be so executed to whole of the files.
-        # TODO: Move this to the docstring, legacy
         if os.path.isfile(input_path):
-            # if a file, scan the current folder to get the files
-            self.ops_filepaths = self.get_linked_files(self.input_path)
+            # if input is a file and legacy flag is set, scan the current folder to get the files
+            if uses_legacy_parser:
+                self.ops_filepaths = self.get_linked_files_legacy(self.input_path)
+            # otherwise create dictionary with same formatting as legacy parser, containing only the main item
+            else:
+                self.ops_filepaths = {settings.STANDARD_FILE_EXT: [input_path]}
         elif os.path.isdir(input_path):
             # if a folder, scan the given folder with files in it
             os.path.walk(input_path, lambda a, d, n: self.store_filepaths(a, d, n), input_path)
         else:
-            # TODO: This error should have been caught way eariler.
+            # Note! This error has most likely been caught eariler, but will be kept just in case.
             self.logger.critical("The corpus file(s) were not found! Terminating script without output.")
             sys.exit(1)
 
@@ -95,8 +101,6 @@ class CorpusBuilder:
             op_object.setBgChannels(harm_bg_channels)
 
     def build_corpus(self, output_folder):
-        """triggers the corpus computation. This is made in two phases to let the user modify the operations if needed.
-            # TODO: This docstring is not necessarily complete or correct"""
         output_files = []
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -107,8 +111,8 @@ class CorpusBuilder:
                 output_file = output_folder + self.corpus_name + '.json'
             for path in op.getFilePaths():
                 if not os.path.splitext(path)[-1] in op.admitted_extensions:
-                    # TODO: Handle with logging. Need to cause this error to be able to debug it
-                    raise Exception("File " + path + " not understood by operation ", self.callback_dic[key])
+                    self.logger.critical("File {0} is not understood by operation {1}. This should not have occurred."
+                                         "Script terminating without output.".format(path, self.callback_dic[key]))
             # Run the actual operator
             op.process(output_file)
             output_files.append(output_file)
@@ -116,7 +120,6 @@ class CorpusBuilder:
 
     def store_filepaths(self, corpus_path, dirname, names):
         """function called to build the operation dictionary on every file of a folder."""
-        # TODO: This has not been checked (2019-09-06)
         names = filter(lambda x: x[0] != '.', names)  # exclude hidden files
         file_dict = dict()
         Op = getattr(importlib.import_module("ops"), self.callback_dic[''])
@@ -144,8 +147,7 @@ class CorpusBuilder:
 
         self.ops_filepaths = file_dict
 
-    def get_linked_files(self, input_file):
-        # TODO: Note: it's currently unclear what the purpose of _h.mid and _m.mid files is. Perhaps, this part could be removed
+    def get_linked_files_legacy(self, input_file):
         dir_name = os.path.dirname(input_file) + '/'
         corpus_name = os.path.splitext(os.path.basename(input_file))[0]
         if '_' in corpus_name:

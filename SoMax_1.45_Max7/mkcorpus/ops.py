@@ -19,11 +19,12 @@ class MatrixIdx:
 
 
 class MetaOp:
-    """ this is the operation model for every corpus operations.
+    """ This is the operation model for every corpus operations.
         this meta-operation is initialized with the name of the corpus
         and have a process function, which has to output a file at the output_file location.
-        # TODO: Update legacy docstring
-        # TODO: As there are no instances inheriting from only MetaOp, this class is likely redundant (?)"""
+
+        TODO: As there are no classes inheriting solely from MetaOp apart from OpSomaxStandard, this class is likely
+              redundant and could likely be a part of OpSomaxStandard (?)"""
 
     def __init__(self, corpus_name):
         self.corpus_name = corpus_name
@@ -42,13 +43,13 @@ class MetaOp:
 
 
 class SegmentationOp(MetaOp):
-    """ this is a higher level abstraction to formalize the classic operations made on OMax and co. operations
+    """ This is a higher level abstraction to formalize the classic operations made on OMax and co. operations
         based on the segmentation of the files in states. This is why the init function requires one more argument,
         which is the paths of the files to analyze.
-        # TODO: Update legacy docstring
-        # TODO: As there are no instances inheriting from only SegmentationOp, this class is likely redundant (?) """
 
-    # TODO: Global, static variable. Is this intentional?
+        TODO: As there is no class inheriting solely from SegmentationOp apart from OpSomaxStandard, this class is
+              likely redundant and could likely be a part of OpSomaxStandard (?)"""
+
     admitted_extensions = []  # contains the file extensions that the operation can read.
 
     def __init__(self, file_paths, corpus_name):
@@ -56,32 +57,29 @@ class SegmentationOp(MetaOp):
         self.file_paths = file_paths
 
     def process(self, output_file):
-        """ for the overload commodity, the process function is divided in three function :
+        """ For the overload commodity, the process function is divided in three function :
               -- a readFiles function which reads the files to acquire the raw data
               -- a readData function which withdraws the wanted information from the raw data
-              -- a writeFiles which writes the acquired data into the final corpus file at output_file location.
-            TODO: Update legacy docstring"""
+              -- a writeFiles which writes the acquired data into the final corpus file at output_file location."""
         self.raw_data = self.readFiles(self.file_paths)
         self.result = self.readData(self.raw_data)
         self.writeFiles(self.result, output_file)
 
     def readFiles(self, file_paths):
-        """ # TODO: Proper docstring
-            This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
+        """ This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
             by either readMIDIFiles or readAudioFiles depending on input file format. """
         print "Here is the function reading the corpus files and returning the appropriate data structure."
         return []
 
     def readData(self, data):
-        """ # TODO: Proper docstring
-            This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
+        """ This function should be considered abstract and is always overwritten in the constructor of OpSomaxStandard
             by either readMIDIData or readAudioData depending on input file format. """
         print "Here is the main process of the operation that will apply to data."
 
     def writeFiles(self, result, output_file):
-        """ # TODO: Proper docstring
-            This function is abstract and overridden in OpSomaxStandard.
-            # TODO: As there are no instances inheriting from only SegmentationOp, this function is likely redundant"""
+        """ This function is abstract and overridden in OpSomaxStandard.
+
+            TODO: As there are no instances inheriting from only SegmentationOp, this function is likely redundant """
         print "Writes the results in the given output_file location."
 
     def getFilePaths(self):
@@ -89,9 +87,7 @@ class SegmentationOp(MetaOp):
 
 
 class OpSomaxStandard(SegmentationOp):
-    """ # this is the classic Somax operation, used for the main file.
-        # TODO: Update legacy docstring
-    """
+    """ This is the classic Somax operation, used for the main file."""
 
     admitted_extensions = ['.mid', '.midi', '.wav', '.aif', '.aiff']
 
@@ -205,20 +201,18 @@ class OpSomaxStandard(SegmentationOp):
             if matrix == []:
                 matrix = array(parser.get_matrix())
             else:
-                # TODO: When is this ever called? "If matrix is empty, add these columns to each other...?"
+                # TODO: When is this ever called? "If matrix is empty, add these columns from it to each other...?"
                 tBeatRef, tMsRef = ceil(matrix[-1][0] + matrix[-1][1]), matrix[-1][5] + matrix[-1][6]
                 newMatrix = array(parser.get_matrix())
                 newMatrix[:, 0] += tBeatRef
                 newMatrix[:, 5] += tMsRef
                 matrix = concatenate((matrix, newMatrix), 0)
             file_inds.append(matrix.shape[0])
-        # TODO: Handle with logging
-        if self.verbose:
-            for i in range(0, len(matrix)):
-                print matrix[i]
-        self.file_inds = []  # TODO: Is this intentional?
+        self.file_inds = []         # TODO: Is this intentional, or should it rather set self.file_inds = find_inds?
         mat = numpy.array(matrix)
-        scipy.io.savemat('noteMatrix.mat', mdict={'notes': mat})
+
+        if settings.WRITE_NOTE_MATRIX:
+            scipy.io.savemat('noteMatrix.mat', mdict={'notes': mat})
         return matrix
 
     def readMIDIData(self, data):
@@ -227,7 +221,7 @@ class OpSomaxStandard(SegmentationOp):
         fgMatrix, bgMatrix = tools.splitMatrixByChannel(data, self.fgChannels, self.bgChannels)
         corpus["name"] = self.corpus_name  # a changer
         corpus["typeID"] = 'MIDI'
-        corpus["type"] = 3  # TODO: What is this '3'? Change to static variable
+        corpus["type"] = 3  # TODO: What is this '3'? Change to named, static variable
         corpus["size"] = 1
         corpus["data"] = []
 
@@ -260,7 +254,8 @@ class OpSomaxStandard(SegmentationOp):
                     num_pitches = len(pitchesInState)
 
                     if num_pitches == 0:
-                        slice_value = 140  # repos TODO Handle magic number
+                        # Note: 0-127 are note values, 128-139 virtual fundamentals and 140 denotes 'no value')
+                        slice_value = 140
                     elif num_pitches == 1:
                         slice_value = int(pitchesInState[0])
                     else:
@@ -287,7 +282,7 @@ class OpSomaxStandard(SegmentationOp):
                 if frameNbTmp <= 0:
                     nextState["extras"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
                 else:
-                    nextState["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+                    nextState["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1] - 1)].tolist()
                 nextState["slice"] = [0, 0.0]
                 nextState["notes"] = []
 
@@ -356,8 +351,6 @@ class OpSomaxStandard(SegmentationOp):
             if (timeCurrentSlice[0] + timeCurrentSlice[1]) <= lastSliceDuration:
                 if timeCurrentSlice[0] < 0:
                     corpus["data"][next_state_idx]["notes"][k]["note"][1] = 0
-                    # TODO: Remove print statement or fix as debug message
-
                     # self.logger.debug("Setting velocity of note {0} of state {1} to 0".format(k, next_state_idx))
                     corpus["data"][next_state_idx]["notes"][k]["time"][0] = \
                         int(corpus["data"][next_state_idx]["notes"][k]["time"][1]) \
@@ -375,7 +368,7 @@ class OpSomaxStandard(SegmentationOp):
         if (frameNbTmp <= 0):
             corpus["data"][next_state_idx]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][next_state_idx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+            corpus["data"][next_state_idx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1]) - 1].tolist()
 
         corpus["size"] = next_state_idx + 1
 
@@ -484,8 +477,7 @@ class OpSomaxStandard(SegmentationOp):
     def writeFiles(self, data, output_file):
         with open(output_file, 'wb') as fp:
             json.dump(data, fp)
-        # TODO: Change to proper log message
-        print output_file, 'file outputted.'
+        self.logger.info('Generated file {}.'.format(output_file))
         return 0
 
 
@@ -592,7 +584,7 @@ class OpSomaxHarmonic(OpSomaxStandard):
                 nextState["notes"] = []
                 previousSliceDuration = matrix[i][5] - lastSliceOnset
                 numNotesInPreviousSlice = len(corpus["data"][stateIdx - 1]["notes"])
-                # TODO: Code duplication from OpSomaxStandard
+                # TODO: Code duplication from OpSomaxStandard. Refactor
                 for k in range(0, numNotesInPreviousSlice):
                     if ((corpus["data"][stateIdx - 1]["notes"][k]["time"][0] +
                          corpus["data"][stateIdx - 1]["notes"][k]["time"][1]) \
@@ -667,7 +659,7 @@ class OpSomaxHarmonic(OpSomaxStandard):
         if (frameNbTmp <= 0):
             corpus["data"][stateIdx]["extras"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][stateIdx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1])].tolist()
+            corpus["data"][stateIdx]["extras"] = hCtxt[:, min(int(frameNbTmp), hCtxt.shape[1] - 1)].tolist()
 
         corpus["size"] = stateIdx + 1
         return dict(corpus)
