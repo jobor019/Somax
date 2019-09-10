@@ -62,7 +62,7 @@ class CorpusBuilder:
                 self.ops_filepaths = {settings.STANDARD_FILE_EXT: [input_path]}
         elif os.path.isdir(input_path):
             # if a folder, scan the given folder with files in it
-            os.path.walk(input_path, lambda a, d, n: self.store_filepaths(a, d, n), input_path)
+            os.path.walk(input_path, lambda a, d, n: self.store_filepaths(a, d, n, uses_legacy_parser), input_path)
         else:
             # Note! This error has most likely been caught eariler, but will be kept just in case.
             self.logger.critical("The corpus file(s) were not found! Terminating script without output.")
@@ -75,12 +75,13 @@ class CorpusBuilder:
             self.ops[key] = op_object
             self.logger.debug("Added operator {0} related to file(s) {1}".format(self.callback_dic[key], filepaths))
 
-        # Adding harmonic and melodic output files if no matching midi files are foudn
+        # Adding harmonic and melodic output files if no matching midi files are found
         if settings.MELODIC_FILE_EXT not in self.ops.keys():
             standard_filepaths = self.ops[settings.STANDARD_FILE_EXT].getFilePaths()
-            self.ops[settings.MELODIC_FILE_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
-            self.logger.debug("No _m file found. Added Melodic operator based on standard file(s) ({0})."
-                              .format(standard_filepaths))
+            if self.all_files_are_midi(standard_filepaths):
+                self.ops[settings.MELODIC_FILE_EXT] = OpSomaxMelodic(standard_filepaths, self.corpus_name)
+                self.logger.debug("No _m file found. Added Melodic operator based on standard file(s) ({0})."
+                                  .format(standard_filepaths))
         if settings.HARMONIC_FILE_EXT not in self.ops.keys():
             standard_filepaths = self.ops[settings.STANDARD_FILE_EXT].getFilePaths()
             self.ops[settings.HARMONIC_FILE_EXT] = OpSomaxHarmonic(standard_filepaths, self.corpus_name)
@@ -118,14 +119,17 @@ class CorpusBuilder:
             output_files.append(output_file)
         return output_files
 
-    def store_filepaths(self, corpus_path, dirname, names):
+    def store_filepaths(self, corpus_path, dirname, names, uses_legacy_parser):
         """function called to build the operation dictionary on every file of a folder."""
         names = filter(lambda x: x[0] != '.', names)  # exclude hidden files
         file_dict = dict()
         Op = getattr(importlib.import_module("ops"), self.callback_dic[''])
 
-        main_files = filter(lambda x: len(x.split('_')) == 1 and os.path.splitext(x)[1] in Op.admitted_extensions,
-                            names)
+        if uses_legacy_parser:
+            main_files = filter(lambda x: len(x.split('_')) == 1 and os.path.splitext(x)[1] in Op.admitted_extensions,
+                                names)
+        else:
+            main_files = filter(lambda x: os.path.splitext(x)[1] in Op.admitted_extensions, names)
         file_dict[''] = map(lambda x: dirname + '/' + x, main_files)
         # looking
         potential_files = filter(
@@ -176,3 +180,6 @@ class CorpusBuilder:
                         file_dict[parts[-1]] = [dir_name + f]
         self.logger.debug("Relevant files found: {}".format(file_dict))
         return file_dict
+
+    def all_files_are_midi(self, filepaths):
+        return all([os.path.splitext(p)[-1] in settings.MIDI_EXTENSIONS for p in filepaths])

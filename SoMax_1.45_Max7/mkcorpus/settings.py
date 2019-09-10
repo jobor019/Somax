@@ -1,11 +1,6 @@
 import os
 
 #######################
-# Formats             #
-#######################
-MIDI_FILE = ['.mid', '.midi']
-
-#######################
 # Default settings    #
 #######################
 
@@ -15,6 +10,10 @@ DEFAULT_FOREGROUND = list(range(1, 17))
 DEFAULT_SELF_BACKGROUND = list(range(1, 17))
 DEFAULT_MEL_BACKGROUND = [1]
 DEFAULT_HARM_BACKGROUND = list(range(1, 17))
+
+AUDIO_EXTENSIONS = ['.wav', '.aif', '.aiff']
+MIDI_EXTENSIONS = ['.mid', '.midi']
+ADMITTED_EXTENSIONS = AUDIO_EXTENSIONS + MIDI_EXTENSIONS
 
 #######################
 # File extension keys #

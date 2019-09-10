@@ -69,15 +69,15 @@ class Main:
             raise argparse.ArgumentTypeError('"{0}" is not a valid path'.format(path))
 
     @staticmethod
-    def is_midi_file_or_folder(path):
+    def is_midi_audio_or_folder(path):
         Main.path_if_valid(path)
         _, file_ext = os.path.splitext(path)
-        if file_ext in settings.MIDI_FILE:
+        if file_ext in settings.ADMITTED_EXTENSIONS:
             return path
         elif os.path.isdir(path):
             return path
         else:
-            raise argparse.ArgumentTypeError('"{0}" is not a midi file or a valid folder.'.format(path))
+            raise argparse.ArgumentTypeError('"{0}" is not a midi file, audio file or a valid folder.'.format(path))
 
     @staticmethod
     def is_folder(path):
@@ -142,7 +142,7 @@ class Main:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("inputfile", help="Path to the midi file or folder to parse", type=Main.is_midi_file_or_folder)
+    parser.add_argument("inputfile", help="Path to the midi file or folder to parse", type=Main.is_midi_audio_or_folder)
     parser.add_argument("-o", "--output_folder", help="Path to the corpus folder", type=Main.is_folder,
                         default=settings.DEFAULT_CORPUS_PATH)
     parser.add_argument("-v", "--verbose", help="Verbose output", action='store_true', default=False)

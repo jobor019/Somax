@@ -89,7 +89,7 @@ class SegmentationOp(MetaOp):
 class OpSomaxStandard(SegmentationOp):
     """ This is the classic Somax operation, used for the main file."""
 
-    admitted_extensions = ['.mid', '.midi', '.wav', '.aif', '.aiff']
+    admitted_extensions = settings.ADMITTED_EXTENSIONS
 
     def __init__(self, file_paths, corpus_name):
         SegmentationOp.__init__(self, file_paths, corpus_name)
@@ -384,7 +384,7 @@ class OpSomaxStandard(SegmentationOp):
         return all_arrays
 
     def readAudioData(self, data):
-        segtype = "beats"
+        # segtype = "beats"
         usebeats = True
         tau = 600.0  # range of leaky integration
         print len(data)
@@ -407,7 +407,7 @@ class OpSomaxStandard(SegmentationOp):
                 else:
                     seg = librosa.beat.beat_track(y)
             elif self.segtype == "free":
-                beats = numpy.arange(0.0, librosa.core.get_duration(y), freeInt)
+                beats = numpy.arange(0.0, librosa.core.get_duration(y), self.freeInt)
             else:
                 print "segmentation type not recognized. Onsets used"
                 seg = librosa.onset.onset_detect(y)
@@ -450,15 +450,15 @@ class OpSomaxStandard(SegmentationOp):
                 tmp["state"] = o + 1
                 tmp["seg"] = [1, 0]
 
-                current_time = librosa.core.frames_to_time(seg[o]).tolist()[0]
-                next_time = librosa.core.frames_to_time(seg[o + 1]).tolist()[0]
+                current_time = librosa.core.frames_to_time(seg[o])
+                next_time = librosa.core.frames_to_time(seg[o + 1])
                 tmp["time"] = [int(current_time * 1000.0), (next_time - current_time) * 1000.0]
 
                 current_beat = tools.get_beat(seg[o], beats)
                 previous_beat = int(numpy.floor(current_beat))
-                current_beat_t = librosa.core.frames_to_time(beats[previous_beat]).tolist()[0]
+                current_beat_t = librosa.core.frames_to_time(beats[previous_beat])
                 try:
-                    next_beat_t = librosa.core.frames_to_time(beats[previous_beat + 1]).tolist()[0]
+                    next_beat_t = librosa.core.frames_to_time(beats[previous_beat + 1])
                     if current_time != next_time:
                         tmp["beat"] = [current_beat, 60.0 / (next_beat_t - current_beat_t), 0, 0]
                     else:
