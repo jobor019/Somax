@@ -119,11 +119,12 @@ class MelodicLabel(AbstractLabel):
                     raise Exception("midi pitch identifier must be an integer")
             # classic pitch, [[0, 140], vel, channel
             elif influence_type=='pitch':
-                note = int(data[1])
+                note = int(args[0])
                 if type(note)==int:
-                    label = cls(data[1])
+                    label = cls(note)
                 else:
                     raise Exception("pitch identifier must be an integer")
+            # TODO: elif influence_type=='chroma':
             else:
                 print "streamview", cls, "doesn't understand type", influence_type
         elif type(data)==int or type(data)==float:

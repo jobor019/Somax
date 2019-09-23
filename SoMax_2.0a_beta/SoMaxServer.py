@@ -10,7 +10,7 @@ from multiprocessing import Process, Pool
 #   the server, adressing /player_name.
 # It has to be initialized with an OSC incoming port and an OSC outcoming port.
 
-class SoMaxServer(Process):
+class SoMaxServer():
     max_activity_length = 500
     # Initialization method
     def __init__(self, in_port, out_port):
@@ -33,7 +33,7 @@ class SoMaxServer(Process):
         self.server.addMsgHandler("/update", self.send_info_dict)
 
         self.send_info_dict()
-        Process.__init__(self)
+        # Process.__init__(self)
 
     def stopServer(self, *args):
         '''stops the SoMax server'''
@@ -392,7 +392,8 @@ if __name__ == "__main__":
     out_port = args.out_port[0]
     somax_server = SoMaxServer(in_port, out_port)
 
-    somax_server.start()
+    # somax_server.start()
+    somax_server.run()
 
     c = ""
     '''while c!="quit":

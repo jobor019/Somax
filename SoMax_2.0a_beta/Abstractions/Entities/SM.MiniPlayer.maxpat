@@ -39,6 +39,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"comment" : "",
+					"id" : "obj-7",
+					"index" : 5,
+					"maxclass" : "outlet",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 1030.0, 688.0, 30.0, 30.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"comment" : "state",
 					"id" : "obj-49",
 					"index" : 4,
@@ -1533,7 +1545,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-6",
-					"items" : [ "Player", ",", "pitch", ",", "pitch:melody", ",", "pitch:harmony" ],
+					"items" : [ "Player", ",", "pitch" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -2209,8 +2221,7 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 710.5, 779.0, 66.0, 20.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 416.0, 430.0, 66.0, 20.0 ],
-					"text" : "1405/3943"
+					"presentation_rect" : [ 416.0, 430.0, 66.0, 20.0 ]
 				}
 
 			}
@@ -2536,6 +2547,15 @@
 		"lines" : [ 			{
 				"patchline" : 				{
 					"destination" : [ "obj-15", 0 ],
+					"order" : 1,
+					"source" : [ "obj-10", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-7", 0 ],
+					"order" : 0,
 					"source" : [ "obj-10", 0 ]
 				}
 
