@@ -128,10 +128,17 @@ class NGramMemorySpace(AbstractMemorySpace):
                 k = tuple(map(lambda x: transform.encode(x), self.buffer))
                 values = []
                 c = None
+                # TODO: Optimize. Takes ~20ms with a large corpus (x2 with self_influence) and 8 transforms.
+                #       Size of this loop is of order O(1000) with a complicated __eq__ comparison (MelodicLabel.__eq__)
+                #       Nevermind. Avg. call time per compare is just 1e-6, but in total 20k compares per influence.
+                #       Numeric comparsion with matrices will generally cost <1 ms.
+                #       f.ex. b = (a == (1, 2, 3)).all(axis=1).nonzero(), but this will require a radically different
+                #       structure the entire NGram.
                 for t, z in self.subsequences.iteritems():
                     if k==t:
                         c=t
                         break
+                # TODO: (Until here).
                 if c!=None:
                     for state in self.subsequences[c]:
 
@@ -173,3 +180,60 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.subsequences = dict()
         self.orderedDateList = list()
         self.orderedEventList = list()
+
+
+class FastNgramMemSpace(NGramMemorySpace):
+
+    def __init__(self, dates=[], states=[],
+                 label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
+                 event_type=Events.AbstractEvent):
+        super(FastNgramMemSpace, self).__init__(dates, states, label_type, contents_type, event_type)
+        self.ngram_map = np.ndarray([])
+
+    def read(self, filez, timing='relative'):
+        NGramMemorySpace.read(self, filez, timing)
+        self.restructure_ngram()
+
+    def restructure_ngram(self):
+        num_states = sum([len(state) for state in self.subsequences.values()])  # TODO: Missing 2 (should be 68)?
+        print '\033[92m',  "Num States are", num_states, '\033[0m'
+        valid_transforms = []
+        for t in self.transforms:
+            valid_transforms.extend(t.get_transformation_patterns())
+
+        num_transforms = len(valid_transforms)
+        self.ngram_map = np.zeros((num_states * num_transforms, self.ngram_size + 1))
+        i = 0
+        print '\033[91m', valid_transforms, '\033[0m'
+        for transform in valid_transforms:
+            # Temporary shift, as original class does not allow shifting the comparison material.
+            #   Not necessary for symmetrical transposes.
+            # transform.semitone = -transform.semitone  # Not applicable for NoTransform
+            for labels, states in self.subsequences.iteritems():
+                pattern = tuple(transform.encode(l).label for l in labels)
+                # Note:  Not generalized: only constructed to handle Melodic labels
+                for state in states:
+                    row = np.append(pattern, state)
+                    self.ngram_map[i, :] = row
+                    i += 1
+
+
+
+    def influence(self, data, **kwargs):
+        event = self.build_event(*data, **kwargs)
+        self.buffer.append(event.get_label())
+        transforms = []
+        peaks = []
+        valid_transforms = self.transforms  # getting appropriate transformations
+        for Transform in valid_transforms:
+            transforms.extend(Transform.get_transformation_patterns())
+        if len(self.buffer) >= self.ngram_size:
+            raw_notes = [label.label for label in self.buffer]
+            c = (self.ngram_map[:, :self.ngram_size] == raw_notes).all(axis=1).nonzero()
+            print c
+            if not c:
+                for state in c:
+                    peaks.append(tuple([self.orderedDateList[int(state)], 1.0, NoTransform()]))
+                    # peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
+        print peaks
+        return peaks

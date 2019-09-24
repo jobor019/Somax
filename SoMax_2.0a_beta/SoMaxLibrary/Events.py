@@ -67,6 +67,7 @@ class MelodicLabel(AbstractLabel):
             raise TypeError("Failed creating Melodic Label from ", label)
 
     def __eq__(self, a):
+        # TODO: Optimize or move modulo to json construction.
         if a==None:
             return False
         elif issubclass(type(a), MelodicLabel):
@@ -119,7 +120,7 @@ class MelodicLabel(AbstractLabel):
                     raise Exception("midi pitch identifier must be an integer")
             # classic pitch, [[0, 140], vel, channel
             elif influence_type=='pitch':
-                note = int(args[0])
+                note = int(data[1])
                 if type(note)==int:
                     label = cls(note)
                 else:
