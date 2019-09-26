@@ -134,6 +134,9 @@ class NGramMemorySpace(AbstractMemorySpace):
                 #       Numeric comparsion with matrices will generally cost <1 ms.
                 #       f.ex. b = (a == (1, 2, 3)).all(axis=1).nonzero(), but this will require a radically different
                 #       structure the entire NGram.
+                #
+                # TODO: An alternative solution would be to parallelize the operations (as entries are indep.),
+                #       see https://stackoverflow.com/a/28463266
                 for t, z in self.subsequences.iteritems():
                     if k==t:
                         c=t

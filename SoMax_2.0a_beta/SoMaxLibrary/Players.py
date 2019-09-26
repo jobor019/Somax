@@ -1,8 +1,16 @@
+import itertools
+import logging
+import operator
+import os
+import random
+import re
+from collections import deque
 
-import StreamViews, Tools, Events, ActivityPatterns, MemorySpaces, Transforms
-import sys, inspect, importlib, operator, itertools, random, json, os, re
-import numpy as np
-from collections import deque, OrderedDict
+import ActivityPatterns
+import Events
+import MemorySpaces
+import StreamViews
+import Tools
 import Transforms
 from MergeActions import *
 from OSC import OSCClient, OSCMessage
@@ -20,17 +28,19 @@ from OSC import OSCClient, OSCMessage
 
 class Player(object):
     max_history_len = 100
+
     def __init__(self, name, scheduler, out_port):
-        self.name = name #name of the player
-        self.scheduler = scheduler # server scheduler
-        self.streamviews = dict() # streamviews dictionary
+        self.logger = logging.getLogger(__name__)
+        self.name = name  # name of the player
+        self.scheduler = scheduler  # server scheduler
+        self.streamviews = dict()  # streamviews dictionary
         self.improvisation_memory = deque('', self.max_history_len)
-        self.decide = self.decide_chooseMax # current decide function
-        self.merge_actions =[DistanceMergeAction(), PhaseModulationMergeAction(self.scheduler)] # final merge actions
+        self.decide = self.decide_chooseMax  # current decide function
+        self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction(self.scheduler)]  # final merge actions
 
         # current streamview is the private streamview were is caught the
         #    generation atom, from which events are generated and is auto-influenced
-        self.current_streamview=StreamViews.StreamView(name="auto_streamview")
+        self.current_streamview = StreamViews.StreamView(name="auto_streamview")
         self.current_atom = None
         self.self_influence = True
         self.nextstate_mod = 1.5
@@ -39,22 +49,22 @@ class Player(object):
         self.info_dictionary = dict()
         self.client = OSCClient()
         self.out_port = out_port
-        print "[INFO] Player", name, "created with outcoming port", out_port
-
-
+        self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
 
     def new_event(self, date, event_index=None):
         '''returns a new event'''
+        self.logger.debug("[new_event] Player {} attempting to create a new event with date {}."
+                          .format(self.name, date))
 
         # if not any memory is loaded
         if not "_self" in self.current_streamview.atoms.keys():
             return None
 
         # if event is specified, play it now
-        if event_index!=None:
+        if event_index != None:
             self.reset()
             event_index = int(event_index)
             z_, event = self.current_streamview.atoms["_self"].memorySpace[event_index]
@@ -70,16 +80,16 @@ class Player(object):
                 zetas = global_activity.get_dates_list()
                 states, _ = self.current_streamview.atoms["_self"].memorySpace.get_events(zetas)
                 for i in range(0, len(states)):
-                    if states[i].index == self.improvisation_memory[-1][0].index+1:
+                    if states[i].index == self.improvisation_memory[-1][0].index + 1:
                         del global_activity[i]
                 self.waiting_to_jump = False
 
-            if len(global_activity)!=0 and len(self.improvisation_memory)>0:
+            if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
                 event, transforms = self.decide(global_activity)
-                if event==None:
+                if event == None:
                     # if no event returned, choose default
                     event, transforms = self.decide_default()
-                if type(transforms)!=list:
+                if type(transforms) != list:
                     transforms = [transforms]
             else:
                 # if activity is empty, choose default
@@ -93,6 +103,8 @@ class Player(object):
             self.current_streamview.influence("_self", date, event.get_label())
         # sends state num
         self.send([event.index, event.get_contents().get_zeta(), event.get_contents().get_state_length()], "/state")
+        self.logger.debug("[new_event] Player {} created a new event with content {}."
+                          .format(self.name, event.get_contents()))
         return event
 
     def new_content(self, date):
@@ -100,58 +112,68 @@ class Player(object):
         event = new_event(date)
         return event.get_contents().get_contents()
 
-
     def influence(self, path, *args, **kwargs):
         '''influences target atom with *args'''
+        self.logger.debug("[influence] Player {} initialized call to influence with path {}, args {} and kwargs {}"
+                          .format(self.name, path, args, kwargs))
         time = self.scheduler.get_time()
         pf, pr = Tools.parse_path(path)
         if pf in self.streamviews.keys():
             self.streamviews[pf].influence(pr, time, *args, **kwargs)
+            self.logger.debug("[influence] Completed successfully.")
         else:
-            raise Exception("[ERROR] Streamview {0} is missing".format(pf))
+            self.logger.warning("Call to influence failed: Player {} does not have a streamview with name {}."
+                                .format(self.name, pf))
 
     def jump(self):
+        self.logger.debug("Jump set to True.")
         self.waiting_to_jump = True
 
-    def goto(self, state = None):
+    def goto(self, state=None):
         self.pending_event = state
-
-
-
-
 
     ######################################################
     ###### UNIT GENERATION AND DELETION
 
-    def create_streamview(self, name="streamview", weight = 1.0, merge_actions = [DistanceMergeAction()]):
+    def create_streamview(self, name="streamview", weight=1.0, merge_actions=[DistanceMergeAction()]):
         '''creates streamview at target path'''
         if not ":" in name:
-            st = StreamViews.StreamView(name=name, weight=weight, merge_actions = merge_actions)
+            st = StreamViews.StreamView(name=name, weight=weight, merge_actions=merge_actions)
+            # TODO: This overwrites existing streamview without warning (which is great for debugging, but needs to be handled later on)
             self.streamviews[name] = st
+            self.logger.info("[create_streamview] Streamview {0} created.".format(name))
         else:
-            path_splitted=name.split(":")
+            path_splitted = name.split(":")
             path = path_splitted[0]
-            path_bottom = reduce(lambda x,y: x+":"+y, path_splitted[1:])
+            path_bottom = reduce(lambda x, y: x + ":" + y, path_splitted[1:])
             if path in self.streamviews:
-                print "[ERROR] streamview {0} already exists in player"
+                self.logger.warning(
+                    "[create_streamview] A streamview with the name {} already exists in player {}".format(path,
+                                                                                                           self.name))
             else:
                 self.streamviews[path].create_streamview(path_bottom, weight, merge_actions=merge_actions)
-        print "[INFO] streamview {0} created!".format(name)
+                self.logger.info("[create_streamview] Streamview {0} created.".format(name))
         self.send_info_dict()
 
-    def create_atom(self, name, weight=1.0, \
-                    label_type = Events.AbstractLabel, contents_type=Events.AbstractContents, event_type=Events.AbstractEvent, \
-                    activity_type = ActivityPatterns.ClassicActivityPattern, memory_type = MemorySpaces.NGramMemorySpace, memory_file = None):
+    def create_atom(self, name, weight=1.0, label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
+                    event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
+                    memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         '''creates atom at target path'''
-        if not ":" in name:
-            raise Exception("[ERROR] Atoms must be embedded in a streamview first!")
+        if ":" not in name:
+            self.logger.warning("[create_atom] Unable to create atom. Atom path must contain a streamview "
+                                "(format: streamview:atom).")
+            return
         path, path_bottom = Tools.parse_path(name)
-        atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, contents_type, event_type, activity_type, memory_type, memory_file)
-        if not "_self" in self.current_streamview.atoms or name==self.current_atom:
+        if path not in self.streamviews:
+            self.logger.warning("[create_atom] Unable to create atom. Streamview {} does not exist.".format(path))
+            return
+        atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, contents_type, event_type,
+                                                  activity_type, memory_type, memory_file)
+        if "_self" not in self.current_streamview.atoms or name == self.current_atom:
             self.set_active_atom(name)
             self.current_atom = name
-        if atom != None:
-            print "[INFO] atom {0} created!".format(name)
+        if atom:
+            self.logger.info("[create_atom] Created atom {}.".format(name))
             self.send_info_dict()
 
     def delete_atom(self, name):
@@ -167,26 +189,31 @@ class Player(object):
     def read_file(self, path, filez):
         '''tells target atom to read corresponding file.'''
         # read commands to a streamview diffuses to every child of this streamview
-        if path==None:
-            for n,s in self.streamviews.iteritems():
+        if path == None:
+            for n, s in self.streamviews.iteritems():
                 s.read(None, filez)
             self.current_streamview.read(None, filez)
-        elif path=="_self":
+        elif path == "_self":
             self.current_streamview.read("_self", filez)
         else:
             path_head, path_follow = Tools.parse_path(path)
             if path_head in self.streamviews.keys():
-                self.streamviews[path_head].read(path_follow,filez)
-                if path==self.current_atom:
+                self.streamviews[path_head].read(path_follow, filez)
+                if path == self.current_atom:
                     self.current_streamview.atoms["_self"].read(filez)
             else:
-                raise Exception("[ERROR] Streamview {0} missing!".format(path))
+                self.logger.warning("Failed to read file. Streamview {0} does not exist.".format(path))
+                return
         # if target atom is current atom, tells private atom to read the file
         if self.current_atom == path:
-            self.streamviews.atoms["_self"].read(filez)
+            if self.streamviews:
+                # TODO: Not sure what this is intended to do. Never reached apart from exception, self.streamviews.atoms is not a valid path
+                self.streamviews.atoms["_self"].read(filez)
+            else:
+                self.logger.warning("Failed to read file. No streamview has been created.")
+                return
         self.update_memory_length()
         self.send_info_dict()
-
 
     def set_active_atom(self, name):
         '''set private atom of the player to target'''
@@ -194,8 +221,8 @@ class Player(object):
         if path in self.streamviews.keys():
             atom = self.streamviews[path].get_atom(path_bottom)
         else:
-            atom=None
-        if atom!=None:
+            atom = None
+        if atom != None:
             if "_self" in self.current_streamview.atoms:
                 del self.current_streamview.atoms["_self"]
             self.current_streamview.add_atom(atom, copy=True, replace=True, name="_self")
@@ -214,13 +241,12 @@ class Player(object):
         self.update_memory_length()
         self.send_info_dict()
 
-
     ######################################################
     ###### ACTIVITIES ACCESSORS
 
-    def get_activities(self, date, path=None, weighted = True):
+    def get_activities(self, date, path=None, weighted=True):
         '''fetches separated activities of the children of target path'''
-        if path!=None:
+        if path != None:
             if ":" in path:
                 head, tail = Tools.parse_path(path)
                 activities = self.streamviews[head].get_activities(date, path=tail)
@@ -228,33 +254,36 @@ class Player(object):
                 activities = self.streamviews[path].get_activities(date, path=None)
         else:
             activities = dict()
-            for n,a in self.streamviews.iteritems():
+            for n, a in self.streamviews.iteritems():
                 w = a.weight if weighted else 1.0
-                activities[n] = a.get_merged_activity(date, weighted=weighted).mul(w,0)
+                activities[n] = a.get_merged_activity(date, weighted=weighted).mul(w, 0)
             if "_self" in self.current_streamview.atoms:
                 w = self.current_streamview.weight if weighted else 1.0
-                activities["_self"] = self.current_streamview.get_merged_activity(date, weighted=weighted).mul(w,0)
+                activities["_self"] = self.current_streamview.get_merged_activity(date, weighted=weighted).mul(w, 0)
         return activities
 
     def get_merged_activity(self, date, weighted=True, filters=None, merge_actions=[StreamViews.DistanceMergeAction()]):
         '''getting activites of all streamviews of the player, merging with corresponding merge actions and optionally weighting'''
+        self.logger.debug("[get_merged_activity] Initialized with date {}".format(date))
         global_activity = Tools.SequencedList()
         weight_sum = self.get_weights_sum()
-        if filters==None:
+        if filters == None:
             filters = self.streamviews.keys()
         for f in filters:
             activity = self.streamviews[f].get_merged_activity(date, weighted=weighted)
-            w = self.streamviews[f].weight/weight_sum if weighted else 1.0
+            w = self.streamviews[f].weight / weight_sum if weighted else 1.0
             global_activity = global_activity + activity.mul(w, 0)
-        si_w = self.current_streamview.weight/weight_sum if weighted else 1.0
-        global_activity = global_activity + self.current_streamview.get_merged_activity(date, weighted=True).mul(si_w, 0)
+        si_w = self.current_streamview.weight / weight_sum if weighted else 1.0
+        global_activity = global_activity + self.current_streamview.get_merged_activity(date, weighted=True).mul(si_w,
+                                                                                                                 0)
         for m in merge_actions:
             global_activity = m.merge(global_activity)
+        self.logger.debug("[get_merged_activity] Returning with content {}".format(global_activity))
         return global_activity
 
     def reset(self, time=None):
         '''reset improvisation memory and all sub-streamview'''
-        time = time if time!=None else self.scheduler.time
+        time = time if time != None else self.scheduler.time
         self.improvisation_memory = deque('', self.max_history_len)
         self.current_streamview.reset(time)
         for s in self.streamviews.keys():
@@ -262,12 +291,10 @@ class Player(object):
 
     def get_weights_sum(self):
         '''getting sum of subweights'''
-        p = reduce(lambda x,y: x+y.weight, self.streamviews.values(), 0.0)
+        p = reduce(lambda x, y: x + y.weight, self.streamviews.values(), 0.0)
         if self.current_streamview.atoms["_self"]:
-            p+=self.current_streamview.atoms["_self"].weight
+            p += self.current_streamview.atoms["_self"].weight
         return p
-
-
 
     '''def update_info_dictionary(self):
         if self.streamviews!=dict():
@@ -292,7 +319,6 @@ class Player(object):
     ######################################################
     ###### EXTERNAL METHODS
 
-
     def send_buffer(self, atom):
         ''' sending buffers in case of audio contents'''
         filez = atom.memorySpace.current_file
@@ -301,13 +327,13 @@ class Player(object):
             name = name.split('/')[-1]
             g = os.walk('../')
             filepath = None
-            for r,d,fs in g:
+            for r, d, fs in g:
                 for f in fs:
-                    n,e = os.path.splitext(f)
-                    if n==name and e!='.json':
-                        filepath = r+'/'+f
-            if filepath!=None:
-                self.send('buffer '+ os.path.realpath(filepath))
+                    n, e = os.path.splitext(f)
+                    if n == name and e != '.json':
+                        filepath = r + '/' + f
+            if filepath != None:
+                self.send('buffer ' + os.path.realpath(filepath))
             else:
                 raise Exception("[ERROR] couldn't find audio file associated with file", filez)
 
@@ -321,28 +347,30 @@ class Player(object):
         '''sending active memory length'''
         atom = self.current_streamview.atoms["_self"]
         print atom
-        if len(atom.memorySpace)>0:
+        if len(atom.memorySpace) > 0:
             lastEvent = atom.memorySpace[-1][1]
             length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
             self.send(length, "/memory_length")
 
     def get_info_dict(self):
         '''returns the dictionary containing all information of the player'''
-        infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port":self.out_port}
+        infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
         try:
             infodict["current_file"] = str(self.current_streamview.atoms["_self"].current_file)
         except:
             pass
         infodict["streamviews"] = dict()
-        for s,v in self.streamviews.iteritems():
+        for s, v in self.streamviews.iteritems():
             infodict["streamviews"][s] = v.get_info_dict()
             infodict["current_atom"] = self.current_atom
         infodict["current_streamview"] = self.current_streamview.get_info_dict()
-        if self.current_streamview.atoms!=dict():
-            if len(self.current_streamview.atoms["_self"].memorySpace)!=0:
+        if self.current_streamview.atoms != dict():
+            if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
                 self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
-                infodict["current_streamview"]["length_beat"] = self_contents.get_zeta("relative")+self_contents.get_state_length("relative")
-                infodict["current_streamview"]["length_time"] = self_contents.get_zeta("absolute")+self_contents.get_state_length("absolute")
+                infodict["current_streamview"]["length_beat"] = \
+                    self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
+                infodict["current_streamview"]["length_time"] = \
+                    self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
         infodict["subweights"] = self.get_normalized_subweights()
         infodict["nextstate_mod"] = self.nextstate_mod
         infodict["phase_selectivity"] = self.merge_actions[1].selectivity
@@ -358,15 +386,15 @@ class Player(object):
         for s in str_dic:
             self.send(s, "/infodict")
         self.send(self.name, "/infodict-update")
-        print "[INFO] Updating infodict for player", self.name
+        self.logger.debug("Updating infodict for player {}.".format(self.name))
 
     def set_weight(self, streamview, weight):
         '''setting the weight at target path'''
         if not ":" in streamview:
-            if streamview!="_self":
+            if streamview != "_self":
                 self.streamviews[streamview].weight = weight
             else:
-                self.current_streamview.atoms["_self"].weight =  weight
+                self.current_streamview.atoms["_self"].weight = weight
         else:
             head, tail = Tools.parse_path(streamview)
             self.streamviews[head].set_weight(tail, weight)
@@ -375,22 +403,21 @@ class Player(object):
 
     def get_normalized_subweights(self):
         weights = [];
-        weight_sum = 0;
+        weight_sum = 0
         for s in self.streamviews.values():
             weights.append(s.weight)
             weight_sum = weight_sum + s.weight
-        return map(lambda x: x/weight_sum, weights)
-
-
+        return map(lambda x: x / weight_sum, weights)
 
     ######################################################
     ###### DECIDING METHODS
 
     def decide_default(self):
         '''default decision method : selecting conjoint event'''
-        if len(self.improvisation_memory)!=0:
+        if len(self.improvisation_memory) != 0:
             previousState = self.improvisation_memory[-1][0]
-            new = self.current_streamview.atoms["_self"].memorySpace[(previousState.index+1)%len(self.current_streamview.atoms["_self"].memorySpace)]
+            new = self.current_streamview.atoms["_self"].memorySpace[
+                (previousState.index + 1) % len(self.current_streamview.atoms["_self"].memorySpace)]
             trans = self.improvisation_memory[-1][1]
         else:
             new = self.current_streamview.atoms["_self"].memorySpace[0]
@@ -405,9 +432,9 @@ class Player(object):
         v = map(lambda x: x[0], v_t)
         for i in range(1, len(states)):
             if not states[i] is None:
-                if states[i].index == self.improvisation_memory[-1][0].index+1:
-                    v[i]*=self.nextstate_mod
-        sorted_values = sorted( list(zip(v, range(len(v)))), key = operator.itemgetter(0), reverse = True)
+                if states[i].index == self.improvisation_memory[-1][0].index + 1:
+                    v[i] *= self.nextstate_mod
+        sorted_values = sorted(list(zip(v, range(len(v)))), key=operator.itemgetter(0), reverse=True)
         max_value = sorted_values[0][0]
         maxes = [n for n in itertools.takewhile(lambda x: x[0] == max_value, sorted_values)]
         next_state_index = random.choice(maxes)
@@ -419,34 +446,33 @@ class Player(object):
     ###### OSC METHODS
 
     def send(self, content, address=None):
-        if address==None:
-            address = "/"+self.name
+        if address == None:
+            address = "/" + self.name
         message = OSCMessage(address)
         message.append(content)
         self.client.sendto(message, ("127.0.0.1", self.out_port))
 
-
     # Formatting incoming to Python
     def process_contents(self, ct):
-        if ct=='True':
+        if ct == 'True':
             return True
-        elif ct=='False':
+        elif ct == 'False':
             return False
-        elif ct=='None':
+        elif ct == 'None':
             return None
         return ct
 
     def get(self, path_contents):
         if path_contents == None:
             return self
-        if path_contents[0]=="#":
+        if path_contents[0] == "#":
             current_obj = getattr(Transforms, path_contents[1:])
             return current_obj
 
-        assert(len(path_contents)>1)
+        assert (len(path_contents) > 1)
         current_obj = self
         for i in range(0, len(path_contents)):
-            if i==0:
+            if i == 0:
                 current_obj = current_obj.streamviews[path_contents[i]]
             else:
                 current_obj = current_obj.atoms[path_contents[i]]
@@ -463,7 +489,7 @@ class Player(object):
                     u = int(u)
             except:
                 pass
-            if type(u)==str and "=" in u:
+            if type(u) == str and "=" in u:
                 key, value = u.split("=")
                 value = str.replace(value, "%20", " ")
                 kargs[key] = self.process_contents(value)
@@ -474,7 +500,7 @@ class Player(object):
 
     # Communication protocol
     def connect(self, msg, id, contents, ports):
-        if len(contents)==0:
+        if len(contents) == 0:
             return
         header = contents[0]
         vals = None
@@ -483,12 +509,12 @@ class Player(object):
         # start splitting command
         if "=" in header:
             header, vals = header.split("=")
-        if header[0]==":":
+        if header[0] == ":":
             paths = header.split(":")
             path = paths[1:-1] + [paths[-1].split(".")[0]]
             attributes = paths[-1].split(".")[1:]
         else:
-            if header[0]!="#":
+            if header[0] != "#":
                 path = None
                 attributes = header.split(".")
             else:
@@ -497,7 +523,7 @@ class Player(object):
                 attributes = things[1:]
         # target object (None for Player, :path:to:stream/atom for sub-atoms)
         obj = self.get(path)
-        it_range = range(0, len(attributes)-1) if vals!=None else range(0, len(attributes))
+        it_range = range(0, len(attributes) - 1) if vals != None else range(0, len(attributes))
         for i in it_range:
             current_attribute = attributes[i]
             name, key = re.match(r"([\w]+)(\[.+\])?", current_attribute).groups()
@@ -509,12 +535,12 @@ class Player(object):
                 except:
                     pass
                 obj = obj[key]
-        if vals==None:
+        if vals == None:
             if callable(obj):
                 args, kargs = self.getargs(contents[1:])
                 result = obj(*args, **kargs)
         else:
             vals = vals.split(",")
             vals, _ = self.getargs(vals)
-            vals = vals[0] if len(vals)==1 else vals
+            vals = vals[0] if len(vals) == 1 else vals
             setattr(obj, attributes[-1], vals)
