@@ -31,6 +31,8 @@ class Player(object):
 
     def __init__(self, name, scheduler, out_port):
         self.logger = logging.getLogger(__name__)
+        self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
+                          .format(name, scheduler, out_port))
         self.name = name  # name of the player
         self.scheduler = scheduler  # server scheduler
         self.streamviews = dict()  # streamviews dictionary
@@ -77,6 +79,7 @@ class Player(object):
 
             # if going to jump, erases peak in neighbour event
             if self.waiting_to_jump:
+                self.logger.debug("[new_event] Player {} jumping due to waiting_to_jump set to true.".format(self.name))
                 zetas = global_activity.get_dates_list()
                 states, _ = self.current_streamview.atoms["_self"].memorySpace.get_events(zetas)
                 for i in range(0, len(states)):
@@ -87,12 +90,14 @@ class Player(object):
             if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
                 event, transforms = self.decide(global_activity)
                 if event == None:
-                    # if no event returned, choose default
+                    self.logger.debug("[new_event] Player {} no event returned from function decide. "
+                                      "Calling decide_default.".format(self.name))
                     event, transforms = self.decide_default()
                 if type(transforms) != list:
                     transforms = [transforms]
             else:
                 # if activity is empty, choose default
+                self.logger.debug("[new_event] Player {} no activity found. Calling decide_default.".format(self.name))
                 event, transforms = self.decide_default()
             for transform in transforms:
                 event = transform.decode(event)
@@ -122,11 +127,11 @@ class Player(object):
             self.streamviews[pf].influence(pr, time, *args, **kwargs)
             self.logger.debug("[influence] Completed successfully.")
         else:
-            self.logger.warning("Call to influence failed: Player {} does not have a streamview with name {}."
+            self.logger.error("Call to influence failed: Player {} does not have a streamview with name {}."
                                 .format(self.name, pf))
 
     def jump(self):
-        self.logger.debug("Jump set to True.")
+        self.logger.debug("[jump] Jump set to True.")
         self.waiting_to_jump = True
 
     def goto(self, state=None):
@@ -141,31 +146,30 @@ class Player(object):
             st = StreamViews.StreamView(name=name, weight=weight, merge_actions=merge_actions)
             # TODO: This overwrites existing streamview without warning (which is great for debugging, but needs to be handled later on)
             self.streamviews[name] = st
-            self.logger.info("[create_streamview] Streamview {0} created.".format(name))
+            self.logger.info("Streamview {0} created.".format(name))
         else:
             path_splitted = name.split(":")
             path = path_splitted[0]
             path_bottom = reduce(lambda x, y: x + ":" + y, path_splitted[1:])
             if path in self.streamviews:
-                self.logger.warning(
-                    "[create_streamview] A streamview with the name {} already exists in player {}".format(path,
-                                                                                                           self.name))
+                self.logger.error("A streamview with the name {} already exists in player {}"
+                                    .format(path, self.name))
             else:
                 self.streamviews[path].create_streamview(path_bottom, weight, merge_actions=merge_actions)
-                self.logger.info("[create_streamview] Streamview {0} created.".format(name))
+                self.logger.info("Streamview {0} created.".format(name))
         self.send_info_dict()
 
     def create_atom(self, name, weight=1.0, label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
                     event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                     memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         '''creates atom at target path'''
+        self.logger.debug("[create_atom] Attempting to create atom {}.".format(name))
         if ":" not in name:
-            self.logger.warning("[create_atom] Unable to create atom. Atom path must contain a streamview "
-                                "(format: streamview:atom).")
+            self.logger.error("Unable to create atom. Atom path must contain a streamview (format: streamview:atom).")
             return
         path, path_bottom = Tools.parse_path(name)
         if path not in self.streamviews:
-            self.logger.warning("[create_atom] Unable to create atom. Streamview {} does not exist.".format(path))
+            self.logger.error("Unable to create atom. Streamview {} does not exist.".format(path))
             return
         atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, contents_type, event_type,
                                                   activity_type, memory_type, memory_file)
@@ -173,7 +177,7 @@ class Player(object):
             self.set_active_atom(name)
             self.current_atom = name
         if atom:
-            self.logger.info("[create_atom] Created atom {}.".format(name))
+            self.logger.info("Created atom {}.".format(name))
             self.send_info_dict()
 
     def delete_atom(self, name):
@@ -183,7 +187,7 @@ class Player(object):
         else:
             head, tail = Tools.parse_path(name)
             self.streamviews[head].delete_atom(tail)
-        print "[INFO] atom {0} deleted!".format(name)
+        self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
         self.send_info_dict()
 
     def read_file(self, path, filez):
@@ -237,7 +241,7 @@ class Player(object):
         if issubclass(atom.memorySpace.contents_type, Events.ClassicAudioContents):
             self.send_buffer(atom)
         atom.active = True
-        print "[INFO] Setting active atom to {0} ".format(name)
+        self.logger.info("Player {0} setting active atom to {1}.".format(self.name, name))
         self.update_memory_length()
         self.send_info_dict()
 
@@ -346,7 +350,6 @@ class Player(object):
     def update_memory_length(self):
         '''sending active memory length'''
         atom = self.current_streamview.atoms["_self"]
-        print atom
         if len(atom.memorySpace) > 0:
             lastEvent = atom.memorySpace[-1][1]
             length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
@@ -386,7 +389,7 @@ class Player(object):
         for s in str_dic:
             self.send(s, "/infodict")
         self.send(self.name, "/infodict-update")
-        self.logger.debug("Updating infodict for player {}.".format(self.name))
+        self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
 
     def set_weight(self, streamview, weight):
         '''setting the weight at target path'''

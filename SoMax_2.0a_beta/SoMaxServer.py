@@ -44,7 +44,7 @@ class SoMaxServer:
         try:
             self.send_info_dict()
         except sm.OSC.OSCClientError as e:
-            self.logger.critical(e)
+            self.logger.error(e)
             self.logger.critical("Connection to Max was refused. Please ensure that a SoMax object with send port {} "
                                  "and receive port {} exists in Max and try again.".format(in_port, out_port))
             sys.exit(1)
@@ -195,7 +195,7 @@ class SoMaxServer:
             self.scheduler.triggers[player] = mode
             self.logger.debug("Triggering mode set to {} for player {}.".format(mode, player))
         else:
-            self.logger.warning("Invalid input. Triggering mode has to be either reactive or automatic.")
+            self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
 
     def new_event(self, player_name, time=None, event=None):
         self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
