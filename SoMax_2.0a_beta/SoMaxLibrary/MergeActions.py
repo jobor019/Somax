@@ -20,6 +20,9 @@ class DistanceMergeAction(AbstractMergeAction):
         self.transform_merge_mode = transform_merge_mode  # can 'AND' or 'OR'
 
     def merge(self, pattern):
+        """(TODO: Temp docstring) Merges events that are similar and sufficiently close in time to each other into a
+             single events. Returns all other events unchanged. Unless mode is set to AND, then it deletes both (?)"""
+        self.logger.debug("[merge] Merging acvitity with pattern {}.".format(pattern))
         if len(pattern) == 0:
             return pattern
         n = len(pattern)
@@ -56,6 +59,7 @@ class StateMergeAction(AbstractMergeAction):
     def merge(self, pattern, memory_space=None, scheduler=None):
         # print ''
         # print '------BEGINNING MERGE-------'
+        self.logger.debug("[merge] Merging acvitity with pattern {}.".format(pattern))
         if len(pattern) == 0 or memory_space == None:
             return deepcopy(pattern)
         merged_pattern = SequencedList()
@@ -109,6 +113,7 @@ class StateMergeAction(AbstractMergeAction):
                     ta = ta + [cop]
                     # print 'after mutation : ', ta
                     # print 'updating to ', za, ' with transofrom ', va, ' and ta ', ta
+
                     merged_pattern[current_index] = za, (va, ta)
                     # print 'current merged pattern at ',current_index, ' : ', merged_pattern[current_index]
             else:

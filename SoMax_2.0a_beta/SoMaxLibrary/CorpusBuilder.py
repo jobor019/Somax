@@ -215,16 +215,16 @@ class CorpusBuilder(object):
             tmp["state"] = o+1
             tmp["seg"] = [1 ,0]
             # time
-            current_time = librosa.core.frames_to_time(seg[o]).tolist()[0]
-            next_time = librosa.core.frames_to_time(seg[o+1]).tolist()[0]
+            current_time = librosa.core.frames_to_time(seg[o])
+            next_time = librosa.core.frames_to_time(seg[o+1])
             tmp["time"] = dict()
             tmp["time"]["absolute"] = [current_time*1000.0, (next_time-current_time)*1000.0]
             # cur
             current_beat = int(get_beat(seg[o], beats)) # closer beat
             previous_beat = int(floor(current_beat))
-            current_beat_t = librosa.core.frames_to_time(beats[previous_beat]).tolist()[0]
+            current_beat_t = librosa.core.frames_to_time(beats[previous_beat])
             if previous_beat<len(beats)-1:
-                next_beat_t = librosa.core.frames_to_time(beats[previous_beat+1]).tolist()[0]
+                next_beat_t = librosa.core.frames_to_time(beats[previous_beat+1])
                 if current_time!=next_time:
                     tmp["tempo"] = 60.0/(next_beat_t-current_beat_t)
                     tmp["time"]["relative"] = [current_beat, next_beat_t-current_beat_t]

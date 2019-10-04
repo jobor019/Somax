@@ -391,7 +391,6 @@ class ClassicAudioContents(AbstractContents):
 
     def get_state_length(self, timing = "relative", factor=None):
         length = None
-        print factor, timing
         if factor==None:
             length =  self.contents["time"][timing][1]
         else:
@@ -410,14 +409,13 @@ class ClassicAudioContents(AbstractContents):
     @classmethod
     def get_contents_from_data(cls, data, *args, **kwargs):
         contents = None
-        print "class method", data
         if issubclass(type(data), AbstractEvent):
             contents= cls.get_contents_from_data(data.get_contents())
         elif issubclass(type(data), AbstractContents):
             if issubclass(type(data), ClassicAudioContents):
                 contents = deepcopy(data)
         elif type(data)==dict:
-            content =  cls(data)
+            contents =  cls(data)
         elif type(data)==str:
             s = data.split(" ")
             style, beg, end = s[0], s[1], s[2]

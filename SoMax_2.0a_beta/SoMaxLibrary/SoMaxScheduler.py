@@ -68,7 +68,7 @@ class SomaxScheduler(object):
         trig_mode = self.triggers[player]
         midiCheck = False
 
-        if trig_mode == "automatic":
+        if trig_mode == "automatic" and contents[0]['content'][0] == 'midi':    # TODO: Temp check, might break something with midi, but currently breaks audio
             next_time = time + content_object.get_state_length(self.timing_type, factor)
             self.write('server', next_time - self.get_pretime(), "ask_for_event", player, next_time)
             midiCheck = True
@@ -121,7 +121,7 @@ class SomaxScheduler(object):
             self.ask_for_event(self.time + self.pre_time)
         if event[0] == "print":
             if len(event) > 2:
-                print(event[2:])
+                print("Temporary print statement?: ", event[2:])
 
     # external methods
     def set_original_tempo(self, original_tempo):
