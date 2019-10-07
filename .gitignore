@@ -249,5 +249,7 @@ Documentation
 Somax_2.0a_beta/Test
 
 # Only while developing
-SoMax_2.0a_beta/**/*.json
-SoMax_2.0a_beta/**/*.mid
+**/*.json
+**/*.mid
+**/*.wav
+SoMax_1.5_Max7/**
