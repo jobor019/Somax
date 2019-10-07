@@ -6,13 +6,13 @@ from copy import deepcopy
 
 import numpy as np
 
-import Events
-import Transforms
-from Tools import SequencedList
+from SoMaxLibrary import Events, Transforms
+from SoMaxLibrary.Tools import SequencedList
 
 
 # overloading Memory object, asserting a sequence of Event objects and embedding
 #    a given representation, with its influence function used by Atom objects
+from SoMaxLibrary.Transforms import NoTransform
 
 
 class AbstractMemorySpace(SequencedList):
@@ -91,6 +91,7 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     # 26/09 : redefinir append et definir insert
     def append(self, date, *args):
+        # TODO: This should be optimized with numpy solution
         AbstractMemorySpace.append(self, date, *args)
         if len(self.orderedEventList) < self.ngram_size:
             return
@@ -101,10 +102,8 @@ class NGramMemorySpace(AbstractMemorySpace):
         if len(dic) == 0:
             self.subsequences[seq] = [len(self.orderedEventList) - 1]
         else:
-            sub_keys = self.subsequences.keys()
-            if seq in sub_keys:
-                j = sub_keys.index(seq)
-                self.subsequences[sub_keys[j]].append(len(self.orderedEventList) - 1)
+            if seq in self.subsequences.keys():
+                self.subsequences[seq].append(len(self.orderedEventList) - 1)
             else:
                 self.subsequences[seq] = [len(self.orderedEventList) - 1]
 
@@ -146,7 +145,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                 #
                 # TODO: An alternative solution would be to parallelize the operations (as entries are indep.),
                 #       see https://stackoverflow.com/a/28463266
-                for t, z in self.subsequences.iteritems():
+                for t, z in self.subsequences.items():
                     if k == t:
                         c = t
                         break
@@ -158,7 +157,7 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     def read(self, filez, timing='relative'):
         if not os.path.isfile(filez):
-            print "Give a valid file!!"
+            self.logger.error(f"Invalid file {filez}")
             return False
         with open(filez, 'r') as jfile:
             self.reset()
@@ -206,7 +205,7 @@ class FastNgramMemSpace(NGramMemorySpace):
 
     def restructure_ngram(self):
         num_states = sum([len(state) for state in self.subsequences.values()])  # TODO: Missing 2 (should be 68)?
-        print '\033[92m', "Num States are", num_states, '\033[0m'
+        print('\033[92m', "Num States are", num_states, '\033[0m')
         valid_transforms = []
         for t in self.transforms:
             valid_transforms.extend(t.get_transformation_patterns())
@@ -214,7 +213,7 @@ class FastNgramMemSpace(NGramMemorySpace):
         num_transforms = len(valid_transforms)
         self.ngram_map = np.zeros((num_states * num_transforms, self.ngram_size + 1))
         i = 0
-        print '\033[91m', valid_transforms, '\033[0m'
+        print('\033[91m', valid_transforms, '\033[0m')
         for transform in valid_transforms:
             # Temporary shift, as original class does not allow shifting the comparison material.
             #   Not necessary for symmetrical transposes.
@@ -238,10 +237,10 @@ class FastNgramMemSpace(NGramMemorySpace):
         if len(self.buffer) >= self.ngram_size:
             raw_notes = [label.label for label in self.buffer]
             c = (self.ngram_map[:, :self.ngram_size] == raw_notes).all(axis=1).nonzero()
-            print c
+            print(c)
             if not c:
                 for state in c:
                     peaks.append(tuple([self.orderedDateList[int(state)], 1.0, NoTransform()]))
                     # peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
-        print peaks
+        print(peaks)
         return peaks

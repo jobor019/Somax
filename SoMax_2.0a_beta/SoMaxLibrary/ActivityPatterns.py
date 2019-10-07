@@ -1,10 +1,11 @@
 import logging
 from bisect import bisect_left
 from copy import deepcopy
+from functools import reduce
 
 import numpy as np
 
-from Tools import SequencedList
+from SoMaxLibrary.Tools import SequencedList
 
 
 class AbstractActivityPattern(object):
@@ -24,7 +25,7 @@ class AbstractActivityPattern(object):
         return "Abstract Activity Pattern"
 
     def insert(self, z, a, t):
-        print "Inserts activity peaks as sets (location, value, transform)"
+        print("Inserts activity peaks as sets (location, value, transform)")
 
     def get_activity(self, time=None):
         if time == None:
@@ -33,10 +34,10 @@ class AbstractActivityPattern(object):
         # print "returns activity"
 
     def update_activity(self, new_date):
-        print "Forcasts activity profile at the wanted date."
+        print("Forcasts activity profile at the wanted date.")
 
     def clean_up(self):
-        print "Cleans activities profile below extinction thresold"
+        print("Cleans activities profile below extinction thresold")
 
     def reset(self, time):
         self.zeta = np.array([], dtype=np.dtype(float))  # list of activity peaks dates

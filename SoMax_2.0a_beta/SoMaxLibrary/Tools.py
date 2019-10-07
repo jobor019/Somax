@@ -1,4 +1,6 @@
 import bisect
+from functools import reduce
+
 import numpy as np
 from collections import OrderedDict
 from copy import deepcopy
@@ -170,10 +172,10 @@ def eq_to_dic(*args):
     return kwargs
 
 def dic_to_strout(dic):
-    out = [];
-    for k,v in dic.iteritems():
+    out = []
+    for k,v in dic.items():
         if type(v)==type(dict()) or type(v)==type(OrderedDict()):
-            out = out + map(lambda x: str(k)+"::"+x, dic_to_strout(v))
+            out = out + list(map(lambda x: str(k)+"::"+x, dic_to_strout(v)))
         elif type(v)==list and v!=[]:
             out = out + [str(k)+" "+reduce(lambda x,y: str(x)+ " "+str(y), v, "")]
         else:

@@ -1,16 +1,16 @@
 import logging
 
-import ActivityPatterns
-import Atom
-import Events
-import MemorySpaces
-import Tools
-from MergeActions import *
 
 
 # The StreamView object is a container that manages several atoms, whose activity
 #   patterns are taken and then mixed. This is mainly motivated to modulate the diverse
 #   activity patterns depending on the transformations.
+from functools import reduce
+
+from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
+from SoMaxLibrary.MergeActions import DistanceMergeAction
+from SoMaxLibrary.Tools import SequencedList
+
 
 class StreamView(object):
     def __init__(self, name="streamview", weight=1.0, atoms=dict(), merge_actions=[DistanceMergeAction()]):
@@ -116,7 +116,7 @@ class StreamView(object):
             if pf in self.atoms.keys():
                 if isinstance(self.atoms[pf], Atom.Atom):
                     self.atoms[pf].influence(time, *data, **kwargs)
-                elif isinstance(self.atoms[pf], StreamViews.StreamView):
+                elif isinstance(self.atoms[pf], StreamView):
                     self.atoms[pf].influence(pr, time, *data, **kwargs)
         self.logger.debug("[influence] Influence in streamview {} terminated successfully.".format(self.name))
 
@@ -124,7 +124,7 @@ class StreamView(object):
         '''read all sub-atoms with data'''
         self.logger.debug("[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, filez))
         if path == None:
-            for n, a in self.atoms.iteritems():
+            for n, a in self.atoms.items():
                 if issubclass(type(a), Atom.Atom):
                     a.read(filez)
                 else:
@@ -185,7 +185,7 @@ class StreamView(object):
         '''returns info dictionary'''
         infodict = {"activity type": str(type(self)), "weight": self.weight, "type": "Streamview"}
         infodict["atoms"] = dict()
-        for a, v in self.atoms.iteritems():
+        for a, v in self.atoms.items():
             infodict["atoms"][a] = v.get_info_dict()
         return infodict
 

@@ -1,7 +1,9 @@
-from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, round, maximum, ones_like, average, argmax, power, dot, transpose, insert
+from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, round, maximum, ones_like, average, argmax, \
+    power, dot, transpose, insert, concatenate
 from scipy import io
-import readMidi as midi
-import os, json, bisect, itertools, operator, virfun, aubio
+import os, json, bisect, itertools, operator
+from SoMaxLibrary import virfun, aubio
+import SoMaxLibrary.readMidi as midi
 
 
 
@@ -69,12 +71,12 @@ def readMIDIFiles(paths, corpus_name = "unknown", fgChannels=[1], bgChannels=ran
                         corpus["data"][stateNb]["pitch"][0]%=12
 
             if verbose:
-                print "slice is over, finalizing it"
+                print("slice is over, finalizing it")
                 for k in range(0,len(corpus["data"])):
-                    print corpus["data"][k]
-                    print ""
-                    print "----------------------------------------"
-                    print ""
+                    print(corpus["data"][k])
+                    print("")
+                    print("----------------------------------------")
+                    print("")
 
             #create new state
             stateNb+=1
@@ -224,7 +226,7 @@ def readAudioFiles(paths, corpus_name="unknown", segtype="onsets", hop=512, tau=
         elif segtype == "free":
             beats = arange(0.0, librosa.core.get_duration(y), freeInt)
         else:
-            print "segmentation type not recognized. Onsets used"
+            print("segmentation type not recognized. Onsets used")
             seg = librosa.onset.onset_detect(y)
 
         ''' descriptor computation'''

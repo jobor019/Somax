@@ -1,7 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 
-from RawInstreamFile import RawInstreamFile
-from MidiFileParser import MidiFileParser
+from SoMaxLibrary.midi.RawInstreamFile import RawInstreamFile
+from SoMaxLibrary.midi.MidiFileParser import MidiFileParser
 
 
 class MidiInFile:
@@ -16,7 +16,7 @@ class MidiInFile:
     
     Do parsing, and generate events with MidiToText,
     so we can see what a minimal midi file contains
-    >>> from MidiToText import MidiToText
+    >>> from SoMaxLibrary.midi.MidiToText import MidiToText
     >>> midi_in = MidiInFile(MidiToText(), test_file)
     >>> midi_in.read()
     format: 0, nTracks: 1, division: 480

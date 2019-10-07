@@ -1,11 +1,13 @@
 import os
 import numpy as np
 from copy import deepcopy, copy
-import Transforms
+
 
 ###############################################################################
 # AbstractLabel is the abstract pattern for a SoMax Label.
 #   it defines mandatory functions that the label subclasses must handle
+from SoMaxLibrary import Transforms
+from SoMaxLibrary.Transforms import NoTransform, TransposeTransform
 
 
 class AbstractLabel(object):
@@ -55,6 +57,9 @@ class MelodicLabel(AbstractLabel):
 
     def __repr__(self):
         return "Melodic Label with pitch "+str(self.label)
+
+    def __hash__(self):
+        return hash(self.label)
 
     @classmethod
     def __desc__(self):
@@ -127,7 +132,7 @@ class MelodicLabel(AbstractLabel):
                     raise Exception("pitch identifier must be an integer")
             # TODO: elif influence_type=='chroma':
             else:
-                print "streamview", cls, "doesn't understand type", influence_type
+                print("streamview", cls, "doesn't understand type", influence_type)
         elif type(data)==int or type(data)==float:
             label = cls(int(data), mod12)
         elif type(data)==dict:
@@ -174,7 +179,7 @@ class HarmonicLabel(AbstractLabel):
                 self.label = int(data)
                 self.chroma = np.zeros(12)
             except:
-                raise TypeError("Failed to make chromatic label from label ", label.__repr__())
+                raise TypeError("Failed to make chromatic label from label ", self.label.__repr__())
 
 
     def get_label(self, ctype="chroma"):
@@ -238,21 +243,21 @@ class HarmonicLabel(AbstractLabel):
                     try:
                         data = map(lambda x: float(x), data[1:])
                     except TypeError:
-                        print "problem with incoming chromas"
+                        print("problem with incoming chromas")
                     label = cls(data)
                 else:
-                    print "chroma events must contain 12 values!"
+                    print("chroma events must contain 12 values!")
             elif influence_type=='midi' or influence_type=='pitch':
                 note = data[1]
-                print note
+                print(note)
                 if type(note)==type(int()):
                     chroma = list(np.zeros(12))
                     chroma[note%12] = 1.
                     label = HarmonicLabel(chroma)
                 else:
-                    print "midi or pitch identifier must be an integer"
+                    print("midi or pitch identifier must be an integer")
             else:
-                print "event doesn't understand type", influence_type
+                print("event doesn't understand type", influence_type)
         elif type(data)==dict:
             label = cls(data["chroma"])
         if label is None:

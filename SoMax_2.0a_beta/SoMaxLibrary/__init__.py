@@ -1,16 +1,17 @@
-import ActivityPatterns
-import MemorySpaces
-import StreamViews
-import Tools
-import Events
-import SoMaxScheduler
-import Players
-import Transforms
-import Atom
-import MergeActions
-import OSC
-import GenCorpus
-import CorpusBuilder
+from importlib import reload
+
+import SoMaxLibrary.ActivityPatterns
+import SoMaxLibrary.MemorySpaces
+import SoMaxLibrary.StreamViews
+import SoMaxLibrary.Tools
+import SoMaxLibrary.Events
+import SoMaxLibrary.SoMaxScheduler
+import SoMaxLibrary.Players
+import SoMaxLibrary.Transforms
+import SoMaxLibrary.Atom
+import SoMaxLibrary.MergeActions
+import SoMaxLibrary.GenCorpus
+import SoMaxLibrary.CorpusBuilder
 
 reload(ActivityPatterns)
 reload(MemorySpaces)

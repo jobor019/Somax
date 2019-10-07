@@ -2,7 +2,7 @@ import logging
 import math
 from copy import deepcopy
 
-from Tools import SequencedList
+from SoMaxLibrary.Tools import SequencedList
 
 
 class AbstractMergeAction(object):

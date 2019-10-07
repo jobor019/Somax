@@ -1,9 +1,10 @@
-import Events
 from numpy import roll
 from copy import deepcopy
 
 # abstract class that represents identity, only if the class of the object
 #       is in the transformation catalog
+from SoMaxLibrary import Events
+
 
 class NoTransform(object):
     def __init__(self):
@@ -118,7 +119,7 @@ class TransposeTransform(NoTransform):
     @classmethod
     def set_transformation_range(cls, minim, maxim):
         cls.transposition_range = [minim, maxim]
-        print "[INFO] Default transposition range set to",cls.transposition_range
+        print("[INFO] Default transposition range set to",cls.transposition_range)
 
 class TransformError(Exception):
     def __init__(self, thing, transform):

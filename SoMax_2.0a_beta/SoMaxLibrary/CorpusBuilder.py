@@ -1,9 +1,10 @@
-from midi.MidiOutStream import MidiOutStream
-from midi.MidiInFile import MidiInFile
-from midi.RawInstreamFile import RawInstreamFile
-from midi.MidiFileParser import MidiFileParser
-from midi.MidiToText import MidiToText
-import bisect, os, numpy, json, virfun, itertools, operator
+from SoMaxLibrary.midi.MidiOutStream import MidiOutStream
+from SoMaxLibrary.midi.MidiInFile import MidiInFile
+from SoMaxLibrary.midi.RawInstreamFile import RawInstreamFile
+from SoMaxLibrary.midi.MidiFileParser import MidiFileParser
+from SoMaxLibrary.midi.MidiToText import MidiToText
+from SoMaxLibrary import virfun
+import bisect, os, numpy, json, itertools, operator
 from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, round, maximum, ones_like, average, argmax, power, dot, transpose, insert
 
 
@@ -35,7 +36,7 @@ class CorpusBuilder(object):
         elif ext in self.audio_exts:
             file_json = self.read_audio(path, name, **options)
         else:
-            print"[ERROR] File format not recognized in corpus construction"
+            print("[ERROR] File format not recognized in corpus construction")
         return file_json
 
 

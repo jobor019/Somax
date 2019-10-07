@@ -6,14 +6,6 @@ import random
 import re
 from collections import deque
 
-import ActivityPatterns
-import Events
-import MemorySpaces
-import StreamViews
-import Tools
-import Transforms
-from MergeActions import *
-from OSC import OSCClient, OSCMessage
 
 
 ###############################################################################
@@ -24,6 +16,11 @@ from OSC import OSCClient, OSCMessage
 #       - decision units : "decide" functions that selects the event to generate
 #           given a set of activity profiles
 #       - communication units : connecting with Max, external compatibility
+from functools import reduce
+
+from SoMaxLibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
+from SoMaxLibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from pythonosc.udp_client import SimpleUDPClient
 
 
 class Player(object):
@@ -49,7 +46,7 @@ class Player(object):
         self.waiting_to_jump = False
 
         self.info_dictionary = dict()
-        self.client = OSCClient()
+        self.client = SimpleUDPClient("127.0.0.1", out_port)
         self.out_port = out_port
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
 
@@ -135,6 +132,7 @@ class Player(object):
         self.waiting_to_jump = True
 
     def goto(self, state=None):
+        # TODO: expose to OSC
         self.pending_event = state
 
     ######################################################
@@ -182,6 +180,7 @@ class Player(object):
 
     def delete_atom(self, name):
         '''deletes target atom'''
+        # TODO: Expose to OSC
         if not ":" in name:
             del self.streamviews[name]
         else:
@@ -194,7 +193,7 @@ class Player(object):
         '''tells target atom to read corresponding file.'''
         # read commands to a streamview diffuses to every child of this streamview
         if path == None:
-            for n, s in self.streamviews.iteritems():
+            for n, s in self.streamviews.items():
                 s.read(None, filez)
             self.current_streamview.read(None, filez)
         elif path == "_self":
@@ -363,7 +362,7 @@ class Player(object):
         except:
             pass
         infodict["streamviews"] = dict()
-        for s, v in self.streamviews.iteritems():
+        for s, v in self.streamviews.items():
             infodict["streamviews"][s] = v.get_info_dict()
             infodict["current_atom"] = self.current_atom
         infodict["current_streamview"] = self.current_streamview.get_info_dict()
@@ -451,9 +450,9 @@ class Player(object):
     def send(self, content, address=None):
         if address == None:
             address = "/" + self.name
-        message = OSCMessage(address)
-        message.append(content)
-        self.client.sendto(message, ("127.0.0.1", self.out_port))
+        # message = OSCMessage(address)
+        # message.append(content)
+        self.client.send_message(address, content)
 
     # Formatting incoming to Python
     def process_contents(self, ct):

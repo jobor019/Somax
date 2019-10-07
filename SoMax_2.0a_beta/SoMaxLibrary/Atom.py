@@ -1,12 +1,11 @@
 import logging
 
-import ActivityPatterns
-import Events
-import MemorySpaces
 
 
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
+from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces
+
 
 class Atom(object):
     def __init__(self, name="atom", weight=1.0, label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
@@ -117,7 +116,7 @@ class Atom(object):
         self.activityPattern.reset(time)
 
     def settest(self, n):
-        print n
+        print(n)
 
     def test(self):
-        print self.testVal, self.testArr, self.testDic
+        print(self.testVal, self.testArr, self.testDic)

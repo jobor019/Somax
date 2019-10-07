@@ -1,13 +1,12 @@
 import logging
-
-from Tools import SequencedList
-
+from SoMaxLibrary.Tools import SequencedList
 
 ###############################################################################
 # SomaxScheduler is the global scheduler in SoMax.
 # the main process is the set_time function, which updates the scheduler and
 # gets back the events to handle.
 #  the scheduler has a timeline, which is a sequenced list.
+
 
 
 class SomaxScheduler(object):

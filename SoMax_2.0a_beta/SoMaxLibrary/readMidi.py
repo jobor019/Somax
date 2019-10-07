@@ -1,8 +1,8 @@
-from midi.MidiOutStream import MidiOutStream
-from midi.MidiInFile import MidiInFile
-from midi.RawInstreamFile import RawInstreamFile
-from midi.MidiFileParser import MidiFileParser
-from midi.MidiToText import MidiToText
+from SoMaxLibrary.midi.MidiOutStream import MidiOutStream
+from SoMaxLibrary.midi.MidiInFile import MidiInFile
+from SoMaxLibrary.midi.RawInstreamFile import RawInstreamFile
+from SoMaxLibrary.midi.MidiFileParser import MidiFileParser
+from SoMaxLibrary.midi.MidiToText import MidiToText
 import bisect
 
 

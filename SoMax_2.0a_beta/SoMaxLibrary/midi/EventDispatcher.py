@@ -4,11 +4,11 @@
 from struct import unpack
 
 # custom
-from DataTypeConverters import readBew, readVar, varLen, toBytes
+from SoMaxLibrary.midi.DataTypeConverters import readBew, readVar, varLen, toBytes
 
 # uhh I don't really like this, but there are so many constants to 
 # import otherwise
-from constants import *
+from SoMaxLibrary.midi.constants import *
 
 
 class EventDispatcher:
@@ -132,7 +132,7 @@ class EventDispatcher:
 
         else:
 
-            raise ValueError, 'Illegal channel message!'
+            raise ValueError('Illegal channel message!')
 
 
 
@@ -279,8 +279,7 @@ class EventDispatcher:
 
 if __name__ == '__main__':
 
-
-    from MidiToText import MidiToText
+    from SoMaxLibrary.midi.MidiToText import MidiToText
     
     outstream = MidiToText()
     dispatcher = EventDispatcher(outstream)

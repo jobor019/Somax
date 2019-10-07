@@ -4,16 +4,18 @@ import logging.config
 import os
 import re
 import sys
+from functools import reduce
 
 import SoMaxLibrary as sm
-
-
 ###############################################################################
 # SoMaxServer is the top class of the SoMax system.
 #   It rules the scheduler, the players and communication between them,
 #   in addition to several macro parameters. Information to players are passed through
 #   the server, adressing /player_name.
 # It has to be initialized with an OSC incoming port and an OSC outcoming port.
+from SoMaxLibrary import MemorySpaces, ActivityPatterns, Events
+from SoMaxLibrary.MergeActions import DistanceMergeAction
+from pythonosc import udp_client, dispatcher, osc_server, osc_message_builder
 
 class SoMaxServer:
     max_activity_length = 500
@@ -25,8 +27,6 @@ class SoMaxServer:
         self.in_port = in_port
         self.out_port = out_port
         self.intern_counter = 0
-        self.server = sm.OSC.OSCServer(("127.0.0.1", self.in_port))
-        self.client = sm.OSC.OSCClient()
 
         self.players = dict()
         self.original_tempo = False
@@ -34,19 +34,25 @@ class SoMaxServer:
         self.scheduler = sm.SoMaxScheduler.SomaxScheduler()
         self.builder = sm.CorpusBuilder.CorpusBuilder()
 
-        self.server.addMsgHandler("/server", self.connect)
-        self.server.addMsgHandler("/stopserver", self.stopServer)
-        self.server.addMsgHandler("/time", self.set_time)
-        self.server.addMsgHandler("/set_activity_feedback", self.set_activity_feedback)
-        self.server.addMsgHandler("/update", self.send_info_dict)
-        self.server.addMsgHandler("default", self.unregistered_callback)
+        osc_dispatcher = dispatcher.Dispatcher()
+
+        osc_dispatcher.map("/server", self.connect)
+        osc_dispatcher.map("/stopserver", self.stopServer)
+        osc_dispatcher.map("/time", self.set_time)
+        osc_dispatcher.map("/set_activity_feedback", self.set_activity_feedback)
+        osc_dispatcher.map("/update", self.send_info_dict)
+        osc_dispatcher.map("default", self.unregistered_callback)
+
+        self.server = osc_server.BlockingOSCUDPServer(("127.0.0.1", self.in_port), osc_dispatcher)
+        self.client = udp_client.SimpleUDPClient("127.0.0.1", self.out_port)
 
         try:
             self.send_info_dict()
-        except sm.OSC.OSCClientError as e:
+        except Exception as e:  # TODO: Catch relevant exception here
             self.logger.error(e)
             self.logger.critical("Connection to Max was refused. Please ensure that a SoMax object with send port {} "
                                  "and receive port {} exists in Max and try again.".format(in_port, out_port))
+            raise   # Temporary
             sys.exit(1)
 
         # Process.__init__(self) # TODO: Remove legacy code or reimplement server
@@ -57,9 +63,8 @@ class SoMaxServer:
 
     def stopServer(self, *args):
         '''stops the SoMax server'''
-        message = sm.OSC.OSCMessage("/terminate")
-        self.client.sendto(message, ("127.0.0.1", self.out_port))
-        self.server.close()
+        self.client.send_message("/terminate", [])
+        self.server.server_close()
 
     ######################################################
     ###### PROCESS METHODS
@@ -71,7 +76,7 @@ class SoMaxServer:
     def play(self, time):
         '''starts the scheduler and triggers first event if in automatic mode'''
         self.scheduler.start(-self.scheduler.get_pretime())
-        for name, player in self.players.iteritems():
+        for name, player in self.players.items():
             player['player'].reset(self.scheduler.time)
             if player['triggering'] == "automatic":
                 self.process_internal_event(('ask_for_event', name, 0))
@@ -79,7 +84,7 @@ class SoMaxServer:
     def stop(self):
         '''stops the scheduler and reset all players'''
         self.scheduler.stop()
-        for name, player in self.players.iteritems():
+        for name, player in self.players.items():
             player['player'].send("stop")
 
     ######################################################
@@ -101,16 +106,12 @@ class SoMaxServer:
             self.process_events(events)
         if self.original_tempo:
             tempo = self.scheduler.tempo
-            message = sm.OSC.OSCMessage("/tempo")
-            message.append(tempo)
-            self.client.sendto(message, ("127.0.0.1", self.out_port))
+            self.client.send_message("/tempo", tempo)
 
     def set_tempo(self, tempo):
         tempo = float(tempo)
         self.scheduler.set_tempo(tempo)
-        message = sm.OSC.OSCMessage("/tempo")
-        message.append(tempo)
-        self.client.sendto(message, ("127.0.0.1", self.out_port))
+        self.client.send_message("/tempo", tempo)
 
     def set_timescale(self, timescale):
         timescale = float(timescale)
@@ -131,7 +132,7 @@ class SoMaxServer:
             self.players[player]["output_activity"] = path
 
     def send_activity_profile(self, time):
-        for n, p in self.players.iteritems():
+        for n, p in self.players.items():
             if p["output_activity"]:
                 if p["output_activity"] == 'Player':
                     path = None
@@ -152,7 +153,7 @@ class SoMaxServer:
     def send_info_dict(self, *args):
         info = dict()
         info["players"] = dict()
-        for name, player in self.players.iteritems():
+        for name, player in self.players.items():
             info["players"][name] = player['player'].get_info_dict()
 
         def getClassName(obj):
@@ -174,17 +175,17 @@ class SoMaxServer:
         corpus_list = reduce(lambda x, y: str(x) + " " + str(y), corpus_list)
         info["corpus_list"] = corpus_list
 
-        message = sm.OSC.OSCMessage("/serverdict")
-        message.append("clear")
-        self.client.sendto(message, ("127.0.0.1", self.out_port))
+        self.client.send_message("/serverdict", "clear")
         messages = sm.Tools.dic_to_strout(info)
         for m in messages:
-            message = sm.OSC.OSCMessage("/serverdict")
-            message.append(m)
-            self.client.sendto(message, ("127.0.0.1", self.out_port))
-        message = sm.OSC.OSCMessage("/update")
-        message.append(" ")
-        self.client.sendto(message, ("127.0.0.1", self.out_port))
+            # message = sm.OSC.OSCMessage("/serverdict")
+            # message.append(m)
+            # self.client.sendto(message, ("127.0.0.1", self.out_port))
+            self.client.send_message("/serverdict", m)
+        # message = sm.OSC.OSCMessage("/update")
+        # message.append(" ")
+        # self.client.sendto(message, ("127.0.0.1", self.out_port))
+        self.client.send_message("/serverdict", " ")
 
     ######################################################
     ###### EVENTS METHODS
@@ -232,12 +233,43 @@ class SoMaxServer:
             event = self.players[player_name]['player'].new_event(time, event)
             self.scheduler.write_event(time, player_name, event)
 
+    def influence(self, player, path, *args, **kwargs):
+        # TODO: Temporary refactor for clarity, already exposed through current implem
+        self.logger.debug("[influence] called for player {0} with path {1} and args {2}, kwargs {3}."
+                          .format(player, path, args, kwargs))
+        self.players[player]['player'].influence(path, *args, **kwargs)
+
+    def jump(self, player):
+        # TODO: Temporary refactor for clarity, already exposed through current implem
+        self.logger.debug("[jump] called for player {0}.".format(player))
+        self.players[player]['player'].jump()
+
+    def create_streamview(self, player, name="streamview", weight=1.0, merge_actions=[DistanceMergeAction()]):
+        # TODO: Temporary refactor for clarity, already exposed through current implem
+        self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
+                          .format(player, name, weight, merge_actions))
+        self.players[player]['player'].create_streamview(name, weight, merge_actions)
+
+    def create_atom(self, player, name, weight=1.0, label_type=Events.AbstractLabel,
+                    contents_type=Events.AbstractContents,
+                    event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
+                    memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
+        # TODO: Temporary refactor for clarity, already exposed through current implem
+        self.logger.debug("[create_atom] called for player {0}.".format(player))
+        self.players[player]['player'].create_atom(name, weight, label_type, contents_type, event_type, activity_type,
+                                                   memory_type, memory_file)
+
+    def read_file(self, player, path, filez):
+        # TODO: Temporary refactor for clarity, already exposed through current implem
+        self.logger.debug("[read_file] called for player {0} with path {1} and file {2}.".format(player, path, filez))
+        self.players[player]['player'].read_file(path, filez)
+
     ######################################################
     ###### PLAYER CREATION METHODS
 
     def new_player(self, name, out_port):
         n_player = sm.Players.Player(name, self.scheduler, out_port)
-        self.server.addMsgHandler("/player/" + name, n_player.connect)
+        # self.server.dispatcher.map("/player/" + name, n_player.connect)   # TODO Temp solution
         self.players[name] = {'player': n_player, 'output_activity': None, "triggering": "automatic"}
         self.scheduler.triggers[name] = "automatic"
         self.send_info_dict()
@@ -328,7 +360,7 @@ class SoMaxServer:
         if path_contents == None:
             return self
         if path_contents[0] == "#":
-            current_obj = getattr(Transforms, path_contents[1:])
+            current_obj = getattr(sm.Transforms, path_contents[1:])
             return current_obj
 
         assert (len(path_contents) > 1)
@@ -361,7 +393,7 @@ class SoMaxServer:
         return args, kargs
 
     # Communication protocol
-    def connect(self, msg, id, contents, ports):
+    def connect(self, address, *contents):
         if len(contents) == 0:
             return
         header = contents[0]
