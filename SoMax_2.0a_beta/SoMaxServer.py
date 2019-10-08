@@ -6,16 +6,19 @@ import re
 import sys
 from functools import reduce
 
+from pythonosc import udp_client, dispatcher, osc_server
+
 import SoMaxLibrary as sm
+from SoMaxLibrary import MemorySpaces, ActivityPatterns, Events
+from SoMaxLibrary.MergeActions import DistanceMergeAction
+
+
 ###############################################################################
 # SoMaxServer is the top class of the SoMax system.
 #   It rules the scheduler, the players and communication between them,
 #   in addition to several macro parameters. Information to players are passed through
 #   the server, adressing /player_name.
 # It has to be initialized with an OSC incoming port and an OSC outcoming port.
-from SoMaxLibrary import MemorySpaces, ActivityPatterns, Events
-from SoMaxLibrary.MergeActions import DistanceMergeAction
-from pythonosc import udp_client, dispatcher, osc_server, osc_message_builder
 
 class SoMaxServer:
     max_activity_length = 500
@@ -52,7 +55,7 @@ class SoMaxServer:
             self.logger.error(e)
             self.logger.critical("Connection to Max was refused. Please ensure that a SoMax object with send port {} "
                                  "and receive port {} exists in Max and try again.".format(in_port, out_port))
-            raise   # Temporary
+            raise  # Temporary
             sys.exit(1)
 
         # Process.__init__(self) # TODO: Remove legacy code or reimplement server
@@ -267,8 +270,6 @@ class SoMaxServer:
     def set_self_influence(self, player, si):
         # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
         self.players[player]['player'].set_self_influence(si)
-
-
 
     ######################################################
     ###### PLAYER CREATION METHODS
