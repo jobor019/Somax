@@ -82,6 +82,7 @@ class Player(object):
                 for i in range(0, len(states)):
                     if states[i].index == self.improvisation_memory[-1][0].index + 1:
                         del global_activity[i]
+
                 self.waiting_to_jump = False
 
             if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
@@ -341,6 +342,7 @@ class Player(object):
                 raise Exception("[ERROR] couldn't find audio file associated with file", filez)
 
     def set_self_influence(self, si):
+        self.logger.debug(f"[set_self_influence]: Self influence set to {si}.")
         self.self_influence = bool(si)
 
     def set_nextstate_mod(self, ns):

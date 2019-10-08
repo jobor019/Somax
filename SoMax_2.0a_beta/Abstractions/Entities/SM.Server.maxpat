@@ -46,7 +46,7 @@
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "" ],
+					"outlettype" : [ "int" ],
 					"patching_rect" : [ 59.0, -4.0, 30.0, 30.0 ]
 				}
 
@@ -216,7 +216,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 1199.0, 356.0, 24.0, 35.0 ],
-					"text" : "250."
+					"text" : "130."
 				}
 
 			}
@@ -387,7 +387,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 939.0, 477.0, 24.0, 35.0 ],
-					"text" : "250."
+					"text" : "130."
 				}
 
 			}
@@ -986,7 +986,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 117.0, 400.0, 50.0, 22.0 ],
-									"text" : "160."
+									"text" : "130."
 								}
 
 							}
@@ -2246,8 +2246,8 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 580.5, 400.0, 72.0, 22.0 ],
-					"text" : "loadmess 0"
+					"patching_rect" : [ 580.5, 400.0, 70.0, 22.0 ],
+					"text" : "loadmess 1"
 				}
 
 			}
@@ -3297,11 +3297,11 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 369.25, 274.0, 80.5, 20.0 ],
+					"patching_rect" : [ 369.25, 287.0, 80.5, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 43.75, 35.0, 54.5, 20.0 ],
-					"text" : "Inactive",
-					"textcolor" : [ 0.2, 0.2, 0.2, 1.0 ]
+					"text" : "Active",
+					"textcolor" : [ 0.2, 0.8, 0.2, 1.0 ]
 				}
 
 			}
@@ -3364,7 +3364,7 @@
 					"patching_rect" : [ 153.0, 373.0, 50.5, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 203.0, 37.0, 52.270240999999999, 20.0 ],
-					"text" : "0.00",
+					"text" : "219.60",
 					"textcolor" : [ 0.862745, 0.870588, 0.878431, 1.0 ]
 				}
 
@@ -3381,7 +3381,7 @@
 					"patching_rect" : [ 106.0, 373.0, 40.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 161.0, 37.0, 40.0, 20.0 ],
-					"text" : "1",
+					"text" : "3",
 					"textcolor" : [ 0.862745, 0.870588, 0.878431, 1.0 ]
 				}
 
@@ -3398,7 +3398,7 @@
 					"patching_rect" : [ 59.0, 373.0, 40.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 119.0, 37.0, 40.0, 20.0 ],
-					"text" : "1",
+					"text" : "48",
 					"textcolor" : [ 0.862745, 0.870588, 0.878431, 1.0 ]
 				}
 
@@ -3778,14 +3778,6 @@
 					"hidden" : 1,
 					"midpoints" : [ 25.5, 459.0, 386.5, 459.0 ],
 					"order" : 0,
-					"source" : [ "obj-1", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-47", 0 ],
-					"order" : 2,
 					"source" : [ "obj-1", 0 ]
 				}
 

@@ -240,12 +240,12 @@ class SoMaxServer:
         self.players[player]['player'].influence(path, *args, **kwargs)
 
     def jump(self, player):
-        # TODO: Temporary refactor for clarity, already exposed through current implem
+        # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
         self.logger.debug("[jump] called for player {0}.".format(player))
         self.players[player]['player'].jump()
 
     def create_streamview(self, player, name="streamview", weight=1.0, merge_actions=[DistanceMergeAction()]):
-        # TODO: Temporary refactor for clarity, already exposed through current implem
+        # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
         self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
                           .format(player, name, weight, merge_actions))
         self.players[player]['player'].create_streamview(name, weight, merge_actions)
@@ -254,15 +254,21 @@ class SoMaxServer:
                     contents_type=Events.AbstractContents,
                     event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                     memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
-        # TODO: Temporary refactor for clarity, already exposed through current implem
+        # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
         self.logger.debug("[create_atom] called for player {0}.".format(player))
         self.players[player]['player'].create_atom(name, weight, label_type, contents_type, event_type, activity_type,
                                                    memory_type, memory_file)
 
     def read_file(self, player, path, filez):
-        # TODO: Temporary refactor for clarity, already exposed through current implem
+        # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
         self.logger.debug("[read_file] called for player {0} with path {1} and file {2}.".format(player, path, filez))
         self.players[player]['player'].read_file(path, filez)
+
+    def set_self_influence(self, player, si):
+        # TODO: Temporary refactor for clarity, already exposed through 2.7 implementation
+        self.players[player]['player'].set_self_influence(si)
+
+
 
     ######################################################
     ###### PLAYER CREATION METHODS

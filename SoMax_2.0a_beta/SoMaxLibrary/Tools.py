@@ -1,4 +1,5 @@
 import bisect
+import logging
 from functools import reduce
 
 import numpy as np
@@ -8,6 +9,7 @@ from copy import deepcopy
 # implementing the basic representation of a memory ordered by time
 class SequencedList(list):
     def __init__(self, dates=[], events=[]):
+        self.logger = logging.getLogger(__name__)
         if type(dates)!=list or type(events)!=list:
             raise TypeError("SequencedList has to be initialized with two lists")
         m = min(len(dates), len(events))
@@ -18,7 +20,8 @@ class SequencedList(list):
         return reduce(lambda  x, y: x + str(self.orderedDateList[y])+": "+str(self.orderedEventList[y])+ " ; ", range(len(self.orderedDateList)), "")
 
     def __getitem__(self, b):
-        # TODO: Get rid of this entirely. Currently used in way too many incompatible ways (input: None's, int, slices, outputs: SequencedList, int, etc)
+        # TODO: Get rid of this entirely. Currently used in way too many incompatible ways (input: None's, int,
+        #  slices, outputs: SequencedList, tuples of ints, tuples of lists)
         if isinstance(b, int):
             if b >= len(self.orderedDateList):
                 raise IndexError("list index out of range")
@@ -67,7 +70,7 @@ class SequencedList(list):
 
     def mul(self, scalar, item=None):
         if item==None:
-            return SequencedList(self.orderedDateList, map(lambda x: x*scalar, self.orderedEventList))
+            return SequencedList(self.orderedDateList, list(map(lambda x: x*scalar, self.orderedEventList)))
         else:
             try:
                 item = int(item)
@@ -100,6 +103,7 @@ class SequencedList(list):
         return i
 
     def append(self, date, state):
+        self.logger.debug(f"Appending event with date {date} and state {state}.")
         if len(self.orderedDateList):
             if date<self.orderedDateList[-1]:
                 raise Exception("ERROR in Memory : trying to append a event that comes sooner")

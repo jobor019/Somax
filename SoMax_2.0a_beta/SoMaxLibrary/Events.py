@@ -19,6 +19,9 @@ class AbstractLabel(object):
     def __repr__(self):
         return "Abstract Label with label "+str(self.label)
 
+    def __hash__(self):
+        return hash(self.label)
+
     @classmethod
     def __desc__(self):
         return "Abstract label"
@@ -159,6 +162,9 @@ class HarmonicLabel(AbstractLabel):
     def __repr__(self):
         return "Harmonic Label with label "+str(self.label)
 
+    def __hash__(self):
+        return hash(self.label)
+
     @classmethod
     def __desc__(self):
         return "Harmonic label"
@@ -241,7 +247,7 @@ class HarmonicLabel(AbstractLabel):
             if influence_type=='chroma':
                 if len(data)==13:
                     try:
-                        data = map(lambda x: float(x), data[1:])
+                        data = list(map(lambda x: float(x), data[1:]))
                     except TypeError:
                         print("problem with incoming chromas")
                     label = cls(data)
