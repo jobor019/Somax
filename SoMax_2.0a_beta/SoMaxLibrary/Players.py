@@ -431,7 +431,7 @@ class Player(object):
         zetas = global_activity.get_dates_list()
         states, _ = self.current_streamview.atoms["_self"].memorySpace.get_events(zetas)
         v_t = global_activity.get_events_list()
-        v = map(lambda x: x[0], v_t)
+        v = list(map(lambda x: x[0], v_t))
         for i in range(1, len(states)):
             if not states[i] is None:
                 if states[i].index == self.improvisation_memory[-1][0].index + 1:

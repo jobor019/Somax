@@ -95,7 +95,7 @@ class SoMaxServer:
         if timing == "relative" or timing == "absolute":
             self.scheduler.timing_type = timing
 
-    def set_time(self, msg, id, content, ports):
+    def set_time(self, address, *content):
         '''main time routine. set current time of the scheduler, and takes out events to be played'''
         time = float(content[0])
         events = self.scheduler.set_time(time)
@@ -343,7 +343,7 @@ class SoMaxServer:
 
     def increment_intern_counter(self):
         self.intern_counter += 1
-        if self.intern_counter > sys.maxint:
+        if self.intern_counter > sys.maxsize:
             self.intern_counter = 0
 
     # Formatting incoming to Python

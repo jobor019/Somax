@@ -18,22 +18,32 @@ class SequencedList(list):
         return reduce(lambda  x, y: x + str(self.orderedDateList[y])+": "+str(self.orderedEventList[y])+ " ; ", range(len(self.orderedDateList)), "")
 
     def __getitem__(self, b):
-        if b >= len(self.orderedDateList):
-            raise IndexError("list index out of range")
-        return self.orderedDateList[b], self.orderedEventList[b]
+        # TODO: Get rid of this entirely. Currently used in way too many incompatible ways (input: None's, int, slices, outputs: SequencedList, int, etc)
+        if isinstance(b, int):
+            if b >= len(self.orderedDateList):
+                raise IndexError("list index out of range")
+            else:
+                return self.orderedDateList[b], self.orderedEventList[b]
+        if isinstance(b, slice):
+            if b.stop and b.stop > len(self.orderedDateList):
+                raise IndexError("list index out of range")
+            else:
+                result = SequencedList()
+                result.orderedEventList = list(self.orderedEventList[b])
+                result.orderedDateList = list(self.orderedDateList[b])
+                return result
+
+
+
     def __delitem__(self, b):
         if b >= len(self.orderedDateList):
             raise IndexError("list index out of range")
         del self.orderedDateList[b]
         del self.orderedEventList[b]
+
     def __setitem__(self, i, b):
         self.orderedDateList[i] = b[0]
         self.orderedEventList[i] = b[1]
-    def __getslice__(self, b,c):
-        result = SequencedList()
-        result.orderedEventList = list(self.orderedEventList[b:c])
-        result.orderedDateList = list(self.orderedDateList[b:c])
-        return result
 
     def __delslice__(self,b,c):
         if b >= len(self.orderedDateList) or c >= len(self.orderedDateList):
