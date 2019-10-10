@@ -1,6 +1,6 @@
 # -*- coding: ISO-8859-1 -*-
 
-from SoMaxLibrary.midi.MidiOutStream import MidiOutStream
+from somaxlibrary.midi.MidiOutStream import MidiOutStream
 
 
 class MidiToText(MidiOutStream):
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     f = open(test_file, 'rb')
     
     # do parsing
-    from SoMaxLibrary.midi.MidiInFile import MidiInFile
+    from somaxlibrary.midi.MidiInFile import MidiInFile
     midiIn = MidiInFile(MidiToText(), f)
     midiIn.read()
     f.close()

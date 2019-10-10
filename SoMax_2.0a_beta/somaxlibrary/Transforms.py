@@ -3,7 +3,7 @@ from copy import deepcopy
 
 # abstract class that represents identity, only if the class of the object
 #       is in the transformation catalog
-from SoMaxLibrary import Events
+from somaxlibrary import Events
 
 
 class NoTransform(object):
@@ -35,7 +35,7 @@ class NoTransform(object):
 
 # obligatoirement mod12?
 class TransposeTransform(NoTransform):
-    transposition_range = [-3, 3]
+    transposition_range = [0, 0]
     def __init__(self, semitone, mod12 = True):
         self.semitone = semitone
         self.mod12 = True

@@ -18,8 +18,8 @@ from collections import deque
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
 
-from SoMaxLibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
-from SoMaxLibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
+from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from pythonosc.udp_client import SimpleUDPClient
 
 
@@ -430,6 +430,7 @@ class Player(object):
 
     def decide_chooseMax(self, global_activity):
         '''choosing the state with maximum activity'''
+        self.logger.debug(f"[decide_chooseMax] Called with global activity {global_activity}.")
         zetas = global_activity.get_dates_list()
         states, _ = self.current_streamview.atoms["_self"].memorySpace.get_events(zetas)
         v_t = global_activity.get_events_list()

@@ -5,7 +5,7 @@ from functools import reduce
 
 import numpy as np
 
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary.Tools import SequencedList
 
 
 class AbstractActivityPattern(object):
@@ -60,6 +60,7 @@ class ClassicActivityPattern(AbstractActivityPattern):
         return "Classic Activity Pattern"
 
     def insert(self, *args):
+        self.logger.debug(f"[insert]: Inserting peaks {args}.")
         for peak in args:
             assert type(peak) is tuple and len(peak) == 3, "peak insertion failed!"
             zeta, value, transform = peak
@@ -85,6 +86,8 @@ class ClassicActivityPattern(AbstractActivityPattern):
         transform_tmp = deepcopy(transform)
         for i in reversed(sorted(itmp[0].tolist())):
             del transform_tmp[i]
+        self.logger.debug(f"[clean_up] Deleted entries with indices {itmp} from ActivityPattern. "
+                          f"Number of entries left are {np.size(self.zeta)}.")
         return zeta, value, transform_tmp
 
     def get_activity(self, date=None):

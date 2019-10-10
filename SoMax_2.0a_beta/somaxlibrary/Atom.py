@@ -4,7 +4,7 @@ import logging
 
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
-from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces
+from somaxlibrary import Events, ActivityPatterns, MemorySpaces
 
 
 class Atom(object):

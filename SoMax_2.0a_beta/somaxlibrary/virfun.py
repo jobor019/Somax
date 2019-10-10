@@ -74,13 +74,13 @@ def rec_virfun(freqs, divmin, divmax, approxF):
 
 def midi2freq(midis):
 	if type(midis)==type([]):
-		return map((lambda x: 440.0*pow(2,(x-69)/12.0)), midis) 
+		return list(map((lambda x: 440.0*pow(2,(x-69)/12.0)), midis))
 	else:
 		return 440.0*pow(2,(midis-69)/12.0)
 
 def freq2midi(freqs):
 	if type(freqs)==type([]):
-		return map((lambda x: 69 + 12*log(x/440.0, 2)), freqs) 
+		return list(map((lambda x: 69 + 12*log(x/440.0, 2)), freqs))
 	else:
 		return 69 + 12*log(freqs/440.0, 2)
 

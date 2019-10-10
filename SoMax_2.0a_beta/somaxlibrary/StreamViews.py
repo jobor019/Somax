@@ -7,9 +7,9 @@ import logging
 #   activity patterns depending on the transformations.
 from functools import reduce
 
-from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
-from SoMaxLibrary.MergeActions import DistanceMergeAction
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
+from somaxlibrary.MergeActions import DistanceMergeAction
+from somaxlibrary.Tools import SequencedList
 
 
 class StreamView(object):

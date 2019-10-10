@@ -1,3 +1,4 @@
+import logging
 import os
 import numpy as np
 from copy import deepcopy, copy
@@ -6,12 +7,13 @@ from copy import deepcopy, copy
 ###############################################################################
 # AbstractLabel is the abstract pattern for a SoMax Label.
 #   it defines mandatory functions that the label subclasses must handle
-from SoMaxLibrary import Transforms
-from SoMaxLibrary.Transforms import NoTransform, TransposeTransform
+from somaxlibrary import Transforms
+from somaxlibrary.Transforms import NoTransform, TransposeTransform
 
 
 class AbstractLabel(object):
     def __init__(self, label=None):
+        self.logger = logging.getLogger(__name__)
         self.available_transforms = self.get_available_transforms()
         if not label is None and label!=[]:
             self.set_label(label)
@@ -180,6 +182,8 @@ class HarmonicLabel(AbstractLabel):
             indtmp = np.argsort(clust_vec)
             # pick corresponding SOM class from chroma information
             self.label = HarmonicLabel.som_c[indtmp[-1]]
+            self.logger.debug(f"[set_label] Harmonic label assigned to class {self.label} with "
+                              f"corresponding index {indtmp[-1]}.")
         else:
             try:
                 self.label = int(data)
