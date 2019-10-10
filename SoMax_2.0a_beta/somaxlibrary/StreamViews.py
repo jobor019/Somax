@@ -162,7 +162,7 @@ class StreamView(object):
 
     def get_merged_activity(self, date, weighted=True):
         '''get merged activities of children'''
-        weight_sum = float(reduce(lambda x, y: x + y.weight, self.atoms.values(), 0.0))
+        weight_sum = float(reduce(lambda x, y: x + y.weight, self.atoms.values(), 0.0))  # TODO: Not used
         merged_activity = SequencedList()
         for atom in self.atoms.values():
             w = atom.weight if weighted else 1.0

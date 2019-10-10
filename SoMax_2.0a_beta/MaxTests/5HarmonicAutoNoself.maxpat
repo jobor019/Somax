@@ -102,7 +102,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 401.0, 506.0, 52.0, 49.0 ],
-					"text" : "/time 1787.521702"
+					"text" : "/time 162.578805"
 				}
 
 			}
@@ -481,7 +481,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 189.0, 495.0, 64.0, 102.0 ],
-									"text" : "influence player1 pitch:melody \"pitch 62\" mod12=True"
+									"text" : "influence player1 pitch:melody \"pitch 60\" mod12=True"
 								}
 
 							}
@@ -1011,8 +1011,8 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 59.600000000000136, 169.955719557195607, 613.0, 22.0 ],
-					"text" : "read_file player1 None /Users/joakimborg/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Corpus/debussy_part.json"
+					"patching_rect" : [ 59.600000000000136, 169.955719557195607, 585.0, 22.0 ],
+					"text" : "read_file player1 None /Users/joakimborg/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Corpus/debussy.json"
 				}
 
 			}
