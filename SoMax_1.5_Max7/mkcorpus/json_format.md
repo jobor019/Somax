@@ -62,7 +62,7 @@ Each item of the list "data" contains a dictionary representing a single state, 
 
 "notes": List of dicts, where each dict contains two entries:
     "note": [nn, vel, ch],
-    "time": Not sure.
+    "time": [onset relative to state start, offset (noteoff) relative to state start]
 
 "extras": Twelve floats representing chroma
 
