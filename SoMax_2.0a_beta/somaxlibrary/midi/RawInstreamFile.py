@@ -4,7 +4,7 @@
 from struct import unpack
 
 # custom import
-from SoMaxLibrary.midi.DataTypeConverters import readBew, readVar, varLen
+from somaxlibrary.midi.DataTypeConverters import readBew, readVar, varLen
 
 
 class RawInstreamFile:

@@ -18,8 +18,8 @@ from collections import deque
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
 
-from SoMaxLibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
-from SoMaxLibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
+from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from pythonosc.udp_client import SimpleUDPClient
 
 
@@ -392,7 +392,7 @@ class Player(object):
         self.send(self.name, "/infodict-update")
         self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
 
-    def set_weight(self, streamview, weight):
+    def set_weight(self, streamview: str, weight: float):
         '''setting the weight at target path'''
         if not ":" in streamview:
             if streamview != "_self":
@@ -430,6 +430,7 @@ class Player(object):
 
     def decide_chooseMax(self, global_activity):
         '''choosing the state with maximum activity'''
+        self.logger.debug(f"[decide_chooseMax] Called with global activity {global_activity}.")
         zetas = global_activity.get_dates_list()
         states, _ = self.current_streamview.atoms["_self"].memorySpace.get_events(zetas)
         v_t = global_activity.get_events_list()
@@ -450,10 +451,8 @@ class Player(object):
     ###### OSC METHODS
 
     def send(self, content, address=None):
-        if address == None:
+        if address is None:
             address = "/" + self.name
-        # message = OSCMessage(address)
-        # message.append(content)
         self.client.send_message(address, content)
 
     # Formatting incoming to Python

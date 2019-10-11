@@ -6,13 +6,13 @@ from copy import deepcopy
 
 import numpy as np
 
-from SoMaxLibrary import Events, Transforms
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary import Events, Transforms
+from somaxlibrary.Tools import SequencedList
 
 
 # overloading Memory object, asserting a sequence of Event objects and embedding
 #    a given representation, with its influence function used by Atom objects
-from SoMaxLibrary.Transforms import NoTransform
+from somaxlibrary.Transforms import NoTransform
 
 
 class AbstractMemorySpace(SequencedList):
@@ -34,8 +34,7 @@ class AbstractMemorySpace(SequencedList):
         self.available = True
 
     def __repr__(self):
-        return "AbstractActivityPattern"
-        # print "maps the raw data from memory to its internal representation"
+        return "AbstractMemorySpace"
 
     def __desc__(self):
         return "Abstract Memory Space"
@@ -145,14 +144,17 @@ class NGramMemorySpace(AbstractMemorySpace):
                 #
                 # TODO: An alternative solution would be to parallelize the operations (as entries are indep.),
                 #       see https://stackoverflow.com/a/28463266
-                for t, z in self.subsequences.items():
-                    if k == t:
-                        c = t
-                        break
-                # TODO: (Until here).
-                if c != None:
-                    for state in self.subsequences[c]:
+                if k in self.subsequences.keys():
+                    for state in self.subsequences[k]:
                         peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
+                # for t, z in self.subsequences.items():
+                #     if k == t:
+                #         c = t
+                #         break
+                # TODO: (Until here).
+                # if c != None:
+                #     for state in self.subsequences[c]:
+                #         peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
         return peaks
 
     def read(self, filez, timing='relative'):

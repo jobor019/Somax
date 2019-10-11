@@ -4,7 +4,8 @@ import logging
 
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
-from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces
+from somaxlibrary import Events, ActivityPatterns, MemorySpaces
+from somaxlibrary.Transforms import Transform
 
 
 class Atom(object):
@@ -63,8 +64,8 @@ class Atom(object):
 
     # influences the memory with incoming data
     def influence(self, time, *data, **kwargs):
-        peaks = self.memorySpace.influence(data, **kwargs)  # we get the activity peaks created by influence
-        if peaks != []:
+        peaks: [(float, float, Transform)] = self.memorySpace.influence(data, **kwargs)  # we get the activity peaks created by influence
+        if peaks:
             self.activityPattern.update_activity(time)  # we update the activity profile to the current time
             self.activityPattern.insert(*peaks)  # we insert the peaks into the activity profile
 
@@ -96,7 +97,7 @@ class Atom(object):
 
     # external method to fetch properties of the atom
     def get_info_dict(self):
-        infodict = {"activity": self.activityPattern.__desc__(), "memory": self.memorySpace.__desc__(), \
+        infodict = {"activity": self.activityPattern.__desc__(), "memory": self.memorySpace.__desc__(),
                     "event_type": self.memorySpace.event_type.__desc__(),
                     "label_type": self.memorySpace.label_type.__desc__(),
                     "contents_type": self.memorySpace.contents_type.__desc__(), "name": self.name,
@@ -114,9 +115,3 @@ class Atom(object):
 
     def reset(self, time):
         self.activityPattern.reset(time)
-
-    def settest(self, n):
-        print(n)
-
-    def test(self):
-        print(self.testVal, self.testArr, self.testDic)

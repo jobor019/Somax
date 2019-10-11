@@ -7,9 +7,9 @@ import logging
 #   activity patterns depending on the transformations.
 from functools import reduce
 
-from SoMaxLibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
-from SoMaxLibrary.MergeActions import DistanceMergeAction
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
+from somaxlibrary.MergeActions import DistanceMergeAction
+from somaxlibrary.Tools import SequencedList
 
 
 class StreamView(object):
@@ -64,6 +64,7 @@ class StreamView(object):
 
     def create_streamview(self, path="streamview", weight=1.0, atoms=dict(), merge_actions=[DistanceMergeAction]):
         '''creating a streamview at required path'''
+        # TODO: Either remove this behaviour entirely or clean up intent
         if ":" in path:
             # if streamview in sub-streamview
             head, tail = Tools.parse_path(path)
@@ -162,7 +163,7 @@ class StreamView(object):
 
     def get_merged_activity(self, date, weighted=True):
         '''get merged activities of children'''
-        weight_sum = float(reduce(lambda x, y: x + y.weight, self.atoms.values(), 0.0))
+        weight_sum = float(reduce(lambda x, y: x + y.weight, self.atoms.values(), 0.0))  # TODO: Not used
         merged_activity = SequencedList()
         for atom in self.atoms.values():
             w = atom.weight if weighted else 1.0

@@ -1,5 +1,5 @@
 import logging
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary.Tools import SequencedList
 
 ###############################################################################
 # SomaxScheduler is the global scheduler in SoMax.

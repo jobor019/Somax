@@ -2,7 +2,7 @@ import logging
 import math
 from copy import deepcopy
 
-from SoMaxLibrary.Tools import SequencedList
+from somaxlibrary.Tools import SequencedList
 
 
 class AbstractMergeAction(object):
@@ -59,7 +59,7 @@ class StateMergeAction(AbstractMergeAction):
     def merge(self, pattern, memory_space=None, scheduler=None):
         # print ''
         # print '------BEGINNING MERGE-------'
-        self.logger.debug("[merge] Merging acvitity with pattern {}.".format(pattern))
+        self.logger.debug("[merge] Merging activity with pattern {}.".format(pattern))
         if len(pattern) == 0 or memory_space == None:
             return deepcopy(pattern)
         merged_pattern = SequencedList()

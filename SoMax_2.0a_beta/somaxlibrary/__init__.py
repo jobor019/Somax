@@ -1,17 +1,17 @@
 from importlib import reload
 
-import SoMaxLibrary.ActivityPatterns
-import SoMaxLibrary.MemorySpaces
-import SoMaxLibrary.StreamViews
-import SoMaxLibrary.Tools
-import SoMaxLibrary.Events
-import SoMaxLibrary.SoMaxScheduler
-import SoMaxLibrary.Players
-import SoMaxLibrary.Transforms
-import SoMaxLibrary.Atom
-import SoMaxLibrary.MergeActions
-import SoMaxLibrary.GenCorpus
-import SoMaxLibrary.CorpusBuilder
+import somaxlibrary.ActivityPatterns
+import somaxlibrary.MemorySpaces
+import somaxlibrary.StreamViews
+import somaxlibrary.Tools
+import somaxlibrary.Events
+import somaxlibrary.SoMaxScheduler
+import somaxlibrary.Players
+import somaxlibrary.Transforms
+import somaxlibrary.Atom
+import somaxlibrary.MergeActions
+import somaxlibrary.GenCorpus
+import somaxlibrary.CorpusBuilder
 
 reload(ActivityPatterns)
 reload(MemorySpaces)

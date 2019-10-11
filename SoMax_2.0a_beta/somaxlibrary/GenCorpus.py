@@ -2,8 +2,8 @@ from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, roun
     power, dot, transpose, insert, concatenate
 from scipy import io
 import os, json, bisect, itertools, operator
-from SoMaxLibrary import virfun, aubio
-import SoMaxLibrary.readMidi as midi
+from somaxlibrary import virfun, aubio
+import somaxlibrary.readMidi as midi
 
 
 
