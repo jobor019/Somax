@@ -2,11 +2,11 @@ from importlib import reload
 
 import somaxlibrary.ActivityPatterns
 import somaxlibrary.MemorySpaces
-import somaxlibrary.StreamViews
+import somaxlibrary.StreamView
 import somaxlibrary.Tools
 import somaxlibrary.Events
 import somaxlibrary.SoMaxScheduler
-import somaxlibrary.Players
+import somaxlibrary.Player
 import somaxlibrary.Transforms
 import somaxlibrary.Atom
 import somaxlibrary.MergeActions
@@ -15,11 +15,11 @@ import somaxlibrary.CorpusBuilder
 
 reload(ActivityPatterns)
 reload(MemorySpaces)
-reload(StreamViews)
+reload(StreamView)
 reload(Tools)
 reload(Events)
 reload(SoMaxScheduler)
-reload(Players)
+reload(Player)
 reload(Transforms)
 reload(Atom)
 reload(MergeActions)
