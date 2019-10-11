@@ -39,7 +39,7 @@ class NoTransform(object):
 
 # obligatoirement mod12?
 class TransposeTransform(NoTransform):
-    transposition_range = [0, 0]
+    transposition_range = [-3, 3]
 
     def __init__(self, semitone, mod12=True):
         self.semitone = semitone

@@ -96,13 +96,12 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-4",
-					"linecount" : 3,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 401.0, 506.0, 52.0, 49.0 ],
-					"text" : "/time 162.578805"
+					"patching_rect" : [ 401.0, 506.0, 52.0, 22.0 ],
+					"text" : "/time 0."
 				}
 
 			}

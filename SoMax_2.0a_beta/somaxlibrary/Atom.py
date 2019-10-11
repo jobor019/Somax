@@ -115,9 +115,3 @@ class Atom(object):
 
     def reset(self, time):
         self.activityPattern.reset(time)
-
-    def settest(self, n):
-        print(n)
-
-    def test(self):
-        print(self.testVal, self.testArr, self.testDic)

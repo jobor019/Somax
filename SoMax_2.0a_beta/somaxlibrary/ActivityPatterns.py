@@ -72,8 +72,8 @@ class ClassicActivityPattern(AbstractActivityPattern):
     def update_activity(self, new_date):
         if self.available:
             self.available = 0
-            self.zeta += new_date - self.date
-            self.value *= np.exp(-np.divide(new_date - self.date, self.tau_mem_decay))
+            self.zeta += new_date - self.date   # shift peaks in time
+            self.value *= np.exp(-np.divide(new_date - self.date, self.tau_mem_decay))  # decay peaks in amplitude
             self.date = new_date
             self.zeta, self.value, self.transform = self.clean_up(self.zeta, self.value, self.transform)
             self.available = 1

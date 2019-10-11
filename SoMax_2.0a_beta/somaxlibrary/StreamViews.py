@@ -64,6 +64,7 @@ class StreamView(object):
 
     def create_streamview(self, path="streamview", weight=1.0, atoms=dict(), merge_actions=[DistanceMergeAction]):
         '''creating a streamview at required path'''
+        # TODO: Either remove this behaviour entirely or clean up intent
         if ":" in path:
             # if streamview in sub-streamview
             head, tail = Tools.parse_path(path)

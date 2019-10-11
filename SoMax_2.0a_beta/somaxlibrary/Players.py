@@ -392,7 +392,7 @@ class Player(object):
         self.send(self.name, "/infodict-update")
         self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
 
-    def set_weight(self, streamview, weight):
+    def set_weight(self, streamview: str, weight: float):
         '''setting the weight at target path'''
         if not ":" in streamview:
             if streamview != "_self":
@@ -451,10 +451,8 @@ class Player(object):
     ###### OSC METHODS
 
     def send(self, content, address=None):
-        if address == None:
+        if address is None:
             address = "/" + self.name
-        # message = OSCMessage(address)
-        # message.append(content)
         self.client.send_message(address, content)
 
     # Formatting incoming to Python

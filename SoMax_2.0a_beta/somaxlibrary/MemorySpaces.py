@@ -144,14 +144,17 @@ class NGramMemorySpace(AbstractMemorySpace):
                 #
                 # TODO: An alternative solution would be to parallelize the operations (as entries are indep.),
                 #       see https://stackoverflow.com/a/28463266
-                for t, z in self.subsequences.items():
-                    if k == t:
-                        c = t
-                        break
-                # TODO: (Until here).
-                if c != None:
-                    for state in self.subsequences[c]:
+                if k in self.subsequences.keys():
+                    for state in self.subsequences[k]:
                         peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
+                # for t, z in self.subsequences.items():
+                #     if k == t:
+                #         c = t
+                #         break
+                # TODO: (Until here).
+                # if c != None:
+                #     for state in self.subsequences[c]:
+                #         peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
         return peaks
 
     def read(self, filez, timing='relative'):

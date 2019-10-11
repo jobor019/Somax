@@ -259,7 +259,12 @@ class SoMaxServer:
         self.players[player]['player'].read_file(path, filez)
 
     def set_self_influence(self, player, si):
+        self.logger.debug(f"[set_self_influence] Attemptint to set influence of player {player} to {si}.")
         self.players[player]['player'].set_self_influence(si)
+
+    def set_weight(self, player: str, streamview: str, weight: float):
+        self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
+        self.players[player]['player'].set_weight(streamview, weight)
 
     ######################################################
     # PLAYER CREATION METHODS

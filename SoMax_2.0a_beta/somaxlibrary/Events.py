@@ -84,30 +84,34 @@ class MelodicLabel(AbstractLabel):
         except:
             raise TypeError("Failed creating Melodic Label from ", label)
 
-    def __eq__(self, a):
+    def __eq__(self, other):
         # TODO: Optimize or move modulo to json construction.
-        if a == None:
-            return False
-        elif issubclass(type(a), MelodicLabel):
-            if self.mod12:
-                return self.label % 12 == a.label % 12
-            else:
-                return self.label == a.label
-        elif issubclass(type(a), AbstractLabel):
-            try:
-                a_i = int(a)
-                if self.mod12:
-                    return self.label % 12 == a.label % 12
-                else:
-                    return self.label == a.label
-            except:
-                raise TypeError("Failed comparing", self.label, " to abstract label ", a.__repr__())
-        elif isinstance(a, AbstractEvent):
-            return self.__eq__(a.label)
-        elif type(a) == int:
-            return self.label == a
+        if self.mod12:
+            return isinstance(other, MelodicLabel) and self.label % 12 == other.label % 12
         else:
-            raise TypeError("Failed comparing Melodic Label with ", a.__repr__())
+            return isinstance(other, MelodicLabel) and self.label == other.label
+        # if a == None:
+        #     return False
+        # elif issubclass(type(a), MelodicLabel):
+        #     if self.mod12:
+        #         return self.label % 12 == a.label % 12
+        #     else:
+        #         return self.label == a.label
+        # elif issubclass(type(a), AbstractLabel):
+        #     try:
+        #         a_i = int(a)
+        #         if self.mod12:
+        #             return self.label % 12 == a.label % 12
+        #         else:
+        #             return self.label == a.label
+        #     except:
+        #         raise TypeError("Failed comparing", self.label, " to abstract label ", a.__repr__())
+        # elif isinstance(a, AbstractEvent):
+        #     return self.__eq__(a.label)
+        # elif type(a) == int:
+        #     return self.label == a
+        # else:
+        #     raise TypeError("Failed comparing Melodic Label with ", a.__repr__())
 
     def get_available_transforms(self):
         return [Transforms.NoTransform, Transforms.TransposeTransform]
@@ -181,9 +185,6 @@ class HarmonicLabel(AbstractLabel):
     def __desc__(self):
         return "Harmonic label"
 
-    def get_available_transforms(self):
-        return [Transforms.NoTransform, Transforms.TransposeTransform]
-
     def set_label(self, data):
         if type(data) == list or type(data) == type(np.array(0)):
             # initialized with chroma information
@@ -212,6 +213,7 @@ class HarmonicLabel(AbstractLabel):
             return self.chroma
 
     def __eq__(self, a):
+        # return isinstance(a, HarmonicLabel) and self.label == a.label
         if type(a) == type(None):
             return False
         elif type(a) == int or type(a) == float:
