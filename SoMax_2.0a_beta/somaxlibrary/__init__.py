@@ -12,6 +12,11 @@ import somaxlibrary.Atom
 import somaxlibrary.MergeActions
 import somaxlibrary.GenCorpus
 import somaxlibrary.CorpusBuilder
+import somaxlibrary.Contents
+import somaxlibrary.Corpus
+import somaxlibrary.DictClasses
+import somaxlibrary.Exceptions
+import somaxlibrary.Labels
 
 reload(ActivityPatterns)
 reload(MemorySpaces)
@@ -26,8 +31,8 @@ reload(MergeActions)
 
 
 TRANSFORM_TYPES = [Transforms.NoTransform, Transforms.TransposeTransform]
-LABEL_TYPES = [Events.MelodicLabel, Events.HarmonicLabel]
-CONTENTS_TYPES = [Events.ClassicMIDIContents, Events.ClassicAudioContents]
+LABEL_TYPES = [Labels.MelodicLabel, Labels.HarmonicLabel]
+CONTENTS_TYPES = [Contents.ClassicMIDIContents, Contents.ClassicAudioContents]
 EVENT_TYPES = [Events.AbstractEvent]
 MEMORY_TYPES = [MemorySpaces.NGramMemorySpace]
 

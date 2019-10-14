@@ -19,6 +19,8 @@ from collections import deque
 from functools import reduce
 
 from somaxlibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
+from somaxlibrary.Contents import AbstractContents
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from pythonosc.udp_client import SimpleUDPClient
 
@@ -158,7 +160,7 @@ class Player(object):
                 self.logger.info("Streamview {0} created.".format(name))
         self.send_info_dict()
 
-    def create_atom(self, name, weight=1.0, label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
+    def create_atom(self, name, weight=1.0, label_type=AbstractLabel, contents_type=AbstractContents,
                     event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                     memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         '''creates atom at target path'''

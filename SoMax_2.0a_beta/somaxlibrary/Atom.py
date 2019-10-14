@@ -5,11 +5,13 @@ import logging
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
 from somaxlibrary import Events, ActivityPatterns, MemorySpaces
+from somaxlibrary.Contents import AbstractContents
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Transforms import Transform
 
 
 class Atom(object):
-    def __init__(self, name="atom", weight=1.0, label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
+    def __init__(self, name="atom", weight=1.0, label_type=AbstractLabel, contents_type=AbstractContents,
                  event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                  memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         self.logger = logging.getLogger(__name__)
@@ -40,8 +42,8 @@ class Atom(object):
         return "Atom with {0} and {1}".format(type(self.activityPattern), type(self.memorySpace))
 
     # Tells the memory space to load the file filez
-    def read(self, filez, memory_type=None, label_type=Events.AbstractLabel,
-             contents_type=Events.AbstractContents, event_type=Events.AbstractEvent):
+    def read(self, filez, memory_type=None, label_type=AbstractLabel,
+             contents_type=AbstractContents, event_type=Events.AbstractEvent):
         if memory_type != None:
             # if different memory type, create a new memory space
             memory_class = getattr(MemorySpaces, memory_type)
@@ -111,7 +113,7 @@ class Atom(object):
         return infodict
 
     def isAvailable(self):
-        return self.activityPattern.isAvailable() and self.memorySpace.isAvailable()
+        return self.activityPattern.isAvailable() and self.memorySpace.is_available()
 
     def reset(self, time):
         self.activityPattern.reset(time)

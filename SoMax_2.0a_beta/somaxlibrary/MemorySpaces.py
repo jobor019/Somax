@@ -1,59 +1,55 @@
 import json
 import logging
 import os
+from abc import ABC, abstractmethod
 from collections import deque
 from copy import deepcopy
+from typing import TypeVar, Union, Any
 
-import numpy as np
-
-from somaxlibrary import Events, Transforms
+from somaxlibrary import Events, Transforms, Labels, Contents
+from somaxlibrary.Contents import AbstractContents
+from somaxlibrary.Corpus import Corpus
+from somaxlibrary.Events import AbstractEvent
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Tools import SequencedList
 
 
 # overloading Memory object, asserting a sequence of Event objects and embedding
 #    a given representation, with its influence function used by Atom objects
-from somaxlibrary.Transforms import NoTransform
 
 
-class AbstractMemorySpace(SequencedList):
-    def __init__(self, dates=[], states=[], label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
-                 event_type=Events.AbstractEvent):
+class AbstractMemorySpace(ABC):
+    def __init__(self, corpus: Corpus, label_type: Union[TypeVar, str] = AbstractLabel, *args, **kwargs):
+        """ Note: args, kwargs can be used if additional information is need to construct the data structure."""
         self.logger = logging.getLogger(__name__)
-        SequencedList.__init__(self, dates, states)
-        self.label_type = label_type
-        self.contents_type = contents_type
-        self.event_type = event_type
-        if type(label_type) == str or type(contents_type) == str or type(event_type) == str:
-            if type(label_type) == str:
-                self.label_type = getattr(Events, label_type)
-            if type(contents_type) == str:
-                self.contents_type = getattr(Events, contents_type)
-            if type(event_type) == str:
-                self.event_type = getattr(Events, event_type)
-        self.infos = dict()
+        self.corpus: Corpus = corpus
+        self.data: Any = None   # Abstract, defined per class
+
+        if isinstance(label_type, str):
+            self.label_type: TypeVar = getattr(Labels, label_type)
+        else:
+            self.label_type: TypeVar = label_type
+
+        self._build(*args, **kwargs)
         self.available = True
 
-    def __repr__(self):
-        return "AbstractMemorySpace"
+    @abstractmethod
+    def _build(self, *args, **kwargs) -> None:
+        """Constructs self.data from loaded Corpus. By default, no parameters should be required"""
 
-    def __desc__(self):
-        return "Abstract Memory Space"
-
-    def read(self, file, *args):
-        return True  # True if succeded, False if failed
-
-    def append(self, date, *args):
-        event = self.build_event(*args)
-        SequencedList.append(self, date, event)
-        # and then additional processing specific to the Memory Space
-
+    # TODO: Make abstract. Or... Make generic so that it's not necessary to implement in subclasses.
     def influence(self, event):
         # print "here, the memory influences its internal state and returns activity peaks"
         return [], []  # returns dates and activities
 
-    def isAvailable(self):
-        return bool(self.available)  # securities
+    def _match(self, event: AbstractLabel) -> ????:
 
+    def
+
+    def is_available(self):
+        return bool(self.available)
+
+    # TODO: Remove or private/internal/part of init
     # build event from external data
     def build_event(self, *args, **kwargs):
         label = self.label_type.get_label_from_data(*args, **kwargs)
@@ -62,17 +58,18 @@ class AbstractMemorySpace(SequencedList):
         event.index = len(self)
         return event
 
+    # TODO: Make abstract
     def reset(self):
         pass
 
 
 class NGramMemorySpace(AbstractMemorySpace):
     def __init__(self, dates=[], states=[], \
-                 label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
-                 event_type=Events.AbstractEvent):
-        AbstractMemorySpace.__init__(self, [], [], label_type, contents_type, event_type)
+                 label_type=AbstractLabel, content_type=AbstractContents,
+                 event_type=AbstractEvent):
+        AbstractMemorySpace.__init__(self, [], [], label_type, content_type, event_type)
         self.logger.debug("[__init__] Initializing new NGramMemorySpace with dates {},  states {}, label_t {},"
-                          "content_t {} and event_t {}".format(dates, states, label_type, contents_type, event_type))
+                          "content_t {} and event_t {}".format(dates, states, label_type, content_type, event_type))
         self.ngram_size = 3
         self.subsequences = dict()
         self.buffer = deque([], self.ngram_size)
@@ -191,58 +188,3 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.subsequences = dict()
         self.orderedDateList = list()
         self.orderedEventList = list()
-
-
-class FastNgramMemSpace(NGramMemorySpace):
-
-    def __init__(self, dates=[], states=[],
-                 label_type=Events.AbstractLabel, contents_type=Events.AbstractContents,
-                 event_type=Events.AbstractEvent):
-        super(FastNgramMemSpace, self).__init__(dates, states, label_type, contents_type, event_type)
-        self.ngram_map = np.ndarray([])
-
-    def read(self, filez, timing='relative'):
-        NGramMemorySpace.read(self, filez, timing)
-        self.restructure_ngram()
-
-    def restructure_ngram(self):
-        num_states = sum([len(state) for state in self.subsequences.values()])  # TODO: Missing 2 (should be 68)?
-        print('\033[92m', "Num States are", num_states, '\033[0m')
-        valid_transforms = []
-        for t in self.transforms:
-            valid_transforms.extend(t.get_transformation_patterns())
-
-        num_transforms = len(valid_transforms)
-        self.ngram_map = np.zeros((num_states * num_transforms, self.ngram_size + 1))
-        i = 0
-        print('\033[91m', valid_transforms, '\033[0m')
-        for transform in valid_transforms:
-            # Temporary shift, as original class does not allow shifting the comparison material.
-            #   Not necessary for symmetrical transposes.
-            # transform.semitone = -transform.semitone  # Not applicable for NoTransform
-            for labels, states in self.subsequences.iteritems():
-                pattern = tuple(transform.encode(l).label for l in labels)
-                # Note:  Not generalized: only constructed to handle Melodic labels
-                for state in states:
-                    row = np.append(pattern, state)
-                    self.ngram_map[i, :] = row
-                    i += 1
-
-    def influence(self, data, **kwargs):
-        event = self.build_event(*data, **kwargs)
-        self.buffer.append(event.get_label())
-        transforms = []
-        peaks = []
-        valid_transforms = self.transforms  # getting appropriate transformations
-        for Transform in valid_transforms:
-            transforms.extend(Transform.get_transformation_patterns())
-        if len(self.buffer) >= self.ngram_size:
-            raw_notes = [label.label for label in self.buffer]
-            c = (self.ngram_map[:, :self.ngram_size] == raw_notes).all(axis=1).nonzero()
-            print(c)
-            if not c:
-                for state in c:
-                    peaks.append(tuple([self.orderedDateList[int(state)], 1.0, NoTransform()]))
-                    # peaks.append(tuple([self.orderedDateList[int(state)], 1.0, deepcopy(transform)]))
-        print(peaks)
-        return peaks

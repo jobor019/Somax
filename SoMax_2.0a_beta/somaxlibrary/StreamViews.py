@@ -8,6 +8,8 @@ import logging
 from functools import reduce
 
 from somaxlibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
+from somaxlibrary.Contents import AbstractContents
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MergeActions import DistanceMergeAction
 from somaxlibrary.Tools import SequencedList
 
@@ -39,8 +41,8 @@ class StreamView(object):
     def __repr__(self):
         return "Stream view called {0} with atoms {1}".format(self.name, self.atoms)
 
-    def create_atom(self, path="atom", weight=1.0, label_type=Events.AbstractLabel,
-                    contents_type=Events.AbstractContents, event_type=Events.AbstractEvent,
+    def create_atom(self, path="atom", weight=1.0, label_type=AbstractLabel,
+                    contents_type=AbstractContents, event_type=Events.AbstractEvent,
                     activity_type=ActivityPatterns.ClassicActivityPattern, memory_type=MemorySpaces.NGramMemorySpace,
                     memory_file=None):
         '''creating an atom at required path'''
