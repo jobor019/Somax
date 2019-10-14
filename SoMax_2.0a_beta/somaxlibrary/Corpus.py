@@ -1,50 +1,13 @@
 import json
-from typing import Any, Dict
+import logging
+from typing import Dict, TypeVar
 
 from somaxlibrary import Contents
 from somaxlibrary.Contents import AbstractContents
-from somaxlibrary.Exceptions import InvalidJsonFormat
-from somaxlibrary.Labels import HarmonicLabel, MelodicLabel
+from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Exceptions import InvalidJsonFormat, InvalidLabelInput
+from somaxlibrary.ProperLabels import ProperAbstractLabel
 from somaxlibrary.Tools import SequencedList
-
-
-class Note:
-    def __init__(self, pitch: int, velocity: int, channel: int, relative_onset: float, relative_duration: float):
-        self.pitch: int = pitch
-        self.velocity: int = velocity
-        self.channel: int = channel
-        self.onset: float = relative_onset  # in relation to CorpusEvent onset
-        self.duration: float = relative_duration
-
-    def __repr__(self):
-        return f"Note object with pitch {self.pitch}"
-
-
-class CorpusState:
-    def __init__(self, state_index, tempo, absolute_onset, absolute_duration, chroma, pitch, notes: [{str: Any}],
-                 timing_type: str):
-        self.state_index: int = state_index
-        self.tempo: float = tempo
-        self.onset: float = absolute_onset
-        self.duration: float = absolute_duration
-        self.chroma: [float] = chroma
-        self.harmonic_label: HarmonicLabel = HarmonicLabel()
-        self.melodic_label: MelodicLabel = MelodicLabel()
-        self.pitch: int = pitch
-        self.notes: [Note] = self._parse_notes(notes, timing_type)
-
-
-    def __repr__(self):
-        return f"CorpusState object with pitch {self.pitch}, chroma {self.chroma} and {len(self.notes)} note(s)"
-
-    @staticmethod
-    def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
-        parsed_notes: [Note] = []
-        for note in notes:
-            n = Note(note["pitch"], note["velocity"], note["channel"], note["time"][timing_type][0],
-                     note[timing_type][1])
-            parsed_notes.append(n)
-        return parsed_notes
 
 
 class Corpus:
@@ -55,7 +18,8 @@ class Corpus:
         :param filepath:
         :param timing_type: "relative" or "absolute"
         """
-        self.events: SequencedList[float, CorpusState] = SequencedList()
+        self.logger = logging.getLogger(__name__)
+        self.events: SequencedList[float, CorpusEvent] = SequencedList()
         self.content_type: AbstractContents = None
 
         if filepath:
@@ -79,15 +43,21 @@ class Corpus:
 
         events = corpus_data["data"]
         self.events = self._parse_events(events, timing_type)
+        self._classify_events()
 
     @staticmethod
-    def _parse_events(events: [Dict], timing_type: str) -> [CorpusState]:
-        parsed_events: SequencedList[float, CorpusState] = SequencedList()
+    def _parse_events(events: [Dict], timing_type: str) -> [CorpusEvent]:
+        parsed_events: SequencedList[float, CorpusEvent] = SequencedList()
         for event in events:
-            c = CorpusState(event["state"], event["tempo"], event["time"][timing_type][0],
-                            event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"])
+            c = CorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
+                            event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"], timing_type)
             parsed_events.append(event["time"][timing_type], c)
         return parsed_events
+
+    def _classify_events(self):
+            valid_label_classes: [(str, TypeVar)] = ProperAbstractLabel.label_classes()
+            for _time, event in self.events:
+                event.classify(valid_label_classes)
 
     def reset(self):
         self.events = SequencedList()

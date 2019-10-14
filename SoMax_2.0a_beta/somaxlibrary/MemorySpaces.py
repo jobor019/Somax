@@ -42,9 +42,8 @@ class AbstractMemorySpace(ABC):
         # print "here, the memory influences its internal state and returns activity peaks"
         return [], []  # returns dates and activities
 
-    def _match(self, event: AbstractLabel) -> ????:
-
-    def
+    def _match(self, event: AbstractLabel) -> None:  # TODO: specify type!!!
+        pass
 
     def is_available(self):
         return bool(self.available)
