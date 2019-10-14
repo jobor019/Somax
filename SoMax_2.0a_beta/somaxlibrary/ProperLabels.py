@@ -36,7 +36,6 @@ class ProperAbstractLabel(ABC):
 class ProperMelodicLabel(ProperAbstractLabel):
     MAX_LABEL = 140
 
-    # TODO WARNING: CIRCULAR DEPENDENCY FROM CorpusState
     @staticmethod
     def classify(data: Union[int, CorpusEvent], mod12: bool = False) -> int:
         if isinstance(data, CorpusEvent):

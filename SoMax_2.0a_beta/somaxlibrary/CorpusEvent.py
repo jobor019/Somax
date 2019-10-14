@@ -28,7 +28,7 @@ class CorpusEvent:
         self.chroma: [float] = chroma
         self.pitch: int = pitch
         self.notes: [Note] = self._parse_notes(notes, timing_type)
-        self.labels: {str: int} = {}
+        self.labels: {TypeVar: int} = {}
 
     @staticmethod
     def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
@@ -40,13 +40,23 @@ class CorpusEvent:
         return parsed_notes
 
     def classify(self, label_classes: [(str, TypeVar)]) -> None:
-        for class_name, label_class in label_classes:
+        for _class_name, label_class in label_classes:
             try:
                 label: int = label_class.classify(self)
             except InvalidLabelInput:
                 self.logger.error(f"Classification failed for label class {label_class} with input {self}.")
                 raise
-            self.labels[class_name] = label
+            self.labels[label_class] = label
+
+    def get_label(self, label_type: TypeVar) -> int:
+        # TODO: Update docstring when renaming ProperLabel
+        """Valid keys are any class objects (note: object, not instance) existing in ProperLabel
+
+        Raises
+        ------
+        KeyError if label is invalid
+        """
+        return self.labels[label_type]
 
     def __repr__(self):
         return f"CorpusEvent object with labels {self.labels}."

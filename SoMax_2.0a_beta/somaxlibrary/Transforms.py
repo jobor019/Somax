@@ -1,5 +1,6 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from copy import deepcopy
+from typing import Any
 
 from numpy import roll
 
@@ -9,21 +10,44 @@ from somaxlibrary import Events
 
 
 # TODO: Implement this for readability
-class Transform(ABC):
-    pass
 
 
-class NoTransform(object):
+class AbstractTransform(ABC):
     def __init__(self):
-        self.admitted_types = [Events.AbstractLabel, Events.AbstractContents]  # dictionary of admitted label classes
+        pass
+
+    @abstractmethod
+    def encode(self, obj: Any) -> Any:
+        pass
+
+    @abstractmethod
+    def decode(self, obj: Any) -> Any:
+        pass
+
+
+class NoTransform(AbstractTransform):
+    def __init__(self):
+        super(NoTransform, self).__init__()
+        # TODO: Clean this up
+        # self.admitted_types = [Events.AbstractLabel, Events.AbstractContents]  # dictionary of admitted label classes
 
     def __repr__(self):
         return "No Transformation"
 
     def encode(self, thing):
+        """
+        Raises
+        ------
+        TransformError: TODO
+        """
         return thing
 
     def decode(self, thing):
+        """
+        Raises
+        ------
+        TransformError: TODO
+        """
         return thing
 
     def __eq__(self, a):

@@ -7,7 +7,7 @@ import logging
 from somaxlibrary import Events, ActivityPatterns, MemorySpaces
 from somaxlibrary.Contents import AbstractContents
 from somaxlibrary.Labels import AbstractLabel
-from somaxlibrary.Transforms import Transform
+from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
@@ -66,7 +66,7 @@ class Atom(object):
 
     # influences the memory with incoming data
     def influence(self, time, *data, **kwargs):
-        peaks: [(float, float, Transform)] = self.memorySpace.influence(data, **kwargs)  # we get the activity peaks created by influence
+        peaks: [(float, float, AbstractTransform)] = self.memorySpace.influence(data, **kwargs)  # we get the activity peaks created by influence
         if peaks:
             self.activityPattern.update_activity(time)  # we update the activity profile to the current time
             self.activityPattern.insert(*peaks)  # we insert the peaks into the activity profile
