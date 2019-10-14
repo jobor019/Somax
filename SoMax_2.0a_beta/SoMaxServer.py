@@ -12,6 +12,7 @@ from pythonosc.udp_client import SimpleUDPClient
 
 import somaxlibrary as sm
 from somaxlibrary import MemorySpaces, ActivityPatterns, Events
+from somaxlibrary.Contents import AbstractContents
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.DictClasses import PlayerDict
 from somaxlibrary.MergeActions import DistanceMergeAction
@@ -79,7 +80,7 @@ class SoMaxServer:
         """starts the scheduler and triggers first event if in automatic mode"""
         self.scheduler.start(-self.scheduler.get_pretime())
         for name, player in self.players.items():
-            player['player'].reset(self.scheduler.time)
+            player['player']._reset(self.scheduler.time)
             if player['triggering'] == "automatic":
                 self.process_intern_event(('ask_for_event', name, 0))
 
@@ -247,7 +248,7 @@ class SoMaxServer:
         self.players[player]['player'].create_streamview(name, weight, merge_actions)
 
     def create_atom(self, player, name, weight=1.0, label_type=Events.AbstractLabel,
-                    contents_type=Events.AbstractContents,
+                    contents_type=AbstractContents,
                     event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                     memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         self.logger.debug("[create_atom] called for player {0}.".format(player))

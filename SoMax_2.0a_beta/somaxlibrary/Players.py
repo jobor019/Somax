@@ -5,9 +5,6 @@ import os
 import random
 import re
 from collections import deque
-
-
-
 ###############################################################################
 # Player is the main generation unit in SoMax.
 # it is roughly composed by three different parts :
@@ -18,11 +15,13 @@ from collections import deque
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
 
+from pythonosc.udp_client import SimpleUDPClient
+
 from somaxlibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
 from somaxlibrary.Contents import AbstractContents
+from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
-from pythonosc.udp_client import SimpleUDPClient
 
 
 class Player(object):
@@ -51,6 +50,8 @@ class Player(object):
         self.client = SimpleUDPClient("127.0.0.1", out_port)
         self.out_port = out_port
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
+
+        self.corpus: Corpus = Corpus()
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
@@ -128,7 +129,7 @@ class Player(object):
             self.logger.debug("[influence] Completed successfully.")
         else:
             self.logger.error("Call to influence failed: Player {} does not have a streamview with name {}."
-                                .format(self.name, pf))
+                              .format(self.name, pf))
 
     def jump(self):
         self.logger.debug("[jump] Jump set to True.")
@@ -154,7 +155,7 @@ class Player(object):
             path_bottom = reduce(lambda x, y: x + ":" + y, path_splitted[1:])
             if path in self.streamviews:
                 self.logger.error("A streamview with the name {} already exists in player {}"
-                                    .format(path, self.name))
+                                  .format(path, self.name))
             else:
                 self.streamviews[path].create_streamview(path_bottom, weight, merge_actions=merge_actions)
                 self.logger.info("Streamview {0} created.".format(name))
@@ -192,21 +193,22 @@ class Player(object):
         self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
         self.send_info_dict()
 
-    def read_file(self, path, filez):
-        '''tells target atom to read corresponding file.'''
-        # read commands to a streamview diffuses to every child of this streamview
+    def read_file(self, filepath: str, path: str = None):
+        """ raises: OSError # TODO: Major cleanup on OSChandling"""
+        self.corpus.read_file(filepath)
+
         if path == None:
             for n, s in self.streamviews.items():
-                s.read(None, filez)
-            self.current_streamview.read(None, filez)
+                s.read(None, self.corpus)
+            self.current_streamview.read(None, self.corpus)
         elif path == "_self":
-            self.current_streamview.read("_self", filez)
+            self.current_streamview.read("_self", self.corpus)
         else:
             path_head, path_follow = Tools.parse_path(path)
             if path_head in self.streamviews.keys():
-                self.streamviews[path_head].read(path_follow, filez)
+                self.streamviews[path_head].read(path_follow, self.corpus)
                 if path == self.current_atom:
-                    self.current_streamview.atoms["_self"].read(filez)
+                    self.current_streamview.atoms["_self"].read(self.corpus)
             else:
                 self.logger.warning("Failed to read file. Streamview {0} does not exist.".format(path))
                 return
@@ -214,7 +216,7 @@ class Player(object):
         if self.current_atom == path:
             if self.streamviews:
                 # TODO: Not sure what this is intended to do. Never reached apart from exception, self.streamviews.atoms is not a valid path
-                self.streamviews.atoms["_self"].read(filez)
+                self.streamviews.atoms["_self"].read(self.corpus)
             else:
                 self.logger.warning("Failed to read file. No streamview has been created.")
                 return
@@ -293,7 +295,7 @@ class Player(object):
         self.improvisation_memory = deque('', self.max_history_len)
         self.current_streamview.reset(time)
         for s in self.streamviews.keys():
-            self.streamviews[s].reset(time)
+            self.streamviews[s]._reset(time)
 
     def get_weights_sum(self):
         '''getting sum of subweights'''

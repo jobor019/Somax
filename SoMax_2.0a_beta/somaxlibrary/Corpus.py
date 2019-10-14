@@ -12,7 +12,9 @@ from somaxlibrary.Tools import SequencedList
 
 class Corpus:
 
-    def __init__(self, filepath: str = None, timing_type: str = "relative"):
+    DEFAULT_TIMING = "relative"
+
+    def __init__(self, filepath: str = None, timing_type: str = DEFAULT_TIMING):
         """
         # TODO
         :param filepath:
@@ -28,7 +30,8 @@ class Corpus:
     def __repr__(self):
         return f"Corpus object with content type {self.content_type} and {len(self.ordered_events)} states"
 
-    def read_file(self, filepath: str, timing_type: str):
+    def read_file(self, filepath: str, timing_type: str = DEFAULT_TIMING):
+        """" Raises: OSError """
         self.reset()
         with open(filepath, 'r') as jfile:
             corpus_data = json.load(jfile)
