@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from somaxlibrary.Events import AbstractEvent
+from somaxlibrary.DeprecatedEvents import AbstractEvent
 from somaxlibrary.Transforms import TransposeTransform, NoTransform
 
 

@@ -1,7 +1,7 @@
 import inspect
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Union, List, TypeVar
+from typing import Any, Union, List, ClassVar
 
 import numpy as np
 
@@ -26,7 +26,7 @@ class ProperAbstractLabel(ABC):
         pass
 
     @staticmethod
-    def label_classes() -> [(str, TypeVar)]:
+    def label_classes() -> [(str, ClassVar)]:
         """Returns class objects for all non-abstract classes in this module."""
         return inspect.getmembers(sys.modules[__name__],
                                   lambda member: inspect.isclass(member) and not inspect.isabstract(

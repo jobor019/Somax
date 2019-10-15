@@ -1,9 +1,9 @@
 import json
 import logging
-from typing import Dict, TypeVar
+from typing import Dict, ClassVar
 
-from somaxlibrary import Contents
-from somaxlibrary.Contents import AbstractContents
+from somaxlibrary import DeprecatedContents
+from somaxlibrary.DeprecatedContents import AbstractContents
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidJsonFormat
 from somaxlibrary.ProperLabels import ProperAbstractLabel
@@ -38,9 +38,9 @@ class Corpus:
 
         type_id: str = corpus_data["typeID"]
         if type_id == "MIDI":
-            self.content_type = Contents.ClassicMIDIContents
+            self.content_type = DeprecatedContents.ClassicMIDIContents
         elif type_id == "Audio":
-            self.content_type = Contents.ClassicAudioContents
+            self.content_type = DeprecatedContents.ClassicAudioContents
         else:
             raise InvalidJsonFormat("Json file must have a typeID set to either 'MIDI' or 'Audio'")
 
@@ -58,7 +58,7 @@ class Corpus:
         return parsed_events
 
     def _classify_events(self):
-        valid_label_classes: [(str, TypeVar)] = ProperAbstractLabel.label_classes()
+        valid_label_classes: [(str, ClassVar[ProperAbstractLabel])] = ProperAbstractLabel.label_classes()
         for _time, event in self.ordered_events:
             event.classify(valid_label_classes)
 

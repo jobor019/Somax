@@ -11,8 +11,8 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 import somaxlibrary as sm
-from somaxlibrary import MemorySpaces, ActivityPatterns, Events
-from somaxlibrary.Contents import AbstractContents
+from somaxlibrary import MemorySpaces, ActivityPatterns, DeprecatedEvents
+from somaxlibrary.DeprecatedContents import AbstractContents
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.DictClasses import PlayerDict
 from somaxlibrary.MergeActions import DistanceMergeAction
@@ -247,9 +247,9 @@ class SoMaxServer:
                           .format(player, name, weight, merge_actions))
         self.players[player]['player'].create_streamview(name, weight, merge_actions)
 
-    def create_atom(self, player, name, weight=1.0, label_type=Events.AbstractLabel,
+    def create_atom(self, player, name, weight=1.0, label_type=DeprecatedEvents.AbstractLabel,
                     contents_type=AbstractContents,
-                    event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
+                    event_type=DeprecatedEvents.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
                     memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
         self.logger.debug("[create_atom] called for player {0}.".format(player))
         self.players[player]['player'].create_atom(name, weight, label_type, contents_type, event_type, activity_type,

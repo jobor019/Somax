@@ -1,17 +1,17 @@
 import logging
-
-
-
 # The StreamView object is a container that manages several atoms, whose activity
 #   patterns are taken and then mixed. This is mainly motivated to modulate the diverse
 #   activity patterns depending on the transformations.
+from copy import deepcopy
 from functools import reduce
 
-from somaxlibrary import Events, ActivityPatterns, MemorySpaces, Atom, Tools
-from somaxlibrary.Contents import AbstractContents
+from somaxlibrary import Atom, Tools
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.DeprecatedContents import AbstractContents
+from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction
+from somaxlibrary.ProperLabels import ProperMelodicLabel
 from somaxlibrary.Tools import SequencedList
 
 
@@ -42,10 +42,8 @@ class StreamView(object):
     def __repr__(self):
         return "Stream view called {0} with atoms {1}".format(self.name, self.atoms)
 
-    def create_atom(self, path="atom", weight=1.0, label_type=AbstractLabel,
-                    contents_type=AbstractContents, event_type=Events.AbstractEvent,
-                    activity_type=ActivityPatterns.ClassicActivityPattern, memory_type=MemorySpaces.NGramMemorySpace,
-                    memory_file=None):
+    def create_atom(self, path="atom", weight=1.0, label_type=ProperMelodicLabel, contents_type=AbstractContents,
+                    activity_type=ClassicActivityPattern, memory_type=NGramMemorySpace, corpus=None):
         '''creating an atom at required path'''
         self.logger.debug("[create_atom] Attempting to create atom from path {}.".format(path))
         atom = None
@@ -60,8 +58,7 @@ class StreamView(object):
             if path in self.atoms:
                 self.logger.error("Atom {0} already existing in {1}".format(path, self.name))
             else:
-                atom = Atom.Atom(path, weight, label_type, contents_type, event_type, activity_type, memory_type,
-                                 memory_file)
+                atom = Atom.Atom(path, weight, label_type, activity_type, memory_type, corpus)
                 self.atoms[path] = atom
         return atom
 
@@ -86,7 +83,10 @@ class StreamView(object):
             if not replace:
                 raise Exception("{0} already exists in {1}".format(atom.name, self.name))
         if copy:
-            self.atoms[name] = atom.copy(name)
+            # TODO: Why? ~~~
+            new_atom: Atom = deepcopy(atom)
+            new_atom.name = name
+            self.atoms[name] = new_atom
         else:
             self.atoms[name] = atom
 
@@ -126,7 +126,8 @@ class StreamView(object):
 
     def read(self, path: str, corpus: Corpus):
         '''read all sub-atoms with data'''
-        self.logger.debug("[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, corpus))
+        self.logger.debug(
+            "[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, corpus))
         if path == None:
             for n, a in self.atoms.items():
                 if issubclass(type(a), Atom.Atom):
@@ -196,4 +197,3 @@ class StreamView(object):
     def reset(self, time):
         for f in self.atoms.values():
             f._reset(time)
-

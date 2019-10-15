@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar
+from typing import Any, ClassVar
 
 from somaxlibrary.Exceptions import InvalidLabelInput
 
@@ -28,7 +28,7 @@ class CorpusEvent:
         self.chroma: [float] = chroma
         self.pitch: int = pitch
         self.notes: [Note] = self._parse_notes(notes, timing_type)
-        self.labels: {TypeVar: int} = {}
+        self.labels: {ClassVar: int} = {}  # Classvar[ProperAbstractLabel] TODO Rename
 
     @staticmethod
     def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
@@ -39,7 +39,7 @@ class CorpusEvent:
             parsed_notes.append(n)
         return parsed_notes
 
-    def classify(self, label_classes: [(str, TypeVar)]) -> None:
+    def classify(self, label_classes: [(str, ClassVar)]) -> None:
         for _class_name, label_class in label_classes:
             try:
                 label: int = label_class.classify(self)
@@ -48,7 +48,7 @@ class CorpusEvent:
                 raise
             self.labels[label_class] = label
 
-    def get_label(self, label_type: TypeVar) -> int:
+    def get_label(self, label_type: ClassVar) -> int:
         # TODO: Update docstring when renaming ProperLabel
         """Valid keys are any class objects (note: object, not instance) existing in ProperLabel
 

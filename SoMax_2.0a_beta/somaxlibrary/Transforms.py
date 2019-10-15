@@ -6,7 +6,7 @@ from numpy import roll
 
 # abstract class that represents identity, only if the class of the object
 #       is in the transformation catalog
-from somaxlibrary import Events
+from somaxlibrary import DeprecatedEvents
 
 
 # TODO: Implement this for readability
@@ -68,8 +68,8 @@ class TransposeTransform(NoTransform):
     def __init__(self, semitone, mod12=True):
         self.semitone = semitone
         self.mod12 = True
-        self.admitted_types = [Events.MelodicLabel, Events.HarmonicLabel, Events.ClassicMIDIContents,
-                               Events.ClassicAudioContents]
+        self.admitted_types = [DeprecatedEvents.MelodicLabel, DeprecatedEvents.HarmonicLabel, DeprecatedEvents.ClassicMIDIContents,
+                               DeprecatedEvents.ClassicAudioContents]
 
     def __repr__(self):
         return "Transposition of " + str(self.semitone) + " semi-tones"
@@ -78,24 +78,24 @@ class TransposeTransform(NoTransform):
         return 'TransposeTransform'
 
     def encode(self, thing):
-        if isinstance(thing, Events.AbstractEvent):
+        if isinstance(thing, DeprecatedEvents.AbstractEvent):
             new_thing = deepcopy(thing)
             new_thing.label = self.encode(new_thing.label)
             new_thing.contents = self.encode(new_thing.contents)
             return new_thing
-        if type(thing) is Events.MelodicLabel:
+        if type(thing) is DeprecatedEvents.MelodicLabel:
             new_label = deepcopy(thing)
             new_label.label += self.semitone  # pas precis : rajouter les bornes et les accords
             return new_label
-        elif type(thing) is Events.HarmonicLabel:
+        elif type(thing) is DeprecatedEvents.HarmonicLabel:
             chromas = list(thing.chroma)
-            new_label = Events.HarmonicLabel(roll(thing.chroma, self.semitone))
-        elif type(thing) is Events.ClassicMIDIContents:
+            new_label = DeprecatedEvents.HarmonicLabel(roll(thing.chroma, self.semitone))
+        elif type(thing) is DeprecatedEvents.ClassicMIDIContents:
             new_content = deepcopy(thing)
             for u in new_content.contents["notes"]:
                 u["pitch"] += float(self.semitone)
             return new_content
-        elif type(thing) is Events.ClassicAudioContents:
+        elif type(thing) is DeprecatedEvents.ClassicAudioContents:
             new_content = deepcopy(thing)
             new_content.transpose += float(self.semitone * 100.0)
             return new_content
@@ -103,24 +103,24 @@ class TransposeTransform(NoTransform):
             raise TransformError(thing, self)
 
     def decode(self, thing):
-        if isinstance(thing, Events.AbstractEvent):
+        if isinstance(thing, DeprecatedEvents.AbstractEvent):
             new_thing = deepcopy(thing)
             new_thing.label = self.decode(new_thing.label)
             new_thing.contents = self.decode(new_thing.contents)
             return new_thing
-        if type(thing) is Events.MelodicLabel:
+        if type(thing) is DeprecatedEvents.MelodicLabel:
             new_label = deepcopy(thing)
             new_label.label -= self.semitone  # pas precis : rajouter les bornes et les accords
             return new_label
-        elif type(thing) is Events.HarmonicLabel:
+        elif type(thing) is DeprecatedEvents.HarmonicLabel:
             chromas = list(thing.chroma)
-            new_label = Events.HarmonicLabel(roll(thing.chroma, -self.semitone))
-        elif type(thing) is Events.ClassicMIDIContents:
+            new_label = DeprecatedEvents.HarmonicLabel(roll(thing.chroma, -self.semitone))
+        elif type(thing) is DeprecatedEvents.ClassicMIDIContents:
             new_content = deepcopy(thing)
             for u in new_content.contents["notes"]:
                 u["pitch"] -= float(self.semitone)
             return new_content
-        elif type(thing) is Events.ClassicAudioContents:
+        elif type(thing) is DeprecatedEvents.ClassicAudioContents:
             new_content = deepcopy(thing)
             new_content.transpose -= float(self.semitone * 100)
             return new_content

@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.DeprecatedLabels import AbstractLabel
 
 
 ###############################################################################

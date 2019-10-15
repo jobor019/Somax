@@ -14,14 +14,16 @@ from collections import deque
 #           given a set of activity profiles
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
+from typing import ClassVar
 
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary import StreamViews, Transforms, Tools, Events, ActivityPatterns, MemorySpaces
-from somaxlibrary.Contents import AbstractContents
+from somaxlibrary import StreamViews, Transforms, Tools, MemorySpaces
+from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary.ProperLabels import ProperMelodicLabel
 
 
 class Player(object):
@@ -159,11 +161,12 @@ class Player(object):
             else:
                 self.streamviews[path].create_streamview(path_bottom, weight, merge_actions=merge_actions)
                 self.logger.info("Streamview {0} created.".format(name))
-        self.send_info_dict()
+        # TODO: Temporarily removed
+        # self.send_info_dict()
 
-    def create_atom(self, name, weight=1.0, label_type=AbstractLabel, contents_type=AbstractContents,
-                    event_type=Events.AbstractEvent, activity_type=ActivityPatterns.ClassicActivityPattern,
-                    memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
+    def create_atom(self, name, weight=1.0, label_type: ClassVar[AbstractMemorySpace] = ProperMelodicLabel,
+                    activity_type: ClassVar[AbstractActivityPattern] = ClassicActivityPattern,
+                    memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace, corpus: Corpus = None):
         '''creates atom at target path'''
         self.logger.debug("[create_atom] Attempting to create atom {}.".format(name))
         if ":" not in name:
@@ -173,14 +176,14 @@ class Player(object):
         if path not in self.streamviews:
             self.logger.error("Unable to create atom. Streamview {} does not exist.".format(path))
             return
-        atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, contents_type, event_type,
-                                                  activity_type, memory_type, memory_file)
+        atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, activity_type, memory_type, corpus)
         if "_self" not in self.current_streamview.atoms or name == self.current_atom:
             self.set_active_atom(name)
             self.current_atom = name
         if atom:
             self.logger.info("Created atom {}.".format(name))
-            self.send_info_dict()
+            # TODO: Temp removed
+            # self.send_info_dict()
 
     def delete_atom(self, name):
         '''deletes target atom'''
@@ -220,8 +223,9 @@ class Player(object):
             else:
                 self.logger.warning("Failed to read file. No streamview has been created.")
                 return
-        self.update_memory_length()
-        self.send_info_dict()
+        # TODO: Temp removed
+        # self.update_memory_length()
+        # self.send_info_dict()
 
     def set_active_atom(self, name):
         '''set private atom of the player to target'''
@@ -242,12 +246,15 @@ class Player(object):
                 former_atom = self.streamviews[path].get_atom(path_bottom)
                 former_atom.active = False
         self.current_atom = name
-        if issubclass(atom.memorySpace.contents_type, Events.ClassicAudioContents):
-            self.send_buffer(atom)
+        # TODO: Temp removed
+        # if issubclass(atom.memorySpace.contents_type, Events.ClassicAudioContents):
+        #     self.send_buffer(atom)
         atom.active = True
         self.logger.info("Player {0} setting active atom to {1}.".format(self.name, name))
-        self.update_memory_length()
-        self.send_info_dict()
+        # TODO: Temp removed
+        # self.update_memory_length()
+
+        # self.send_info_dict()
 
     ######################################################
     ###### ACTIVITIES ACCESSORS
@@ -352,49 +359,49 @@ class Player(object):
     def set_nextstate_mod(self, ns):
         self.nextstate_mod = ns
 
-    def update_memory_length(self):
-        '''sending active memory length'''
-        atom = self.current_streamview.atoms["_self"]
-        if len(atom.memorySpace) > 0:
-            lastEvent = atom.memorySpace[-1][1]
-            length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
-            self.send(length, "/memory_length")
+    # def update_memory_length(self):
+    #     '''sending active memory length'''
+    #     atom = self.current_streamview.atoms["_self"]
+    #     if len(atom.memorySpace) > 0:
+    #         lastEvent = atom.memorySpace[-1][1]
+    #         length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
+    #         self.send(length, "/memory_length")
 
-    def get_info_dict(self):
-        '''returns the dictionary containing all information of the player'''
-        infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
-        try:
-            infodict["current_file"] = str(self.current_streamview.atoms["_self"].current_file)
-        except:
-            pass
-        infodict["streamviews"] = dict()
-        for s, v in self.streamviews.items():
-            infodict["streamviews"][s] = v.get_info_dict()
-            infodict["current_atom"] = self.current_atom
-        infodict["current_streamview"] = self.current_streamview.get_info_dict()
-        if self.current_streamview.atoms != dict():
-            if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
-                self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
-                infodict["current_streamview"]["length_beat"] = \
-                    self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
-                infodict["current_streamview"]["length_time"] = \
-                    self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
-        infodict["subweights"] = self.get_normalized_subweights()
-        infodict["nextstate_mod"] = self.nextstate_mod
-        infodict["phase_selectivity"] = self.merge_actions[1].selectivity
-        infodict["triggering_mode"] = self.scheduler.triggers[self.name]
-        return infodict
+    # def get_info_dict(self):
+    #     '''returns the dictionary containing all information of the player'''
+    #     infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
+    #     try:
+    #         infodict["current_file"] = str(self.current_streamview.atoms["_self"].current_file)
+    #     except:
+    #         pass
+    #     infodict["streamviews"] = dict()
+    #     for s, v in self.streamviews.items():
+    #         infodict["streamviews"][s] = v.get_info_dict()
+    #         infodict["current_atom"] = self.current_atom
+    #     infodict["current_streamview"] = self.current_streamview.get_info_dict()
+    #     if self.current_streamview.atoms != dict():
+    #         if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
+    #             self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
+    #             infodict["current_streamview"]["length_beat"] = \
+    #                 self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
+    #             infodict["current_streamview"]["length_time"] = \
+    #                 self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
+    #     infodict["subweights"] = self.get_normalized_subweights()
+    #     infodict["nextstate_mod"] = self.nextstate_mod
+    #     infodict["phase_selectivity"] = self.merge_actions[1].selectivity
+    #     infodict["triggering_mode"] = self.scheduler.triggers[self.name]
+    #     return infodict
 
-    def send_info_dict(self):
-        '''sending the info dictionary of the player'''
-        infodict = self.get_info_dict()
-        str_dic = Tools.dic_to_strout(infodict)
-        self.send("clear", "/infodict")
-        self.send(self.streamviews.keys(), "/streamviews")
-        for s in str_dic:
-            self.send(s, "/infodict")
-        self.send(self.name, "/infodict-update")
-        self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
+    # def send_info_dict(self):
+    #     '''sending the info dictionary of the player'''
+    #     infodict = self.get_info_dict()
+    #     str_dic = Tools.dic_to_strout(infodict)
+    #     self.send("clear", "/infodict")
+    #     self.send(self.streamviews.keys(), "/streamviews")
+    #     for s in str_dic:
+    #         self.send(s, "/infodict")
+    #     self.send(self.name, "/infodict-update")
+    #     self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
 
     def set_weight(self, streamview: str, weight: float):
         '''setting the weight at target path'''

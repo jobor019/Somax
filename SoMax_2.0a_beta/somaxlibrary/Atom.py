@@ -1,27 +1,27 @@
 import logging
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
-from typing import TypeVar
+from typing import ClassVar
 
-from somaxlibrary import ActivityPatterns, MemorySpaces
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern
+from somaxlibrary import MemorySpaces
+from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.ProperLabels import ProperAbstractLabel
+from somaxlibrary.ProperLabels import ProperMelodicLabel, ProperAbstractLabel
 from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
-    def __init__(self, name: str = "atom", weight: float = 1.0, label_type: TypeVar = ProperAbstractLabel,
-                 activity_type: TypeVar = ActivityPatterns.ClassicActivityPattern,
-                 memory_type: TypeVar = MemorySpaces.NGramMemorySpace, corpus: Corpus = None):
+    def __init__(self, name: str = "atom", weight: float = 1.0,
+                 label_type: ClassVar[ProperAbstractLabel] = ProperMelodicLabel,
+                 activity_type: ClassVar[AbstractActivityPattern] = ClassicActivityPattern,
+                 memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace, corpus: Corpus = None):
         self.logger = logging.getLogger(__name__)
         # self.logger.debug("[__init__ Creating atom {} with weight {}, label_type {}, content_type {}, event_type {}, "
         #                   "activity_type {} and memory_type {}."
         #                   .format(name, weight, label_type, contents_type, event_type, activity_type, memory_type))
         self.weight: float = weight
-
-        self.activityPattern: AbstractActivityPattern = activity_type()  # creates activity
+        self.activity_pattern: AbstractActivityPattern = activity_type()  # creates activity
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type)
         self.name = name
         self.active = False
@@ -32,7 +32,7 @@ class Atom(object):
     #     return "Atom with {0} and {1}".format(type(self.activityPattern), type(self.memory_space))
 
     # Tells the memory space to load the file filez
-    def read(self, corpus, label_type=ProperAbstractLabel):
+    def read(self, corpus, label_type=ClassVar[ProperMelodicLabel]):
         # if memory_type != None:
         #     if different memory type, create a new memory space
         # memory_class = getattr(MemorySpaces, memory_type)
@@ -55,16 +55,16 @@ class Atom(object):
 
     # influences the memory with incoming data
     def influence(self, time, *data, **kwargs):
-        peaks: [(float, float, AbstractTransform)] = self.memory_space.influence(data,
-                                                                                 **kwargs)  # we get the activity peaks created by influence
+        # we get the activity peaks created by influence
+        peaks: [(float, float, AbstractTransform)] = self.memory_space.influence(*data, **kwargs)
         if peaks:
-            self.activityPattern.update_activity(time)  # we update the activity profile to the current time
-            self.activityPattern.insert(*peaks)  # we insert the peaks into the activity profile
+            self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
+            self.activity_pattern.insert(*peaks)  # we insert the peaks into the activity profile
 
     # external method to get back atom's activity
     def get_activity(self, date, weighted=True):
         w = self.weight if weighted else 1.0
-        activity = self.activityPattern.get_activity(date)
+        activity = self.activity_pattern.get_activity(date)
         # returns weighted activity
         return activity.mul(w, 0)
 
@@ -106,4 +106,4 @@ class Atom(object):
     #     return self.activityPattern.isAvailable() and self.memory_space.is_available()
 
     def reset(self, time):
-        self.activityPattern.reset(time)
+        self.activity_pattern.reset(time)
