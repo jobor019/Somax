@@ -10,8 +10,8 @@ from somaxlibrary import Tools
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.DeprecatedLabels import AbstractLabel
 from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.Tools import SequencedList
 
@@ -110,30 +110,11 @@ class StreamView(object):
                     self._atoms[pf].influence(pr, time, *data, **kwargs)
         self.logger.debug("[influence] Influence in streamview {} terminated successfully.".format(self.name))
 
-    def read(self, path: str, corpus: Corpus):
+    def read(self, corpus: Corpus):
         '''read all sub-atoms with data'''
-        self.logger.debug(
-            "[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, corpus))
-        if path == None:
-            for n, a in self._atoms.items():
-                if issubclass(type(a), Atom.Atom):
-                    a.read(corpus)
-                else:
-                    a.read(None, corpus)
-        else:
-            path, path_follow = Tools.parse_path(path)
-            if path_follow == None:
-                for atom in self.atoms.values():
-                    atom.read(corpus)
-            elif path in self.atoms.keys():
-                if isinstance(self.atoms[path_follow], StreamView):
-                    self.atoms[path_follow].read(path_follow, corpus)
-                else:
-                    self.atoms[path_follow].read(corpus)
-            else:
-                # TODO: Should this actually be an exception - where to catch it if that's the case?
-                #       (should it terminate the entire parent call or just ignore the specific streamview?)
-                raise Exception("Atom or streamview {0} missing!".format(path))
+        self.logger.debug(f"[read] Init read in streamview {self.name} with corpus {corpus}")
+        for atom in self._atoms.values():
+            atom.read(corpus)
 
     def get_activities(self, date, path=None, weighted=True):
         '''get separated activities of children'''

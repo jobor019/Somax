@@ -12,7 +12,7 @@ from IOParser import IOParser
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.Exceptions import InvalidPath
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
@@ -35,7 +35,7 @@ class SoMaxServer(Caller):
     DEFAULT_IP = "127.0.0.1"
     DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
     DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
-    DEFAULT_LABEL_TYPE: ClassVar = None  # TODO
+    DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
     DEFAULT_TRANSFORMS: (ClassVar, ...) = (NoTransform,)
     DEFAULT_TRIGGERING_MODE = "automatic"
     DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
@@ -336,10 +336,11 @@ class SoMaxServer(Caller):
         self.logger.debug("[jump] called for player {0}.".format(player))
         self.players[player].jump()
 
-    def read_file(self, player, path, filez):
+    # TODO: Add path for reading files into specific atoms etc
+    def read_file(self, player: str, filepath: str):
         # TODO: IO Error handling
-        self.logger.debug("[read_file] called for player {0} with path {1} and file {2}.".format(player, path, filez))
-        self.players[player].read_file(path, filez)
+        self.logger.debug(f"[read_file] called for player '{player}' and file '{filepath}'.")
+        self.players[player].read_file(filepath)
 
     def set_self_influence(self, player, si):
         # TODO: IO Error handling

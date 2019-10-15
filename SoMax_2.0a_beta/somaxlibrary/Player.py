@@ -191,33 +191,11 @@ class Player(object):
         self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
         # self.send_info_dict()
 
-    def read_file(self, filepath: str, path: str = None):
+    def read_file(self, filepath: str):
         """ raises: OSError # TODO: Major cleanup on OSChandling"""
-        self.corpus.read_file(filepath)
-
-        if path == None:
-            for n, s in self.streamviews.items():
-                s.read(None, self.corpus)
-            self.current_streamview.read(None, self.corpus)
-        elif path == "_self":
-            self.current_streamview.read("_self", self.corpus)
-        else:
-            path_head, path_follow = Tools.parse_path(path)
-            if path_head in self.streamviews.keys():
-                self.streamviews[path_head].read(path_follow, self.corpus)
-                if path == self.current_atom:
-                    self.current_streamview.atoms["_self"].read(self.corpus)
-            else:
-                self.logger.warning("Failed to read file. Streamview {0} does not exist.".format(path))
-                return
-        # if target atom is current atom, tells private atom to read the file
-        if self.current_atom == path:
-            if self.streamviews:
-                # TODO: Not sure what this is intended to do. Never reached apart from exception, self.streamviews.atoms is not a valid path
-                self.streamviews.atoms["_self"].read(self.corpus)
-            else:
-                self.logger.warning("Failed to read file. No streamview has been created.")
-                return
+        self.corpus = Corpus(filepath)
+        for streamview in self.streamviews.values():
+            streamview.read(self.corpus)
         # TODO: Temp removed
         # self.update_memory_length()
         # self.send_info_dict()
