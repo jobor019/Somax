@@ -11,6 +11,7 @@ from pythonosc.udp_client import SimpleUDPClient
 from IOParser import IOParser
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
+from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
@@ -100,32 +101,41 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.warning(f"Could not parse merge actions from string '{merge_actions}'. Setting to default.")
             merge_actions = self.DEFAULT_MERGE_ACTIONS
-        self.players[player].create_streamview(path_and_name, weight, merge_actions)
+        try:
+            self.players[player].create_streamview(path_and_name, weight, merge_actions)
+        except KeyError:
+            self.logger.error(f"Could not create streamview for player '{player}' at path '{path}'.")
 
     def create_atom(self, player: str, path: str, weight: float = 1.0, label_type: str = "",
-                    activity_type: str = "", memory_type: str = ""):
+                    activity_type: str = "", memory_type: str = "", self_influenced: bool = False):
         self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
 
         try:
             label_type: ClassVar[AbstractLabel] = IOParser.parse_label_type(label_type)
-        except KeyError as e:
-            self.logger.warning(e)
+        except KeyError:
+            self.logger.warning(f"Unable to parse '{label_type}' as a Label Type. Setting to default.")
             label_type = self.DEFAULT_LABEL_TYPE
 
         try:
             activity_type: ClassVar[AbstractActivityPattern] = IOParser.parse_activity_type(activity_type)
-        except KeyError as e:
-            self.logger.warning(e)
+        except KeyError:
+            self.logger.warning(f"Unable to parse '{activity_type}' as an Activity Pattern. Setting to default.")
             activity_type = self.DEFAULT_ACTIVITY_TYPE
 
         try:
-            activity_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
-        except KeyError as e:
-            self.logger.warning(e)
+            memory_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
+        except KeyError:
+            self.logger.warning(f"Unable to parse '{memory_type}' as a MemorySpace. Setting to default.")
             memory_type = self.DEFAULT_MEMORY_TYPE
+        try:
+            self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type, self_influenced)
+        except InvalidPath as e:
+            self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
+        except KeyError:
+            self.logger.error(f"Could not create atom at path {path}. The parent streamview does not exist.")
 
-        self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type)
+
 
     ######################################################
     # PROCESS METHODS
@@ -340,7 +350,6 @@ class SoMaxServer(Caller):
         # TODO: IO Error handling
         self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
         self.players[player].set_weight(streamview, weight)
-
 
     ######################################################
     # CORPUS METHODS

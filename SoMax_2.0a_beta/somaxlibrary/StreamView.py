@@ -17,33 +17,33 @@ from somaxlibrary.Tools import SequencedList
 
 
 class StreamView(object):
-    def __init__(self, name: str, weight: float = 1.0, atoms: {str: Atom} = None,
-                 merge_actions: Tuple[Callable, ...] = None):
+    def __init__(self, name: str, weight: float = 1.0, merge_actions: Tuple[Callable, ...] = None):
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("[__init__] Creating streamview {} with weight {}, atoms {} and merge actions {}"
-                          .format(name, weight, atoms, merge_actions))
+        self.logger.debug("[__init__] Creating streamview {} with weight {} and merge actions {}"
+                          .format(name, weight, merge_actions))
 
         self.name = name
         self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []
-        self._atoms = atoms if atoms else dict()
-        self._streamviews: {str: StreamView} = {}  # TODO: Not really supported
+        self._atoms: {str: Atom} = dict()
+        self._streamviews: {str: StreamView} = {}
         self.weight = weight
 
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self._atoms)
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
-                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace]) -> Atom:
+                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace],
+                    self_influenced: bool) -> Atom:
         """creating an atom at required path
         Raises: KeyError, InvalidPath"""
         self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(path))
         target_name: str = path.pop(0)
         if path:  # Path is not empty: create atom within a child streamview
-            self._streamviews[path].create_atom(path, weight, label_type, activity_type, memory_type)
+            self._streamviews[target_name].create_atom(path, weight, label_type, activity_type, memory_type, self_influenced)
         elif target_name in self._atoms.keys():
             raise InvalidPath(f"An atom with the name {target_name} already exists in streamview {self.name}.")
         else:
-            atom = Atom(target_name, weight, label_type, activity_type, memory_type)
+            atom = Atom(target_name, weight, label_type, activity_type, memory_type, self_influenced)
             self._atoms[target_name] = atom
             return atom  # TODO: Not sure about this return here....
 
@@ -53,7 +53,7 @@ class StreamView(object):
         self.logger.debug("[create_streamview] Attempting to create streamview with path {}.".format(path))
         target_name: str = path.pop(0)
         if path:  # Path is not empty: create streamview within a child streamview
-            self._streamviews[path].create_streamview(path, weight, merge_actions)
+            self._streamviews[target_name].create_streamview(path, weight, merge_actions)
         elif target_name in self._streamviews.keys():
             raise InvalidPath(f"A streamview with the name {target_name} already exists in streamview {self.name}.")
         else:

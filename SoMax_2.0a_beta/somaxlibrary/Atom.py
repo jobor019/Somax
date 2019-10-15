@@ -15,7 +15,8 @@ class Atom(object):
     def __init__(self, name: str = "atom", weight: float = 1.0,
                  label_type: ClassVar[AbstractLabel] = MelodicLabel,
                  activity_type: ClassVar[AbstractActivityPattern] = ClassicActivityPattern,
-                 memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace, corpus: Corpus = None):
+                 memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace,
+                 corpus: Corpus = None, self_influenced: bool = False):
         self.logger = logging.getLogger(__name__)
         # self.logger.debug("[__init__ Creating atom {} with weight {}, label_type {}, content_type {}, event_type {}, "
         #                   "activity_type {} and memory_type {}."
@@ -25,6 +26,7 @@ class Atom(object):
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type)
         self.name = name
         self.active = False
+        self.self_influenced: bool = self_influenced
         if corpus:
             self.read(corpus, label_type)
 

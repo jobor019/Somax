@@ -17,13 +17,13 @@ from typing import ClassVar
 
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary import Transforms, Tools, MemorySpaces
-from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
+from somaxlibrary import Transforms, Tools
+from somaxlibrary.ActivityPatterns import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.DeprecatedContents import ClassicAudioContents
 from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
-from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
+from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.StreamView import StreamView
 
@@ -47,9 +47,6 @@ class Player(object):
 
         # current streamview is the private streamview were is caught the
         #    generation atom, from which events are generated and is auto-influenced
-        self.self_streamview: StreamView = StreamView(name="auto_streamview")  # TODO And this
-        self.current_atom: str = None  # TODO: Don't like this. Ask axel
-        self.self_influence: bool = True
         self.nextstate_mod: float = 1.5
         self.waiting_to_jump: bool = False
 
@@ -58,11 +55,12 @@ class Player(object):
         self.out_port = out_port
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
 
-        self.corpus: Corpus = Corpus()
+        self.corpus: Corpus = None
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
 
+    # TODO: Completely broken
     def new_event(self, date, event_index=None):
         '''returns a new event'''
         self.logger.debug("[new_event] Player {} attempting to create a new event with date {}."
@@ -125,6 +123,7 @@ class Player(object):
     #     event = new_event(date)
     #     return event.get_contents().get_contents()
 
+    # TODO: Pass time from SoMaxServer (gotten through Scheduler)
     def influence(self, path, *args, **kwargs):
         '''influences target atom with *args'''
         self.logger.debug("[influence] Player {} initialized call to influence with path {}, args {} and kwargs {}"
@@ -158,48 +157,28 @@ class Player(object):
             if name in self.streamviews.keys():
                 raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
             else:
-                self.streamviews[name] = StreamView(name=path, weight=weight, merge_actions=merge_actions)
+                self.streamviews[name] = StreamView(name=name, weight=weight, merge_actions=merge_actions)
         else:  # create streamview inside streamview
-            if path in self.streamviews.keys():
-                self.streamviews[name].create_streamview(name=path, weight=weight, merge_actions=merge_actions)
+            if name in self.streamviews.keys():
+                self.streamviews[name].create_streamview(path=path, weight=weight, merge_actions=merge_actions)
             else:
                 raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
 
-        # if not ":" in name:
-        #     st = StreamViews.StreamView.py(name=name, weight=weight, merge_actions=merge_actions)
-        #     self.streamviews[name] = st
-        #     self.logger.info("Streamview {0} created.".format(name))
-        # else:
-        #     path_splitted = name.split(":")
-        #     path = path_splitted[0]
-        #     path_bottom = reduce(lambda x, y: x + ":" + y, path_splitted[1:])
-        #     if path in self.streamviews:
-        #         self.logger.error("A streamview with the name {} already exists in player {}"
-        #                             .format(path, self.name))
-        #     else:
-        #         self.streamviews[path].create_streamview(path_bottom, weight, merge_actions=merge_actions)
-        #         self.logger.info("Streamview {0} created.".format(name))
-        # self.send_info_dict()
-
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
-                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace]):
+                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
+                    self_influenced: bool):
         """creates atom at target path
         raises: InvalidPath, KeyError"""
         self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
 
         streamview: str = path.pop(0)
-        if not path:        # path is empty means no streamview path was given
+        if not path:  # path is empty means no streamview path was given
             raise InvalidPath(f"Cannot create an atom directly in Player.")
         else:
-            atom = self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type)
-
-        # TODO: Break this later
-        if "_self" not in self.self_streamview._atoms or atom == self.current_atom:
-            self.set_active_atom(streamview, atom)
-            self.current_atom = atom
-        if atom:
+            atom = self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
+                                                            self_influenced)
             self.logger.info("Created atom {}.".format(atom))
-            # self.send_info_dict()
+
 
     def delete_atom(self, name):
         '''deletes target atom'''
@@ -210,7 +189,7 @@ class Player(object):
             head, tail = Tools.parse_path(name)
             self.streamviews[head].delete_atom(tail)
         self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
-        self.send_info_dict()
+        # self.send_info_dict()
 
     def read_file(self, filepath: str, path: str = None):
         """ raises: OSError # TODO: Major cleanup on OSChandling"""
