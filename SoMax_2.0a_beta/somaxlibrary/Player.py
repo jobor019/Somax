@@ -18,12 +18,12 @@ from typing import ClassVar
 from pythonosc.udp_client import SimpleUDPClient
 
 from somaxlibrary import Transforms, Tools, MemorySpaces
-from somaxlibrary.ActivityPatterns import ClassicActivityPattern
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.DeprecatedContents import ClassicAudioContents
 from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
-from somaxlibrary.MemorySpaces import NGramMemorySpace
+from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.StreamView import StreamView
 
@@ -181,32 +181,25 @@ class Player(object):
         #         self.logger.info("Streamview {0} created.".format(name))
         # self.send_info_dict()
 
-    def create_atom(self, streamview: str, atom: str, weight: float = 1.0, label_type=AbstractLabel,
-                    activity_type=ClassicActivityPattern,
-                    memory_type=NGramMemorySpace, memory_file=None):
-        """creates atom at target path"""
-        self.logger.debug("[create_atom] Creating atom {} in streamview {}...".format(atom, streamview))
-        if streamview in self.streamviews.keys():
-            atom = self.streamviews[streamview].create_atom(atom, weight, label_type, activity_type, memory_type, memory_file)
-        else:
-            raise InvalidPath(f"A streamview with the name {streamview} does not exist.")
+    def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
+                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace]):
+        """creates atom at target path
+        raises: InvalidPath, KeyError"""
+        self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
 
-        # if ":" not in name:
-        #     self.logger.error("Unable to create atom. Atom path must contain a streamview (format: streamview:atom).")
-        #     return
-        # path, path_bottom = Tools.parse_path(name)
-        # if path not in self.streamviews:
-        #     self.logger.error("Unable to create atom. Streamview {} does not exist.".format(path))
-        #     return
-        # atom = self.streamviews[path].create_atom(path_bottom, weight, label_type, contents_type, event_type,
-        #                                           activity_type, memory_type, memory_file)
+        streamview: str = path.pop(0)
+        if not path:        # path is empty means no streamview path was given
+            raise InvalidPath(f"Cannot create an atom directly in Player.")
+        else:
+            atom = self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type)
+
         # TODO: Break this later
         if "_self" not in self.self_streamview._atoms or atom == self.current_atom:
             self.set_active_atom(streamview, atom)
             self.current_atom = atom
         if atom:
             self.logger.info("Created atom {}.".format(atom))
-            self.send_info_dict()
+            # self.send_info_dict()
 
     def delete_atom(self, name):
         '''deletes target atom'''

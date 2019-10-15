@@ -58,7 +58,7 @@ class Corpus:
         return parsed_events
 
     def _classify_events(self):
-        valid_label_classes: [(str, ClassVar[AbstractLabel])] = AbstractLabel.label_classes()
+        valid_label_classes: [(str, ClassVar[AbstractLabel])] = AbstractLabel.classes()
         for _time, event in self.ordered_events:
             event.classify(valid_label_classes)
 

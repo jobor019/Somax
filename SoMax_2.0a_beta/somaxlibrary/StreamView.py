@@ -4,11 +4,11 @@ import logging
 #   activity patterns depending on the transformations.
 from copy import deepcopy
 from functools import reduce
-from typing import Callable, Tuple
+from typing import Callable, Tuple, ClassVar
 
 from somaxlibrary import Tools
+from somaxlibrary.ActivityPatterns import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
-from somaxlibrary.ActivityPatterns import ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.DeprecatedLabels import AbstractLabel
 from somaxlibrary.Exceptions import InvalidPath
@@ -26,53 +26,39 @@ class StreamView(object):
         self.name = name
         self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []
         self._atoms = atoms if atoms else dict()
+        self._streamviews: {str: StreamView} = {}  # TODO: Not really supported
         self.weight = weight
 
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self._atoms)
 
-    def create_atom(self, name: str = "atom", weight: float = 1.0, label_type=AbstractLabel,
-                    activity_type=ClassicActivityPattern, memory_type=NGramMemorySpace,
-                    memory_file=None):
-        """creating an atom at required path"""
-        self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(name))
-        if name in self._atoms.keys():
-            raise InvalidPath(f"An atom with the name {name} already exists in streamview {self.name}.")
+    def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
+                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace]) -> Atom:
+        """creating an atom at required path
+        Raises: KeyError, InvalidPath"""
+        self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(path))
+        target_name: str = path.pop(0)
+        if path:  # Path is not empty: create atom within a child streamview
+            self._streamviews[path].create_atom(path, weight, label_type, activity_type, memory_type)
+        elif target_name in self._atoms.keys():
+            raise InvalidPath(f"An atom with the name {target_name} already exists in streamview {self.name}.")
         else:
-            atom = Atom(name, weight, label_type, activity_type, memory_type, memory_file)
-            self._atoms[name] = atom
-            return atom
+            atom = Atom(target_name, weight, label_type, activity_type, memory_type)
+            self._atoms[target_name] = atom
+            return atom  # TODO: Not sure about this return here....
 
-        # atom = None
-        # if ":" in name:
-        #     head, tail = Tools.parse_path(name)  # if atom in a sub-streamview
-        #     atom = self.atoms[head].add_atom(tail, weight, label_type, contents_type, event_type, activity_type,
-        #                                      memory_type)
-        #     self.logger.error("Could not add atom {0} in streamview {1}".format(name, self.name))
-        #
-        # else:
-        #     # if atom is directly in current streamview
-        #     if name in self.atoms:
-        #         self.logger.error("Atom {0} already existing in {1}".format(name, self.name))
-        #     else:
-        #         atom = Atom.Atom(name, weight, label_type, contents_type, event_type, activity_type, memory_type,
-        #                          memory_file)
-        #         self.atoms[name] = atom
-        # return atom
+    def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
+        """creating a streamview at required path
+        Raises: KeyError, InvalidPath"""
+        self.logger.debug("[create_streamview] Attempting to create streamview with path {}.".format(path))
+        target_name: str = path.pop(0)
+        if path:  # Path is not empty: create streamview within a child streamview
+            self._streamviews[path].create_streamview(path, weight, merge_actions)
+        elif target_name in self._streamviews.keys():
+            raise InvalidPath(f"A streamview with the name {target_name} already exists in streamview {self.name}.")
+        else:
+            self._streamviews[target_name] = StreamView(path, weight, merge_actions)
 
-    # TODO: No longer supported with current implementation. Handle later
-    # def create_streamview(self, path="streamview", weight=1.0, atoms=dict(), merge_actions=[DistanceMergeAction]):
-    #     '''creating a streamview at required path'''
-    #     # TODO: Either remove this behaviour entirely or clean up intent
-    #     if ":" in path:
-    #         # if streamview in sub-streamview
-    #         head, tail = Tools.parse_path(path)
-    #         st = self.atoms[head].create_streamview(tail, weight, atoms, merge_actions)
-    #     else:
-    #         # if streamview directly in current streamview
-    #         st = StreamView(path, weight, atoms, merge_actions)
-    #         self.atoms[path] = st
-    #     return st
 
     # TODO: Only used at one place. Consider replacing/streamlining behaviour
     def add_atom(self, atom, name=None, copy=False, replace=False):

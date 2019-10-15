@@ -1,14 +1,18 @@
+import inspect
 import logging
+import sys
+from abc import ABC
 from bisect import bisect_left
 from copy import deepcopy
 from functools import reduce
+from typing import ClassVar
 
 import numpy as np
 
 from somaxlibrary.Tools import SequencedList
 
 
-class AbstractActivityPattern(object):
+class AbstractActivityPattern(ABC):
 
     def __init__(self, date=0.0):
         self.logger = logging.getLogger(__name__)
@@ -20,6 +24,13 @@ class AbstractActivityPattern(object):
 
     def __repr__(self):
         return reduce(lambda x, y: x + "{0} at {1}".format(str(y[0]), str(y[1])), zip(self.zeta, self.value), "")
+
+    @staticmethod
+    def classes() -> {(str, ClassVar)}:
+        """Returns class objects for all non-abstract classes in this module."""
+        return dict(inspect.getmembers(sys.modules[__name__],
+                                       lambda member: inspect.isclass(member) and not inspect.isabstract(
+                                           member) and member.__module__ == __name__))
 
     def __desc__(self):
         return "Abstract Activity Pattern"
@@ -72,7 +83,7 @@ class ClassicActivityPattern(AbstractActivityPattern):
     def update_activity(self, new_date):
         if self.available:
             self.available = 0
-            self.zeta += new_date - self.date   # shift peaks in time
+            self.zeta += new_date - self.date  # shift peaks in time
             self.value *= np.exp(-np.divide(new_date - self.date, self.tau_mem_decay))  # decay peaks in amplitude
             self.date = new_date
             self.zeta, self.value, self.transform = self.clean_up(self.zeta, self.value, self.transform)

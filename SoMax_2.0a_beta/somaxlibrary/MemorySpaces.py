@@ -1,4 +1,6 @@
+import inspect
 import logging
+import sys
 from abc import ABC, abstractmethod
 from collections import deque
 from typing import Any, Tuple, ClassVar
@@ -7,8 +9,8 @@ from somaxlibrary import Transforms
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput
-from somaxlibrary.Peak import Peak
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
+from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -31,6 +33,13 @@ class AbstractMemorySpace(ABC):
     @abstractmethod
     def influence(self, influence_type: str, influence_data: Any, **kwargs) -> [Peak]:
         pass
+
+    @staticmethod
+    def classes() -> {(str, ClassVar)}:
+        """Returns class objects for all non-abstract classes in this module."""
+        return dict(inspect.getmembers(sys.modules[__name__],
+                                       lambda member: inspect.isclass(member) and not inspect.isabstract(
+                                           member) and member.__module__ == __name__))
 
     # TODO: Implement if needed
     # def is_available(self):

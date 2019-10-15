@@ -8,17 +8,16 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
-
 from IOParser import IOParser
-from somaxlibrary.ActivityPatterns import ClassicActivityPattern
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.Player import Player
 from somaxlibrary.SoMaxScheduler import SomaxScheduler
 from somaxlibrary.Transforms import NoTransform
-from somaxlibrary.Labels import AbstractLabel
 
 """ 
 SoMaxServer is the top class of the SoMax system.
@@ -53,11 +52,6 @@ class SoMaxServer(Caller):
         osc_dispatcher = Dispatcher()
         osc_dispatcher.map("/server", self._main_callback)
         osc_dispatcher.set_default_handler(self._unmatched_callback)
-        # osc_dispatcher.map("/stopserver", self.stopServer)
-        # osc_dispatcher.map("/time", self.set_time)
-        # osc_dispatcher.map("/set_activity_feedback", self.set_activity_feedback)
-        # osc_dispatcher.map("/update", self.send_info_dict)
-        # osc_dispatcher.map("default", self.unregistered_callback)
 
         self.server = BlockingOSCUDPServer((self.DEFAULT_IP, in_port), osc_dispatcher)
         self.client = SimpleUDPClient(self.DEFAULT_IP, out_port)
@@ -84,11 +78,54 @@ class SoMaxServer(Caller):
     def send_warning(self, warning: str, *args, **kwargs):
         print(warning)
 
-    # TODO: Merge with stop
-    # def stopServer(self, *_args):
-    #     """Stops the SoMax server"""
-    #     self.client.send_message("/terminate", [])
-    #     self.server.server_close()
+    ######################################################
+    # CREATION OF PLAYERS/STREAMVIEWS/ATOMS
+    ######################################################
+
+    def new_player(self, name, out_port):
+        # TODO: Check if player already exists
+        # TODO: IO Error handling
+        self.players[name] = Player(name, out_port, output_activity=None, triggering=self.DEFAULT_TRIGGERING_MODE)
+        # TODO info_dict
+        # self.send_info_dict()
+        # player.send_info_dict()ﬁ
+
+    def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0, merge_actions: str = ""):
+        # TODO: IO Error handling
+        self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
+                          .format(player, path, weight, merge_actions))
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            merge_actions = IOParser.parse_merge_actions(merge_actions)
+        except KeyError:
+            self.logger.warning(f"Could not parse merge actions from string '{merge_actions}'. Setting to default.")
+            merge_actions = self.DEFAULT_MERGE_ACTIONS
+        self.players[player].create_streamview(path_and_name, weight, merge_actions)
+
+    def create_atom(self, player: str, path: str, weight: float = 1.0, label_type: str = "",
+                    activity_type: str = "", memory_type: str = ""):
+        self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+
+        try:
+            label_type: ClassVar[AbstractLabel] = IOParser.parse_label_type(label_type)
+        except KeyError as e:
+            self.logger.warning(e)
+            label_type = self.DEFAULT_LABEL_TYPE
+
+        try:
+            activity_type: ClassVar[AbstractActivityPattern] = IOParser.parse_activity_type(activity_type)
+        except KeyError as e:
+            self.logger.warning(e)
+            activity_type = self.DEFAULT_ACTIVITY_TYPE
+
+        try:
+            activity_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
+        except KeyError as e:
+            self.logger.warning(e)
+            memory_type = self.DEFAULT_MEMORY_TYPE
+
+        self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type)
 
     ######################################################
     # PROCESS METHODS
@@ -116,6 +153,12 @@ class SoMaxServer(Caller):
         # TODO: Migrate this to be called via Scheduler
         # for name, player in self.players.items():
         #     player['player'].send("stop")
+
+    # TODO: Merge with stop
+    # def stopServer(self, *_args):
+    #     """Stops the SoMax server"""
+    #     self.client.send_message("/terminate", [])
+    #     self.server.server_close()
 
     ######################################################
     # TIMING METHODS
@@ -283,28 +326,6 @@ class SoMaxServer(Caller):
         self.logger.debug("[jump] called for player {0}.".format(player))
         self.players[player].jump()
 
-    def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0, merge_actions: str = ""):
-        # TODO: IO Error handling
-        self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
-                          .format(player, path, weight, merge_actions))
-        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        merge_actions = IOParser.parse_merge_actions(merge_actions)
-        merge_actions = merge_actions if merge_actions else self.DEFAULT_MERGE_ACTIONS
-        self.players[player].create_streamview(path_and_name, weight, merge_actions)
-
-    def create_atom(self, player: str, path: str, weight: float = 1.0, label_type: str = "",
-                    activity_type: str = "", memory_type: str = ""):
-        self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
-        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        label_type: ClassVar[AbstractLabel] = IOParser.parse_label_type(label_type)
-        label_type = label_type if label_type else self.DEFAULT_LABEL_TYPE
-        activity_type: ClassVar[AbstractLabel] = IOParser.parse_activity_type(activity_type)
-        activity_type = activity_type if activity_type else self.DEFAULT_ACTIVITY_TYPE
-        memory_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
-        memory_type = memory_type if memory_type else self.DEFAULT_MEMORY_TYPE
-
-        self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type)
-
     def read_file(self, player, path, filez):
         # TODO: IO Error handling
         self.logger.debug("[read_file] called for player {0} with path {1} and file {2}.".format(player, path, filez))
@@ -320,17 +341,6 @@ class SoMaxServer(Caller):
         self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
         self.players[player].set_weight(streamview, weight)
 
-    ######################################################
-    # PLAYER CREATION METHODS
-    ######################################################
-
-    def new_player(self, name, out_port):
-        # TODO: Check if player already exists
-        # TODO: IO Error handling
-        self.players[name] = Player(name, out_port, output_activity=None, triggering=self.DEFAULT_TRIGGERING_MODE)
-        # TODO info_dict
-        # self.send_info_dict()
-        # player.send_info_dict()
 
     ######################################################
     # CORPUS METHODS
