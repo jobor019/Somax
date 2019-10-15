@@ -17,10 +17,12 @@ from typing import ClassVar
 
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary import Transforms, Tools, Events, ActivityPatterns, MemorySpaces
-from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary import StreamViews, Transforms, Tools, MemorySpaces
+from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
+from somaxlibrary.Corpus import Corpus
+from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
-from somaxlibrary.StreamView import StreamView
+from somaxlibrary.ProperLabels import ProperMelodicLabel
 
 
 class Player(object):
@@ -52,6 +54,8 @@ class Player(object):
         self.client = SimpleUDPClient("127.0.0.1", out_port)  # TODO: IP as input argument
         self.out_port = out_port
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
+
+        self.corpus: Corpus = Corpus()
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
@@ -214,21 +218,22 @@ class Player(object):
         self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
         self.send_info_dict()
 
-    def read_file(self, path, filez):
-        '''tells target atom to read corresponding file.'''
-        # read commands to a streamview diffuses to every child of this streamview
+    def read_file(self, filepath: str, path: str = None):
+        """ raises: OSError # TODO: Major cleanup on OSChandling"""
+        self.corpus.read_file(filepath)
+
         if path == None:
             for n, s in self.streamviews.items():
-                s.read(None, filez)
-            self.self_streamview.read(None, filez)
+                s.read(None, self.corpus)
+            self.current_streamview.read(None, self.corpus)
         elif path == "_self":
-            self.self_streamview.read("_self", filez)
+            self.current_streamview.read("_self", self.corpus)
         else:
             path_head, path_follow = Tools.parse_path(path)
             if path_head in self.streamviews.keys():
-                self.streamviews[path_head].read(path_follow, filez)
+                self.streamviews[path_head].read(path_follow, self.corpus)
                 if path == self.current_atom:
-                    self.self_streamview._atoms["_self"].read(filez)
+                    self.current_streamview.atoms["_self"].read(self.corpus)
             else:
                 self.logger.warning("Failed to read file. Streamview {0} does not exist.".format(path))
                 return
@@ -236,12 +241,13 @@ class Player(object):
         if self.current_atom == path:
             if self.streamviews:
                 # TODO: Not sure what this is intended to do. Never reached apart from exception, self.streamviews.atoms is not a valid path
-                self.streamviews.atoms["_self"].read(filez)
+                self.streamviews.atoms["_self"].read(self.corpus)
             else:
                 self.logger.warning("Failed to read file. No streamview has been created.")
                 return
-        self.update_memory_length()
-        self.send_info_dict()
+        # TODO: Temp removed
+        # self.update_memory_length()
+        # self.send_info_dict()
 
     # TODO: Fix/get rid of this
     def set_active_atom(self, streamview: str, atom_name: str):
@@ -318,7 +324,7 @@ class Player(object):
         self.improvisation_memory = deque('', self.max_history_len)
         self.self_streamview.reset(time)
         for s in self.streamviews.keys():
-            self.streamviews[s].reset(time)
+            self.streamviews[s]._reset(time)
 
     def get_weights_sum(self):
         '''getting sum of subweights'''
@@ -375,49 +381,49 @@ class Player(object):
     def set_nextstate_mod(self, ns):
         self.nextstate_mod = ns
 
-    def update_memory_length(self):
-        '''sending active memory length'''
-        atom = self.self_streamview._atoms["_self"]
-        if len(atom.memorySpace) > 0:
-            lastEvent = atom.memorySpace[-1][1]
-            length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
-            self.send(length, "/memory_length")
+    # def update_memory_length(self):
+    #     '''sending active memory length'''
+    #     atom = self.current_streamview.atoms["_self"]
+    #     if len(atom.memorySpace) > 0:
+    #         lastEvent = atom.memorySpace[-1][1]
+    #         length = lastEvent.get_contents().get_zeta() + lastEvent.get_contents().get_state_length()
+    #         self.send(length, "/memory_length")
 
-    def get_info_dict(self):
-        '''returns the dictionary containing all information of the player'''
-        infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
-        try:
-            infodict["current_file"] = str(self.self_streamview._atoms["_self"].current_file)
-        except:
-            pass
-        infodict["streamviews"] = dict()
-        for s, v in self.streamviews.items():
-            infodict["streamviews"][s] = v.get_info_dict()
-            infodict["current_atom"] = self.current_atom
-        infodict["current_streamview"] = self.self_streamview.get_info_dict()
-        if self.self_streamview._atoms != dict():
-            if len(self.self_streamview._atoms["_self"].memorySpace) != 0:
-                self_contents = self.self_streamview._atoms["_self"].memorySpace[-1][1].get_contents()
-                infodict["current_streamview"]["length_beat"] = \
-                    self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
-                infodict["current_streamview"]["length_time"] = \
-                    self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
-        infodict["subweights"] = self.get_normalized_subweights()
-        infodict["nextstate_mod"] = self.nextstate_mod
-        infodict["phase_selectivity"] = self.merge_actions[1].selectivity
-        infodict["triggering_mode"] = self.scheduler.triggers[self.name]
-        return infodict
+    # def get_info_dict(self):
+    #     '''returns the dictionary containing all information of the player'''
+    #     infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
+    #     try:
+    #         infodict["current_file"] = str(self.current_streamview.atoms["_self"].current_file)
+    #     except:
+    #         pass
+    #     infodict["streamviews"] = dict()
+    #     for s, v in self.streamviews.items():
+    #         infodict["streamviews"][s] = v.get_info_dict()
+    #         infodict["current_atom"] = self.current_atom
+    #     infodict["current_streamview"] = self.current_streamview.get_info_dict()
+    #     if self.current_streamview.atoms != dict():
+    #         if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
+    #             self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
+    #             infodict["current_streamview"]["length_beat"] = \
+    #                 self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
+    #             infodict["current_streamview"]["length_time"] = \
+    #                 self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
+    #     infodict["subweights"] = self.get_normalized_subweights()
+    #     infodict["nextstate_mod"] = self.nextstate_mod
+    #     infodict["phase_selectivity"] = self.merge_actions[1].selectivity
+    #     infodict["triggering_mode"] = self.scheduler.triggers[self.name]
+    #     return infodict
 
-    def send_info_dict(self):
-        '''sending the info dictionary of the player'''
-        infodict = self.get_info_dict()
-        str_dic = Tools.dic_to_strout(infodict)
-        self.send("clear", "/infodict")
-        self.send(self.streamviews.keys(), "/streamviews")
-        for s in str_dic:
-            self.send(s, "/infodict")
-        self.send(self.name, "/infodict-update")
-        self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
+    # def send_info_dict(self):
+    #     '''sending the info dictionary of the player'''
+    #     infodict = self.get_info_dict()
+    #     str_dic = Tools.dic_to_strout(infodict)
+    #     self.send("clear", "/infodict")
+    #     self.send(self.streamviews.keys(), "/streamviews")
+    #     for s in str_dic:
+    #         self.send(s, "/infodict")
+    #     self.send(self.name, "/infodict-update")
+    #     self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
 
     def set_weight(self, streamview: str, weight: float):
         '''setting the weight at target path'''

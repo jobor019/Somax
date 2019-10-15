@@ -2,13 +2,17 @@ import logging
 # The StreamView object is a container that manages several atoms, whose activity
 #   patterns are taken and then mixed. This is mainly motivated to modulate the diverse
 #   activity patterns depending on the transformations.
+from copy import deepcopy
 from functools import reduce
 from typing import Callable, Tuple
 
-from somaxlibrary.Atom import Atom
-from somaxlibrary import Events, ActivityPatterns, MemorySpaces, Tools
-from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary import Atom, Tools
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern
+from somaxlibrary.Corpus import Corpus
+from somaxlibrary.DeprecatedContents import AbstractContents
+from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction
+from somaxlibrary.ProperLabels import ProperMelodicLabel
 from somaxlibrary.Tools import SequencedList
 
 
@@ -80,7 +84,10 @@ class StreamView(object):
             if not replace:
                 raise Exception("{0} already exists in {1}".format(atom.name, self.name))
         if copy:
-            self._atoms[name] = atom.copy(name)
+            # TODO: Why? ~~~
+            new_atom: Atom = deepcopy(atom)
+            new_atom.name = name
+            self.atoms[name] = new_atom
         else:
             self._atoms[name] = atom
 
@@ -118,26 +125,26 @@ class StreamView(object):
                     self._atoms[pf].influence(pr, time, *data, **kwargs)
         self.logger.debug("[influence] Influence in streamview {} terminated successfully.".format(self.name))
 
-    def read(self, path, filez):
+    def read(self, path: str, corpus: Corpus):
         '''read all sub-atoms with data'''
         self.logger.debug(
-            "[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, filez))
+            "[read] Init read in streamview {} with path {} and filepath {}".format(self.name, path, corpus))
         if path == None:
             for n, a in self._atoms.items():
                 if issubclass(type(a), Atom.Atom):
-                    a.read(filez)
+                    a.read(corpus)
                 else:
-                    a.read(None, filez)
+                    a.read(None, corpus)
         else:
             path, path_follow = Tools.parse_path(path)
             if path_follow == None:
-                for atom in self._atoms.values():
-                    atom.read(filez)
-            elif path in self._atoms.keys():
-                if isinstance(self._atoms[path_follow], StreamView):
-                    self._atoms[path_follow].read(path_follow, filez)
+                for atom in self.atoms.values():
+                    atom.read(corpus)
+            elif path in self.atoms.keys():
+                if isinstance(self.atoms[path_follow], StreamView):
+                    self.atoms[path_follow].read(path_follow, corpus)
                 else:
-                    self._atoms[path_follow].read(filez)
+                    self.atoms[path_follow].read(corpus)
             else:
                 # TODO: Should this actually be an exception - where to catch it if that's the case?
                 #       (should it terminate the entire parent call or just ignore the specific streamview?)
@@ -189,5 +196,5 @@ class StreamView(object):
         return infodict
 
     def reset(self, time):
-        for f in self._atoms.values():
-            f.reset(time)
+        for f in self.atoms.values():
+            f._reset(time)

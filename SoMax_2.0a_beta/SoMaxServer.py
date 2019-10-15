@@ -10,6 +10,9 @@ from pythonosc.udp_client import SimpleUDPClient
 
 from IOParser import IOParser
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern
+import somaxlibrary as sm
+from somaxlibrary import MemorySpaces, ActivityPatterns, DeprecatedEvents
+from somaxlibrary.DeprecatedContents import AbstractContents
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.Events import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
