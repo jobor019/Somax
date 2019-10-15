@@ -7,13 +7,13 @@ from somaxlibrary import MemorySpaces
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.ProperLabels import ProperMelodicLabel, ProperAbstractLabel
+from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
     def __init__(self, name: str = "atom", weight: float = 1.0,
-                 label_type: ClassVar[ProperAbstractLabel] = ProperMelodicLabel,
+                 label_type: ClassVar[AbstractLabel] = MelodicLabel,
                  activity_type: ClassVar[AbstractActivityPattern] = ClassicActivityPattern,
                  memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace, corpus: Corpus = None):
         self.logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class Atom(object):
     #     return "Atom with {0} and {1}".format(type(self.activityPattern), type(self.memory_space))
 
     # Tells the memory space to load the file filez
-    def read(self, corpus, label_type=ClassVar[ProperMelodicLabel]):
+    def read(self, corpus, label_type=ClassVar[MelodicLabel]):
         # if memory_type != None:
         #     if different memory type, create a new memory space
         # memory_class = getattr(MemorySpaces, memory_type)

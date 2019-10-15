@@ -8,17 +8,17 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput
 from somaxlibrary.Peak import Peak
-from somaxlibrary.ProperLabels import ProperAbstractLabel, ProperMelodicLabel
+from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.Transforms import AbstractTransform
 
 
 class AbstractMemorySpace(ABC):
-    def __init__(self, corpus: Corpus = None, label_type: ClassVar[ProperAbstractLabel] = ProperAbstractLabel,
+    def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = AbstractLabel,
                  history_len: int = 3, transforms: [AbstractTransform] = None, **kwargs):
         """ Note: args, kwargs can be used if additional information is need to construct the data structure."""
         self.logger = logging.getLogger(__name__)
         self.corpus: Corpus = corpus
-        self.label_type: ClassVar[ProperAbstractLabel] = label_type
+        self.label_type: ClassVar[AbstractLabel] = label_type
         self.influence_history: deque = deque([], history_len)
         # TODO: Should also check that they work for this label
         self.transforms: [AbstractTransform] = transforms if transforms else [Transforms.NoTransform()]
@@ -47,7 +47,7 @@ class AbstractMemorySpace(ABC):
 
 
 class NGramMemorySpace(AbstractMemorySpace):
-    def __init__(self, corpus: Corpus = None, label_type: ClassVar[ProperAbstractLabel] = ProperMelodicLabel,
+    def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = MelodicLabel,
                  history_len: int = 3, transforms: [AbstractTransform] = None, **kwargs):
         super(NGramMemorySpace, self).__init__(corpus, label_type, history_len, transforms, **kwargs)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "

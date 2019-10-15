@@ -6,7 +6,7 @@ from somaxlibrary import DeprecatedContents
 from somaxlibrary.DeprecatedContents import AbstractContents
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidJsonFormat
-from somaxlibrary.ProperLabels import ProperAbstractLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Tools import SequencedList
 
 
@@ -58,7 +58,7 @@ class Corpus:
         return parsed_events
 
     def _classify_events(self):
-        valid_label_classes: [(str, ClassVar[ProperAbstractLabel])] = ProperAbstractLabel.label_classes()
+        valid_label_classes: [(str, ClassVar[AbstractLabel])] = AbstractLabel.label_classes()
         for _time, event in self.ordered_events:
             event.classify(valid_label_classes)
 

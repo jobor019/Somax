@@ -17,12 +17,15 @@ from typing import ClassVar
 
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary import StreamViews, Transforms, Tools, MemorySpaces
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
+from somaxlibrary import Transforms, Tools, MemorySpaces
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.MemorySpaces import AbstractMemorySpace
+from somaxlibrary.DeprecatedContents import ClassicAudioContents
+from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
-from somaxlibrary.ProperLabels import ProperMelodicLabel
+from somaxlibrary.StreamView import StreamView
 
 
 class Player(object):
@@ -117,10 +120,10 @@ class Player(object):
                           .format(self.name, event.get_contents()))
         return event
 
-    def new_content(self, date):
-        ''' returns new contents'''
-        event = new_event(date)
-        return event.get_contents().get_contents()
+    # def new_content(self, date):
+    #     ''' returns new contents'''
+    #     event = new_event(date)
+    #     return event.get_contents().get_contents()
 
     def influence(self, path, *args, **kwargs):
         '''influences target atom with *args'''
@@ -178,15 +181,13 @@ class Player(object):
         #         self.logger.info("Streamview {0} created.".format(name))
         # self.send_info_dict()
 
-    def create_atom(self, streamview: str, atom: str, weight: float = 1.0, label_type=Events.AbstractLabel,
-                    contents_type=Events.AbstractContents, event_type=Events.AbstractEvent,
-                    activity_type=ActivityPatterns.ClassicActivityPattern,
-                    memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
+    def create_atom(self, streamview: str, atom: str, weight: float = 1.0, label_type=AbstractLabel,
+                    activity_type=ClassicActivityPattern,
+                    memory_type=NGramMemorySpace, memory_file=None):
         """creates atom at target path"""
         self.logger.debug("[create_atom] Creating atom {} in streamview {}...".format(atom, streamview))
         if streamview in self.streamviews.keys():
-            atom = self.streamviews[streamview].create_atom(atom, weight, label_type, contents_type, event_type,
-                                                            activity_type, memory_type, memory_file)
+            atom = self.streamviews[streamview].create_atom(atom, weight, label_type, activity_type, memory_type, memory_file)
         else:
             raise InvalidPath(f"A streamview with the name {streamview} does not exist.")
 
@@ -271,7 +272,8 @@ class Player(object):
                 former_atom = self.streamviews[path].get_atom(path_bottom)
                 former_atom.active = False
         self.current_atom = atom_name
-        if issubclass(atom.memorySpace.contents_type, Events.ClassicAudioContents):
+        # TODO: Deprecated
+        if issubclass(atom.memorySpace.contents_type, ClassicAudioContents):
             self.send_buffer(atom)
         atom.active = True
         self.logger.info("Player {0} setting active atom to {1}.".format(self.name, atom_name))

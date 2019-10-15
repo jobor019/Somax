@@ -3,7 +3,7 @@ import sys
 from typing import Tuple, ClassVar, Any, Union, List
 
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern
-from somaxlibrary.Events import AbstractLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Transforms import AbstractTransform

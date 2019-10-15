@@ -2,25 +2,23 @@ import argparse
 import logging
 import logging.config
 from functools import reduce
-from typing import Tuple, ClassVar
+from typing import ClassVar
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
+
 from IOParser import IOParser
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern
-import somaxlibrary as sm
-from somaxlibrary import MemorySpaces, ActivityPatterns, DeprecatedEvents
-from somaxlibrary.DeprecatedContents import AbstractContents
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.Events import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.Player import Player
 from somaxlibrary.SoMaxScheduler import SomaxScheduler
 from somaxlibrary.Transforms import NoTransform
+from somaxlibrary.Labels import AbstractLabel
 
 """ 
 SoMaxServer is the top class of the SoMax system.

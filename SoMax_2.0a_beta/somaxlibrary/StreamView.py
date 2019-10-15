@@ -6,13 +6,13 @@ from copy import deepcopy
 from functools import reduce
 from typing import Callable, Tuple
 
-from somaxlibrary import Atom, Tools
+from somaxlibrary import Tools
+from somaxlibrary.Atom import Atom
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.DeprecatedContents import AbstractContents
+from somaxlibrary.DeprecatedLabels import AbstractLabel
+from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.MemorySpaces import NGramMemorySpace
-from somaxlibrary.MergeActions import DistanceMergeAction
-from somaxlibrary.ProperLabels import ProperMelodicLabel
 from somaxlibrary.Tools import SequencedList
 
 
@@ -31,16 +31,15 @@ class StreamView(object):
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self._atoms)
 
-    def create_atom(self, name: str = "atom", weight: float = 1.0, label_type=Events.AbstractLabel,
-                    contents_type=Events.AbstractContents, event_type=Events.AbstractEvent,
-                    activity_type=ActivityPatterns.ClassicActivityPattern, memory_type=MemorySpaces.NGramMemorySpace,
+    def create_atom(self, name: str = "atom", weight: float = 1.0, label_type=AbstractLabel,
+                    activity_type=ClassicActivityPattern, memory_type=NGramMemorySpace,
                     memory_file=None):
         """creating an atom at required path"""
         self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(name))
         if name in self._atoms.keys():
             raise InvalidPath(f"An atom with the name {name} already exists in streamview {self.name}.")
         else:
-            atom = Atom(name, weight, label_type, contents_type, event_type, activity_type, memory_type, memory_file)
+            atom = Atom(name, weight, label_type, activity_type, memory_type, memory_file)
             self._atoms[name] = atom
             return atom
 
