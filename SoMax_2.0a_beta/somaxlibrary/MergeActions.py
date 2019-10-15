@@ -1,6 +1,9 @@
+import inspect
 import logging
 import math
+import sys
 from copy import deepcopy
+from typing import ClassVar
 
 from somaxlibrary.Tools import SequencedList
 
@@ -9,6 +12,12 @@ class AbstractMergeAction(object):
 
     def merge(self, pattern, memory_space=None):
         return pattern
+
+    @staticmethod
+    def classes() -> {(str, ClassVar)}:
+        return dict(inspect.getmembers(sys.modules[__name__],
+                                       lambda member: inspect.isclass(member) and not inspect.isabstract(
+                                           member) and member.__module__ == __name__))
 
 
 class DistanceMergeAction(AbstractMergeAction):
@@ -128,18 +137,18 @@ class StateMergeAction(AbstractMergeAction):
 
 
 class PhaseModulationMergeAction(AbstractMergeAction):
-    def __init__(self, scheduler, selectivity=1.0):
+    def __init__(self, selectivity=1.0):
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
-        self.scheduler = scheduler
         self.selectivity = selectivity
 
-    def merge(self, pattern, memory_space=None):
-        current_time = self.scheduler.get_time()
+    def merge(self, pattern, current_time: float, memory_space=None):
+        # current_time = self.scheduler.get_time()
         for i in range(0, len(pattern)):
             z, (v, t) = pattern[i]
             factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (current_time - z)) - 1))
             pattern[i] = z, (v * factor, t)
+        raise Exception  # TODO: Needs time of merge from scheduler to work
         return pattern
 
     def set_selectivity(self, selectivity):

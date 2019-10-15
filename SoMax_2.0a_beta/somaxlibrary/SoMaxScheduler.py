@@ -1,4 +1,6 @@
 import logging
+
+from somaxlibrary.Player import Player
 from somaxlibrary.Tools import SequencedList
 
 ###############################################################################
@@ -11,7 +13,7 @@ from somaxlibrary.Tools import SequencedList
 
 class SomaxScheduler(object):
 
-    def __init__(self, automode=True, timing_type="relative", original_tempo=False):
+    def __init__(self, players, automode=True, timing_type="relative", original_tempo=False):
         self.logger = logging.getLogger(__name__)
         self.time = 0.0
         self.timeline = SequencedList()
@@ -22,6 +24,8 @@ class SomaxScheduler(object):
         self.original_tempo = original_tempo
         self.triggers = dict()  # list of triggering mode of every players
         self.timing_type = timing_type
+
+        self.players: {str: Player} = players       # shared reference with SomMaxServer
 
     ######################################################
     ###### TIMING METHODS

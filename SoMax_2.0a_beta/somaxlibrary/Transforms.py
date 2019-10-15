@@ -9,7 +9,7 @@ from somaxlibrary import Events
 
 
 # TODO: Implement this for readability
-class Transform(ABC):
+class AbstractTransform(ABC):
     pass
 
 

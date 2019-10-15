@@ -2,19 +2,22 @@ import argparse
 import logging
 import logging.config
 from functools import reduce
-from typing import Callable, Tuple, Union, List
+from typing import Tuple, ClassVar
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary import MemorySpaces, ActivityPatterns, Events
+from IOParser import IOParser
+from somaxlibrary.ActivityPatterns import ClassicActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.DictClasses import PlayerDict
+from somaxlibrary.Events import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
-from somaxlibrary.MergeActions import DistanceMergeAction
+from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
+from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.Player import Player
 from somaxlibrary.SoMaxScheduler import SomaxScheduler
+from somaxlibrary.Transforms import NoTransform
 
 """ 
 SoMaxServer is the top class of the SoMax system.
@@ -29,13 +32,19 @@ class SoMaxServer(Caller):
     max_activity_length = 500  # TODO: What is this?
 
     DEFAULT_IP = "127.0.0.1"
+    DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
+    DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
+    DEFAULT_LABEL_TYPE: ClassVar = None  # TODO
+    DEFAULT_TRANSFORMS: (ClassVar, ...) = (NoTransform,)
+    DEFAULT_TRIGGERING_MODE = "automatic"
+    DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
 
     def __init__(self, in_port: int, out_port: int):
         super(SoMaxServer, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing SoMaxServer with input port {} and output port {}.".format(in_port, out_port))
-        self.players: PlayerDict = dict()
-        self.scheduler = SomaxScheduler()
+        self.players: {str: Player} = dict()
+        self.scheduler = SomaxScheduler(self.players)
         self.builder = CorpusBuilder()
 
         self.original_tempo: bool = False
@@ -89,21 +98,23 @@ class SoMaxServer(Caller):
         # TODO: IO Error handling
         self.server.serve_forever()
 
-    def play(self, _time):
+    def play(self):
         """starts the scheduler and triggers first event if in automatic mode"""
         # TODO: IO Error handling
         self.scheduler.start(-self.scheduler.get_pretime())
-        for name, player in self.players.items():
-            player['player'].reset(self.scheduler.time)
-            if player['triggering'] == "automatic":
-                self.process_intern_event(('ask_for_event', name, 0))
+        for player in self.players.values():
+            player.reset(self.scheduler.time)
+            # TODO: Handle once Server-Scheduler-Player refactor is completed
+            # if player['triggering'] == "automatic":
+            #     self.process_intern_event(('ask_for_event', name, 0))
 
     def stop(self):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
-        for name, player in self.players.items():
-            player['player'].send("stop")
+        # TODO: Migrate this to be called via Scheduler
+        # for name, player in self.players.items():
+        #     player['player'].send("stop")
 
     ######################################################
     # TIMING METHODS
@@ -123,6 +134,7 @@ class SoMaxServer(Caller):
         # self.increment_internal_counter()
         # if self.intern_counter % 10 == 0:
         #     self.send_activity_profile(time)
+        # TODO: Move this to Scheduler
         if events:
             self.process_events(events)
         if self.original_tempo:
@@ -263,44 +275,49 @@ class SoMaxServer(Caller):
         # TODO: IO Error handling
         self.logger.debug("[influence] called for player {0} with path {1} and args {2}, kwargs {3}."
                           .format(player, path, args, kwargs))
-        self.players[player]['player'].influence(path, *args, **kwargs)
+        self.players[player].influence(path, *args, **kwargs)
 
     def jump(self, player):
         # TODO: IO Error handling
         self.logger.debug("[jump] called for player {0}.".format(player))
-        self.players[player]['player'].jump()
+        self.players[player].jump()
 
-    def create_streamview(self, player: str, path: Union[str, List[str]] = "streamview", weight: float = 1.0,
-                          merge_actions: Tuple[Callable, ...] = (DistanceMergeAction,)):
+    def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0, merge_actions: str = ""):
         # TODO: IO Error handling
         self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
                           .format(player, path, weight, merge_actions))
-        if isinstance(path, str):
-            path = [path]
-        self.players[player]['player'].create_streamview(path, weight, merge_actions)
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        merge_actions = IOParser.parse_merge_actions(merge_actions)
+        merge_actions = merge_actions if merge_actions else self.DEFAULT_MERGE_ACTIONS
+        self.players[player].create_streamview(path_and_name, weight, merge_actions)
 
-    def create_atom(self, player: str, streamview: str, name: str, weight: float = 1.0, label_type=Events.AbstractLabel,
-                    contents_type=Events.AbstractContents, event_type=Events.AbstractEvent,
-                    activity_type=ActivityPatterns.ClassicActivityPattern,
-                    memory_type=MemorySpaces.NGramMemorySpace, memory_file=None):
-        self.logger.debug(f"[create_atom] called for player {player}, streamview {streamview} and atom name {name}.")
-        self.players[player]['player'].create_atom(streamview, name, weight, label_type, contents_type, event_type,
-                                                   activity_type, memory_type, memory_file)
+    def create_atom(self, player: str, path: str, weight: float = 1.0, label_type: str = "",
+                    activity_type: str = "", memory_type: str = ""):
+        self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        label_type: ClassVar[AbstractLabel] = IOParser.parse_label_type(label_type)
+        label_type = label_type if label_type else self.DEFAULT_LABEL_TYPE
+        activity_type: ClassVar[AbstractLabel] = IOParser.parse_activity_type(activity_type)
+        activity_type = activity_type if activity_type else self.DEFAULT_ACTIVITY_TYPE
+        memory_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
+        memory_type = memory_type if memory_type else self.DEFAULT_MEMORY_TYPE
+
+        self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type)
 
     def read_file(self, player, path, filez):
         # TODO: IO Error handling
         self.logger.debug("[read_file] called for player {0} with path {1} and file {2}.".format(player, path, filez))
-        self.players[player]['player'].read_file(path, filez)
+        self.players[player].read_file(path, filez)
 
     def set_self_influence(self, player, si):
         # TODO: IO Error handling
         self.logger.debug(f"[set_self_influence] Attemptint to set influence of player {player} to {si}.")
-        self.players[player]['player'].set_self_influence(si)
+        self.players[player].set_self_influence(si)
 
     def set_weight(self, player: str, streamview: str, weight: float):
         # TODO: IO Error handling
         self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
-        self.players[player]['player'].set_weight(streamview, weight)
+        self.players[player].set_weight(streamview, weight)
 
     ######################################################
     # PLAYER CREATION METHODS
@@ -309,9 +326,7 @@ class SoMaxServer(Caller):
     def new_player(self, name, out_port):
         # TODO: Check if player already exists
         # TODO: IO Error handling
-        player = Player(name, self.scheduler, out_port)
-        self.players[name] = {'player': player, 'output_activity': None, "triggering": "automatic"}
-        self.scheduler.triggers[name] = "automatic"
+        self.players[name] = Player(name, out_port, output_activity=None, triggering=self.DEFAULT_TRIGGERING_MODE)
         # TODO info_dict
         # self.send_info_dict()
         # player.send_info_dict()
@@ -324,7 +339,8 @@ class SoMaxServer(Caller):
         # TODO: IO Error handling
         self.builder.build_corpus(path, output)
         self.logger.info("File {0} has been output at location : {1}".format(path, output))
-        self.send_info_dict()
+        # TODO: Info dict
+        # self.send_info_dict()
 
     ######################################################
     # COMMUNICATION METHODS

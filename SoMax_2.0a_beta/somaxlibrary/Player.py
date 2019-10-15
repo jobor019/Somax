@@ -13,30 +13,32 @@ from collections import deque
 #           given a set of activity profiles
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
-from typing import Tuple, Callable
+from typing import ClassVar
 
 from pythonosc.udp_client import SimpleUDPClient
 
 from somaxlibrary import Transforms, Tools, Events, ActivityPatterns, MemorySpaces
 from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
-from somaxlibrary.SoMaxScheduler import SomaxScheduler
 from somaxlibrary.StreamView import StreamView
 
 
 class Player(object):
     max_history_len = 100
 
-    def __init__(self, name, scheduler, out_port):
+    # TODO: Fix signature types once Player-Scheduler-Server refactor is complete
+    def __init__(self, name: str, out_port: int, output_activity: str, triggering: str):
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
-                          .format(name, scheduler, out_port))
+        # self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
+        #                   .format(name, out_port))
+        self.output_activity = output_activity
+        self.triggering = triggering
+
         self.name: str = name  # name of the player
-        self.scheduler: SomaxScheduler = scheduler  # server scheduler
         self.streamviews: {str: StreamView} = dict()  # streamviews dictionary
         self.improvisation_memory = deque('', self.max_history_len)
         self.decide = self.decide_chooseMax  # current decide function
-        self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction(self.scheduler)]  # final merge actions
+        self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction()]  # final merge actions
 
         # current streamview is the private streamview were is caught the
         #    generation atom, from which events are generated and is auto-influenced
@@ -140,28 +142,21 @@ class Player(object):
     ######################################################
     ###### UNIT GENERATION AND DELETION
 
-    def create_streamview(self, path: [str], weight: float, merge_actions: Tuple[Callable, ...]):
+    def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
         """creates streamview at target path"""
-        self.logger.debug("[create_streamview] Creating streamview {} in player {}...".format(path, self.name))
+        self.logger.debug("[create_streamview] Creating streamview {} in player {} with merge_actions {}..."
+                          .format(path, self.name, merge_actions))
         name: str = path.pop(0)
-        if not path:    # streamview_name was last item: create new
+        if not path:  # name was last item: create new
             if name in self.streamviews.keys():
                 raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
             else:
                 self.streamviews[name] = StreamView(name=path, weight=weight, merge_actions=merge_actions)
-        else:           # create streamview inside streamview
+        else:  # create streamview inside streamview
             if path in self.streamviews.keys():
                 self.streamviews[name].create_streamview(name=path, weight=weight, merge_actions=merge_actions)
             else:
                 raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
-
-
-
-
-
-
-
-
 
         # if not ":" in name:
         #     st = StreamViews.StreamView.py(name=name, weight=weight, merge_actions=merge_actions)
