@@ -66,7 +66,7 @@ class ActivityPattern(): # compute the activity profile through time (cf time an
             self.available = 1
             return ztmp,vtmp
         else:
-            print ' oooooooo not available in get activity oooooooo '
+            print(' oooooooo not available in get activity oooooooo ')
             return np.array([]), np.array([])
 
 
@@ -138,7 +138,7 @@ class KappaSpace():
             self.kappa_activation = self.kappa_activation_som_chr
         # [...]
         else:
-            print 'do not know this type of knowledge'
+            print('do not know this type of knowledge')
 
 
 class StreamView():
@@ -164,17 +164,17 @@ class StreamView():
         self.activity = ActivityPattern() # on supprime les activités précédentes
         self.mm_data = {}
         # initialize memory with empty silent slice
-        self.mm_data['name'] = u'undefined name'
+        self.mm_data['name'] = 'undefined name'
         self.mm_data['data'] = []
-        self.mm_data['data'].append({u'slice': [140, 0], u'beat': [0.0, 0.0, 0, 0],
-            u'notes': [], u'seg': [1, 0], u'state': 0,
-            u'extras': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            u'time': [0, 0]})
+        self.mm_data['data'].append({'slice': [140, 0], 'beat': [0.0, 0.0, 0, 0],
+            'notes': [], 'seg': [1, 0], 'state': 0,
+            'extras': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            'time': [0, 0]})
         self.mm_data['size'] = 1 #TBR
         # for OMax compatibility; this is no longer needed
         # this is deprecated and will soon be removed
         self.mm_data['type'] = 3
-        self.mm_data['typeID'] = u'MIDI'
+        self.mm_data['typeID'] = 'MIDI'
         self.event_list = [0.0]
         self.rep_list = [140]
         self.event_history = [[0.0, 0]] #event 0 is silence
@@ -318,7 +318,7 @@ class Player():
                pass
         except IOError:
            filename_h = filename
-        print filename_m
+        print(filename_m)
         self.s_l.load_mem(filename_s)
         self.m_l.load_mem(filename_m)
         self.h_l.load_mem(filename_h)
@@ -326,7 +326,7 @@ class Player():
     def save_mem(self, name):
         with open(self.location+'/corpus/'+name+'.json', 'w') as new_json_file:
             json.dump(self.s_l.mm_data, new_json_file)
-            print new_json_file, 'outputed'
+            print(new_json_file, 'outputed')
 
     def new_event(self, date):
         self.new_event_histo = []
@@ -369,7 +369,7 @@ class Player():
         ztmp_h = np.delete(ztmp_h,itmp)
 
         if self.verbose_mode:
-            print 'selfsize ', vtmp_self.size, 'melsize ', vtmp_mel.size,  'hsize ', vtmp_h.size
+            print('selfsize ', vtmp_self.size, 'melsize ', vtmp_mel.size,  'hsize ', vtmp_h.size)
 
         vtmp_self *= self.s_w
         vtmp_mel *= self.m_w
@@ -442,7 +442,7 @@ class Player():
             if efinal == -1:
                 result = self.s_l.event_history[-1][1] + 1
                 if self.verbose_mode:
-                    print '----------------- no event found -----------------'
+                    print('----------------- no event found -----------------')
             else:
                 result = efinal
 
