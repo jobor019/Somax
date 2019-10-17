@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Any
@@ -6,7 +7,6 @@ from numpy import roll
 
 # abstract class that represents identity, only if the class of the object
 #       is in the transformation catalog
-from somaxlibrary import DeprecatedEvents
 
 
 # TODO: Implement this for readability
@@ -14,20 +14,20 @@ from somaxlibrary import DeprecatedEvents
 
 class AbstractTransform(ABC):
     def __init__(self):
-        pass
+        self.logger = logging.getLogger(__name__)
 
     @abstractmethod
     def encode(self, obj: Any) -> Any:
-        pass
+        raise NotImplementedError("AbstractTransform.encode is abstract")
 
     @abstractmethod
     def decode(self, obj: Any) -> Any:
-        pass
+        raise NotImplementedError("AbstractTransform.decode is abstract")
 
 
 class NoTransform(AbstractTransform):
     def __init__(self):
-        super(NoTransform, self).__init__()
+        super().__init__()
         # TODO: Clean this up
         # self.admitted_types = [Events.AbstractLabel, Events.AbstractContents]  # dictionary of admitted label classes
 
@@ -66,6 +66,7 @@ class TransposeTransform(NoTransform):
     transposition_range = [-3, 3]
 
     def __init__(self, semitone, mod12=True):
+        super(TransposeTransform, self).__init__()
         self.semitone = semitone
         self.mod12 = True
         self.admitted_types = [DeprecatedEvents.MelodicLabel, DeprecatedEvents.HarmonicLabel, DeprecatedEvents.ClassicMIDIContents,

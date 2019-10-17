@@ -1,6 +1,5 @@
 from importlib import reload
 
-import somaxlibrary.ActivityPatterns
 import somaxlibrary.MemorySpaces
 import somaxlibrary.StreamView
 import somaxlibrary.Tools
@@ -18,7 +17,6 @@ import somaxlibrary.DictClasses
 import somaxlibrary.Exceptions
 import somaxlibrary.DeprecatedLabels
 
-reload(ActivityPatterns)
 reload(MemorySpaces)
 reload(StreamView)
 reload(Tools)

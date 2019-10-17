@@ -18,7 +18,7 @@ from typing import ClassVar
 from pythonosc.udp_client import SimpleUDPClient
 
 from somaxlibrary import Transforms, Tools
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Exceptions import InvalidPath

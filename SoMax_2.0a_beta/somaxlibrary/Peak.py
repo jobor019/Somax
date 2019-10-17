@@ -15,4 +15,4 @@ class Peak:
         self.creation_time: float = creation_time
 
     def __repr__(self):
-        return f"Peak with time {self.time}, score {self.score}."
+        return f"Peak with time {self.time}, score {self.score} and {len(self.transforms)} transform(s)."

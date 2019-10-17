@@ -7,7 +7,7 @@ from functools import reduce
 from typing import Callable, Tuple, ClassVar
 
 from somaxlibrary import Tools
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Exceptions import InvalidPath

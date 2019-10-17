@@ -9,7 +9,7 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 from IOParser import IOParser
-from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
+from somaxlibrary.ActivityPattern import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel

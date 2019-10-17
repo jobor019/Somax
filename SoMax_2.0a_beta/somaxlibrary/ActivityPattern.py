@@ -1,5 +1,8 @@
+import inspect
 import logging
+import sys
 from abc import ABC, abstractmethod
+from typing import ClassVar
 
 import numpy as np
 
@@ -23,6 +26,13 @@ class AbstractActivityPattern(ABC):
     @abstractmethod
     def reset(self) -> None:
         raise NotImplementedError("AbstractActivityPattern.reset is abstract.")
+
+    @staticmethod
+    def classes() -> {str: ClassVar}:
+        """Returns class objects for all non-abstract classes in this module."""
+        return dict(inspect.getmembers(sys.modules[__name__],
+                                       lambda member: inspect.isclass(member) and not inspect.isabstract(
+                                           member) and member.__module__ == __name__))
 
 
 class ClassicActivityPattern(AbstractActivityPattern):

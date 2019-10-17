@@ -2,7 +2,7 @@ import logging
 from typing import ClassVar
 
 from somaxlibrary import MemorySpaces
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
+from somaxlibrary.ActivityPattern import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Influence import AbstractInfluence

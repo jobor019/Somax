@@ -1,6 +1,6 @@
 from typing import Tuple, ClassVar, Any, Union, List
 
-from somaxlibrary.ActivityPatterns import AbstractActivityPattern
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
