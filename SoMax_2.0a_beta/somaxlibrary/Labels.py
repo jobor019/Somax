@@ -13,6 +13,15 @@ class AbstractLabel(ABC):
 
     @staticmethod
     @abstractmethod
+    def _influence_keyword() -> str:
+        """
+        Notes
+        -----
+        This should return a for the label unique string that is used to categorize influence messages from max."""
+        raise NotImplementedError("AbstractLabel._influence_keyword is abstract.")
+
+    @staticmethod
+    @abstractmethod
     def classify(data: Union[CorpusEvent, Any], **kwargs) -> int:
         """ # TODO
         Raises
@@ -23,10 +32,20 @@ class AbstractLabel(ABC):
         -----
         Must always handle CorpusState as this will always be passed upon construction of Corpus.
         """
-        pass
+        raise NotImplementedError("AbstractLabel.classify is abstract.")
+
+    @classmethod
+    def classify_as(cls, influence_keyword: str, data: Any, **kwargs):
+        """ Raises: InvalidLabelInput """
+        # TODO: [OPTIMIZATION]: ev. refactor this to own class to avoid calling `classes` continuously (if slow)
+        classes: [ClassVar] = AbstractLabel.classes().values()
+        for c in classes:  # type: ClassVar[AbstractLabel]
+            if c._influence_keyword() == influence_keyword:
+                return c.classify(data, **kwargs)
+        raise InvalidLabelInput(f"No class exists that matches the influence keyword {influence_keyword}.")
 
     @staticmethod
-    def classes() -> {(str, ClassVar)}:
+    def classes() -> {str: ClassVar}:
         """Returns class objects for all non-abstract classes in this module."""
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
@@ -35,6 +54,10 @@ class AbstractLabel(ABC):
 
 class MelodicLabel(AbstractLabel):
     MAX_LABEL = 140
+
+    @staticmethod
+    def _influence_keyword() -> str:
+        return "pitch"
 
     @staticmethod
     def classify(data: Union[int, CorpusEvent], mod12: bool = False) -> int:
@@ -64,6 +87,10 @@ class HarmonicLabel(AbstractLabel):
     SOM_DATA = np.loadtxt('tables/misc_hsom', dtype=float, delimiter=",")  # TODO: Optimize import
     SOM_CLASSES = np.loadtxt('tables/misc_hsom_c', dtype=int, delimiter=",")  # TODO: Optimize import
     NODE_SPECIFICITY = 2.0
+
+    @staticmethod
+    def _influence_keyword() -> str:
+        return "chroma"
 
     @staticmethod
     def classify(data: Union[CorpusEvent, List[float], int], **kwargs) -> int:

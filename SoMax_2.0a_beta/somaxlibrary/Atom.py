@@ -6,9 +6,9 @@ from typing import ClassVar
 from somaxlibrary import MemorySpaces
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
-from somaxlibrary.Transforms import AbstractTransform
+from somaxlibrary.MemorySpaces import AbstractMemorySpace
+from somaxlibrary.Peak import Peak
 
 
 class Atom(object):
@@ -18,9 +18,7 @@ class Atom(object):
                  memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace,
                  corpus: Corpus = None, self_influenced: bool = False):
         self.logger = logging.getLogger(__name__)
-        # self.logger.debug("[__init__ Creating atom {} with weight {}, label_type {}, content_type {}, event_type {}, "
-        #                   "activity_type {} and memory_type {}."
-        #                   .format(name, weight, label_type, contents_type, event_type, activity_type, memory_type))
+        self.logger.debug(f"[__init__ Creating atom '{name}'.")
         self.weight: float = weight
         self.activity_pattern: AbstractActivityPattern = activity_type()  # creates activity
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type)
@@ -56,12 +54,12 @@ class Atom(object):
         self.weight = float(weight)
 
     # influences the memory with incoming data
-    def influence(self, time, *data, **kwargs):
+    def influence(self, label: AbstractLabel, time: float, **kwargs):
         # we get the activity peaks created by influence
-        peaks: [(float, float, AbstractTransform)] = self.memory_space.influence(*data, **kwargs)
+        peaks: [Peak] = self.memory_space.influence(label, time, **kwargs)
+        self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
         if peaks:
-            self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
-            self.activity_pattern.insert(*peaks)  # we insert the peaks into the activity profile
+            self.activity_pattern.insert(peaks)  # we insert the peaks into the activity profile
 
     # external method to get back atom's activity
     def get_activity(self, date, weighted=True):

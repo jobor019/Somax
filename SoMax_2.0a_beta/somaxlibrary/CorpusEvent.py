@@ -39,7 +39,7 @@ class CorpusEvent:
             parsed_notes.append(n)
         return parsed_notes
 
-    def classify(self, label_classes: {(str, ClassVar)}) -> None:
+    def classify(self, label_classes: {str: ClassVar}) -> None:
         for _class_name, label_class in label_classes.items():
             try:
                 label: int = label_class.classify(self)

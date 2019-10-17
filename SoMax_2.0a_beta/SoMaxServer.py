@@ -2,7 +2,7 @@ import argparse
 import logging
 import logging.config
 from functools import reduce
-from typing import ClassVar
+from typing import ClassVar, Any
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
@@ -11,7 +11,7 @@ from pythonosc.udp_client import SimpleUDPClient
 from IOParser import IOParser
 from somaxlibrary.ActivityPatterns import ClassicActivityPattern, AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
@@ -325,11 +325,19 @@ class SoMaxServer(Caller):
             event = self.players[player_name]['player'].new_event(time, event)
             self.scheduler.write_event(time, player_name, event)
 
-    def influence(self, player, path, *args, **kwargs):
-        # TODO: IO Error handling
-        self.logger.debug("[influence] called for player {0} with path {1} and args {2}, kwargs {3}."
-                          .format(player, path, args, kwargs))
-        self.players[player].influence(path, *args, **kwargs)
+    def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
+        self.logger.debug(f"[influence] called for player {player} with path {path}, label keyword {label_keyword}, "
+                          f"value {value} and kwargs {kwargs}")
+        try:
+            label: AbstractLabel = AbstractLabel.classify_as(label_keyword, value, **kwargs)
+        except InvalidLabelInput as e:
+            self.logger.error(str(e) + "No action performed.")
+            return
+        # TODO: Error handling
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        time: float = self.scheduler.get_time()
+        self.players[player].influence(path_and_name, label, time, **kwargs)
+
 
     def jump(self, player):
         # TODO: IO Error handling

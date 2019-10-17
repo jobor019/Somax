@@ -3,12 +3,11 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Any, Tuple, ClassVar
+from typing import Tuple, ClassVar
 
 from somaxlibrary import Transforms
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Exceptions import InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
@@ -28,14 +27,14 @@ class AbstractMemorySpace(ABC):
 
     @abstractmethod
     def read(self, corpus: Corpus, **kwargs) -> None:
-        pass
+        raise NotImplementedError("AbstractMemorySpace.read is abstract.")
 
     @abstractmethod
-    def influence(self, influence_type: str, influence_data: Any, **kwargs) -> [Peak]:
-        pass
+    def influence(self, label: AbstractLabel, time: float, **kwargs) -> [Peak]:
+        raise NotImplementedError("AbstractMemorySpace.influence is abstract.")
 
     @staticmethod
-    def classes() -> {(str, ClassVar)}:
+    def classes() -> {str: ClassVar}:
         """Returns class objects for all non-abstract classes in this module."""
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
@@ -84,14 +83,8 @@ class NGramMemorySpace(AbstractMemorySpace):
                 else:
                     self.structured_data[key] = [value]
 
-    def influence(self, influence_type: str, influence_data: Any, **kwargs) -> [Peak]:
-        try:
-            label: int = self.label_type.classify(influence_data, **kwargs)
-        except InvalidLabelInput:
-            self.logger.error(f"Could not match input {influence_data} with a label of type {self.label_type}.")
-            raise  # TODO: Maybe remove/replace with a return
+    def influence(self, label: AbstractLabel, _time: float, **kwargs) -> [Peak]:
         self.influence_history.append(label)
-
         if len(self.influence_history) < self.ngram_size:
             return []
         else:

@@ -14,7 +14,7 @@ class AbstractMergeAction(object):
         return pattern
 
     @staticmethod
-    def classes() -> {(str, ClassVar)}:
+    def classes() -> {str: ClassVar}:
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))

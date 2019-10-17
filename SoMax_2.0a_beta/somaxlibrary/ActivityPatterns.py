@@ -26,7 +26,7 @@ class AbstractActivityPattern(ABC):
         return reduce(lambda x, y: x + "{0} at {1}".format(str(y[0]), str(y[1])), zip(self.zeta, self.value), "")
 
     @staticmethod
-    def classes() -> {(str, ClassVar)}:
+    def classes() -> {str: ClassVar}:
         """Returns class objects for all non-abstract classes in this module."""
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(

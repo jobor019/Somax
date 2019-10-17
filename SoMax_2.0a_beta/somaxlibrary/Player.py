@@ -19,10 +19,11 @@ from pythonosc.udp_client import SimpleUDPClient
 
 from somaxlibrary import Transforms, Tools
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern
+from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.DeprecatedContents import ClassicAudioContents
 from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.StreamView import StreamView
@@ -56,6 +57,14 @@ class Player(object):
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
 
         self.corpus: Corpus = None
+
+    def get_streamview(self, path: [str]) -> StreamView:
+        streamview: str = path.pop(0)
+        return self.streamviews[streamview].get_streamview(path)
+
+    def get_atom(self, path: [str]) -> Atom:
+        streamview: str = path.pop(0)
+        return self.streamviews[streamview].get_atom(path)
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
@@ -124,18 +133,21 @@ class Player(object):
     #     return event.get_contents().get_contents()
 
     # TODO: Pass time from SoMaxServer (gotten through Scheduler)
-    def influence(self, path, *args, **kwargs):
-        '''influences target atom with *args'''
-        self.logger.debug("[influence] Player {} initialized call to influence with path {}, args {} and kwargs {}"
-                          .format(self.name, path, args, kwargs))
-        time = self.scheduler.get_time()
-        pf, pr = Tools.parse_path(path)
-        if pf in self.streamviews.keys():
-            self.streamviews[pf].influence(pr, time, *args, **kwargs)
-            self.logger.debug("[influence] Completed successfully.")
-        else:
-            self.logger.error("Call to influence failed: Player {} does not have a streamview with name {}."
-                              .format(self.name, pf))
+    def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs):
+        """Raises: """
+        self.get_atom(path).influence(label, time, **kwargs)
+
+
+        # self.logger.debug("[influence] Player {} initialized call to influence with path {}, args {} and kwargs {}"
+        #                   .format(self.name, path, args, kwargs))
+        # time = self.scheduler.get_time()
+        # pf, pr = Tools.parse_path(path)
+        # if pf in self.streamviews.keys():
+        #     self.streamviews[pf].influence(pr, time, *args, **kwargs)
+        #     self.logger.debug("[influence] Completed successfully.")
+        # else:
+        #     self.logger.error("Call to influence failed: Player {} does not have a streamview with name {}."
+        #                       .format(self.name, pf))
 
     def jump(self):
         self.logger.debug("[jump] Jump set to True.")
@@ -152,33 +164,28 @@ class Player(object):
         """creates streamview at target path"""
         self.logger.debug("[create_streamview] Creating streamview {} in player {} with merge_actions {}..."
                           .format(path, self.name, merge_actions))
-        name: str = path.pop(0)
-        if not path:  # name was last item: create new
-            if name in self.streamviews.keys():
-                raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
+        streamview: str = path.pop(0)
+        if not path:
+            if streamview in self.streamviews.keys():
+                raise DuplicateKeyError(f"A streamview '{streamview}' already exists in player '{self.name}'.")
             else:
-                self.streamviews[name] = StreamView(name=name, weight=weight, merge_actions=merge_actions)
-        else:  # create streamview inside streamview
-            if name in self.streamviews.keys():
-                self.streamviews[name].create_streamview(path=path, weight=weight, merge_actions=merge_actions)
-            else:
-                raise InvalidPath(f"A streamview with the name {name} already exists in player {self.name}.")
+                self.streamviews[streamview] = StreamView(name=streamview, weight=weight, merge_actions=merge_actions)
+        else:
+            self.streamviews[streamview].create_streamview(path, weight, merge_actions)
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
                     self_influenced: bool):
         """creates atom at target path
-        raises: InvalidPath, KeyError"""
+        raises: InvalidPath, KeyError, DuplicateKeyError"""
         self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
 
         streamview: str = path.pop(0)
         if not path:  # path is empty means no streamview path was given
             raise InvalidPath(f"Cannot create an atom directly in Player.")
         else:
-            atom = self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
-                                                            self_influenced)
-            self.logger.info("Created atom {}.".format(atom))
-
+            self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
+                                                     self_influenced)
 
     def delete_atom(self, name):
         '''deletes target atom'''
@@ -201,34 +208,34 @@ class Player(object):
         # self.send_info_dict()
 
     # TODO: Fix/get rid of this
-    def set_active_atom(self, streamview: str, atom_name: str):
-        '''set private atom of the player to target'''
-        # path, path_bottom = Tools.parse_path(atom_name)
-        path = streamview
-        path_bottom = atom_name
-        if path in self.streamviews.keys():
-            atom = self.streamviews[path].get_atom(path_bottom)
-        else:
-            atom = None
-        if atom != None:
-            if "_self" in self.self_streamview._atoms:
-                del self.self_streamview._atoms["_self"]
-            self.self_streamview.add_atom(atom, copy=True, replace=True, name="_self")
-        else:
-            raise Exception("Could not find atom {0}!".format(atom_name))
-        if self.current_atom != None:
-            path, path_bottom = Tools.parse_path(self.current_atom)
-            if path in self.streamviews.keys():
-                former_atom = self.streamviews[path].get_atom(path_bottom)
-                former_atom.active = False
-        self.current_atom = atom_name
-        # TODO: Deprecated
-        if issubclass(atom.memorySpace.contents_type, ClassicAudioContents):
-            self.send_buffer(atom)
-        atom.active = True
-        self.logger.info("Player {0} setting active atom to {1}.".format(self.name, atom_name))
-        self.update_memory_length()
-        self.send_info_dict()
+    # def set_active_atom(self, streamview: str, atom_name: str):
+    #     '''set private atom of the player to target'''
+    #     # path, path_bottom = Tools.parse_path(atom_name)
+    #     path = streamview
+    #     path_bottom = atom_name
+    #     if path in self.streamviews.keys():
+    #         atom = self.streamviews[path].get_atom_rec(path_bottom)
+    #     else:
+    #         atom = None
+    #     if atom != None:
+    #         if "_self" in self.self_streamview._atoms:
+    #             del self.self_streamview._atoms["_self"]
+    #         self.self_streamview.add_atom(atom, copy=True, replace=True, name="_self")
+    #     else:
+    #         raise Exception("Could not find atom {0}!".format(atom_name))
+    #     if self.current_atom != None:
+    #         path, path_bottom = Tools.parse_path(self.current_atom)
+    #         if path in self.streamviews.keys():
+    #             former_atom = self.streamviews[path].get_atom_rec(path_bottom)
+    #             former_atom.active = False
+    #     self.current_atom = atom_name
+    #     # TODO: Deprecated
+    #     if issubclass(atom.memorySpace.contents_type, ClassicAudioContents):
+    #         self.send_buffer(atom)
+    #     atom.active = True
+    #     self.logger.info("Player {0} setting active atom to {1}.".format(self.name, atom_name))
+    #     self.update_memory_length()
+    #     self.send_info_dict()
 
     ######################################################
     ###### ACTIVITIES ACCESSORS
