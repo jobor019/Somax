@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Tuple, ClassVar
 
-from somaxlibrary import Transforms
+from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
+from somaxlibrary.Transforms import AbstractTransform, NoTransform
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
@@ -14,23 +15,24 @@ from somaxlibrary.Transforms import AbstractTransform
 
 
 class AbstractMemorySpace(ABC):
+    """ MemorySpaces determine how events are matched to labels """
+
     def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = AbstractLabel,
-                 history_len: int = 3, transforms: [AbstractTransform] = None, **kwargs):
-        """ Note: args, kwargs can be used if additional information is need to construct the data structure."""
+                 transforms: [AbstractTransform] = None, **_kwargs):
+        """ Note: kwargs can be used if additional information is need to construct the data structure."""
         self.logger = logging.getLogger(__name__)
         self.corpus: Corpus = corpus
         self.label_type: ClassVar[AbstractLabel] = label_type
-        self.influence_history: deque = deque([], history_len)
         # TODO: Should also check that they work for this label
-        self.transforms: [AbstractTransform] = transforms if transforms else [Transforms.NoTransform()]
+        self.transforms: [AbstractTransform] = transforms if transforms else [NoTransform()]
         # self.available = True       # TODO: Implement if needed, save for later
 
     @abstractmethod
-    def read(self, corpus: Corpus, **kwargs) -> None:
+    def read(self, corpus: Corpus, **_kwargs) -> None:
         raise NotImplementedError("AbstractMemorySpace.read is abstract.")
 
     @abstractmethod
-    def influence(self, label: AbstractLabel, time: float, **kwargs) -> [Peak]:
+    def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [Peak]:
         raise NotImplementedError("AbstractMemorySpace.influence is abstract.")
 
     @staticmethod
@@ -56,12 +58,13 @@ class AbstractMemorySpace(ABC):
 
 class NGramMemorySpace(AbstractMemorySpace):
     def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = MelodicLabel,
-                 history_len: int = 3, transforms: [AbstractTransform] = None, **kwargs):
-        super(NGramMemorySpace, self).__init__(corpus, label_type, history_len, transforms, **kwargs)
+                 transforms: [AbstractTransform] = None, history_len: int = 3, **_kwargs):
+        super(NGramMemorySpace, self).__init__(corpus, label_type, transforms)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type}, history length {history_len} and transforms {transforms}")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
         self.ngram_size: int = history_len
+        self.influence_history: deque = deque([], history_len)
 
     def __repr__(self):
         return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
@@ -83,21 +86,23 @@ class NGramMemorySpace(AbstractMemorySpace):
                 else:
                     self.structured_data[key] = [value]
 
-    def influence(self, label: AbstractLabel, _time: float, **kwargs) -> [Peak]:
+    def influence(self, label: AbstractLabel, time: float, **kwargs) -> [AbstractInfluence]:
         self.influence_history.append(label)
         if len(self.influence_history) < self.ngram_size:
             return []
         else:
-            peaks: [Peak] = []
+            matches: [AbstractInfluence] = []
             # TODO (Once tested): handle transposes
+            # TODO 2: Handle combinations of transforms, not just individual transforms
             for transform in self.transforms:
                 # Inverse transform of input (equivalent to transform of memory)
                 key: Tuple[int, ...] = tuple(transform.decode(self.influence_history))
                 try:
-                    events: [CorpusEvent] = self.structured_data[key]
-                    for event in events:
-                        peaks.append(Peak(time=event.onset, score=1.0, event=event, transforms=transform))
-                    return peaks
-                except KeyError:
+                    matching_events: [CorpusEvent] = self.structured_data[key]
+                    for event in matching_events:
+                        # TODO: Sends list of single transform only rn
+                        matches.append(ClassicInfluence(event, time, [transform]))
+                    return matches
+                except KeyError:    # no matches found
                     return []
-        return peaks
+        return matches

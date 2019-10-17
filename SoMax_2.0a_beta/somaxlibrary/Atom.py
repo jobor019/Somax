@@ -1,14 +1,18 @@
 import logging
-# Atom is the core object that contains an activity pattern and a memory space.
-# He basically does two things : managing influences and updating activity.
 from typing import ClassVar
 
 from somaxlibrary import MemorySpaces
 from somaxlibrary.ActivityPatterns import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
+from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Peak import Peak
+
+# Atom is the core object that contains an activity pattern and a memory space.
+# He basically does two things : managing influences and updating activity.
+from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
@@ -28,25 +32,9 @@ class Atom(object):
         if corpus:
             self.read(corpus, label_type)
 
-    # def __repr__(self):
-    #     return "Atom with {0} and {1}".format(type(self.activityPattern), type(self.memory_space))
 
-    # Tells the memory space to load the file filez
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):
-        # if memory_type != None:
-        #     if different memory type, create a new memory space
-        # memory_class = getattr(MemorySpaces, memory_type)
-        # self.memory_space = memory_class(label_type=label_type, contents_type=contents_type, event_type=event_type)
-        # read file
-        # self.logger.info("Atom {} reading file {}...".format(self.name, corpus))
         self.memory_space.read(corpus)
-        # if success == False:
-        #     TODO: Exception or log.error?
-        #     raise Exception("[ERROR] failed to load the file ", corpus)
-        # else:
-        # self.logger.info("Atom {} file {} loaded".format(self.name, corpus))
-        # set current file
-        # self.current_file = corpus
 
     # set current weight of atom
     def set_weight(self, weight):
@@ -55,11 +43,12 @@ class Atom(object):
 
     # influences the memory with incoming data
     def influence(self, label: AbstractLabel, time: float, **kwargs):
-        # we get the activity peaks created by influence
-        peaks: [Peak] = self.memory_space.influence(label, time, **kwargs)
-        self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
-        if peaks:
-            self.activity_pattern.insert(peaks)  # we insert the peaks into the activity profile
+        # we get the activity matched_events created by influence
+        matched_events: [AbstractInfluence] = self.memory_space.influence(label, time, **kwargs)
+        # TODO: Technically, this could be done at new_event instead (no need to do it twice - costly)
+        # self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
+        if matched_events:
+            self.activity_pattern.insert(matched_events)  # we insert the events into the activity profile
 
     # external method to get back atom's activity
     def get_activity(self, date, weighted=True):

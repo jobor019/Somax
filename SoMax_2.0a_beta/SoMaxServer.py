@@ -335,6 +335,7 @@ class SoMaxServer(Caller):
             return
         # TODO: Error handling
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        # TODO: We don't need time on insert, only on update (called in new_event)
         time: float = self.scheduler.get_time()
         self.players[player].influence(path_and_name, label, time, **kwargs)
 
