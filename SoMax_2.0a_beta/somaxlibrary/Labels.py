@@ -11,6 +11,17 @@ from somaxlibrary.Exceptions import InvalidLabelInput
 
 class AbstractLabel(ABC):
 
+    def __init__(self, label: int):
+        """
+        Notes
+        -----
+        No label should ever be directly constructed using __init__. use `classify` and `classify_as`.
+        """
+        self.label: int = label
+
+    def __repr__(self):
+        return f"{self.__class__} with label {self.label}"
+
     @staticmethod
     @abstractmethod
     def _influence_keyword() -> str:
@@ -20,9 +31,9 @@ class AbstractLabel(ABC):
         This should return a for the label unique string that is used to categorize influence messages from max."""
         raise NotImplementedError("AbstractLabel._influence_keyword is abstract.")
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def classify(data: Union[CorpusEvent, Any], **kwargs) -> int:
+    def classify(cls, data: Union[CorpusEvent, Any], **kwargs) -> 'AbstractLabel':
         """ # TODO
         Raises
         ------
@@ -35,7 +46,7 @@ class AbstractLabel(ABC):
         raise NotImplementedError("AbstractLabel.classify is abstract.")
 
     @classmethod
-    def classify_as(cls, influence_keyword: str, data: Any, **kwargs):
+    def classify_as(cls, influence_keyword: str, data: Any, **kwargs) -> 'AbstractLabel':
         """ Raises: InvalidLabelInput """
         # TODO: [OPTIMIZATION]: ev. refactor this to own class to avoid calling `classes` continuously (if slow)
         classes: [ClassVar] = AbstractLabel.classes().values()
@@ -59,8 +70,8 @@ class MelodicLabel(AbstractLabel):
     def _influence_keyword() -> str:
         return "pitch"
 
-    @staticmethod
-    def classify(data: Union[int, CorpusEvent], mod12: bool = False) -> int:
+    @classmethod
+    def classify(cls, data: Union[int, CorpusEvent], mod12: bool = False) -> 'MelodicLabel':
         if isinstance(data, CorpusEvent):
             return MelodicLabel._label_from_event(data)
         elif isinstance(data, int):
@@ -68,18 +79,18 @@ class MelodicLabel(AbstractLabel):
         else:
             raise InvalidLabelInput("Melodic Label data could not be classified due to invalid type input.")
 
-    @staticmethod
-    def _label_from_event(event: CorpusEvent, mod12: bool = False) -> int:
+    @classmethod
+    def _label_from_event(cls, event: CorpusEvent, mod12: bool = False) -> 'MelodicLabel':
         return MelodicLabel._label_from_pitch(event.pitch, mod12)
 
-    @staticmethod
-    def _label_from_pitch(pitch: int, mod12: bool = False) -> int:
+    @classmethod
+    def _label_from_pitch(cls, pitch: int, mod12: bool = False) -> 'MelodicLabel':
         if pitch < 0 or pitch > MelodicLabel.MAX_LABEL:
             raise InvalidLabelInput("Melodic Label data could not be classified due to invalid range.")
         if mod12:
-            return pitch % 12
+            return cls(pitch % 12)
         else:
-            return pitch
+            return cls(pitch)
 
 
 class HarmonicLabel(AbstractLabel):
@@ -92,8 +103,8 @@ class HarmonicLabel(AbstractLabel):
     def _influence_keyword() -> str:
         return "chroma"
 
-    @staticmethod
-    def classify(data: Union[CorpusEvent, List[float], int], **kwargs) -> int:
+    @classmethod
+    def classify(cls, data: Union[CorpusEvent, List[float], int], **kwargs) -> 'HarmonicLabel':
         if isinstance(data, CorpusEvent):
             return HarmonicLabel._label_from_event(data)
         elif type(data) is list or isinstance(data, np.ndarray):
@@ -103,12 +114,12 @@ class HarmonicLabel(AbstractLabel):
         else:
             raise InvalidLabelInput(f"Harmonic Label data could not be classified due to incorrect type.")
 
-    @staticmethod
-    def _label_from_event(event: CorpusEvent) -> int:
+    @classmethod
+    def _label_from_event(cls, event: CorpusEvent) -> 'HarmonicLabel':
         return HarmonicLabel._label_from_chroma(event.chroma)
 
-    @staticmethod
-    def _label_from_chroma(chroma: np.array) -> int:
+    @classmethod
+    def _label_from_chroma(cls, chroma: np.array) -> 'HarmonicLabel':
         # TODO: Optimize and fix idiot behaviour with indtmp weirdsort
         if len(chroma) != 12:
             raise InvalidLabelInput(f"Harmonic Label data could not be classified from content with size {len(chroma)}."
@@ -122,10 +133,10 @@ class HarmonicLabel(AbstractLabel):
         indtmp = np.argsort(clust_vec)
         # pick corresponding SOM class from chroma information
         label = HarmonicLabel.SOM_CLASSES[indtmp[-1]]
-        return label
+        return cls(label)
 
-    @staticmethod
-    def _label_from_pitch(pitch: int) -> int:
+    @classmethod
+    def _label_from_pitch(cls, pitch: int) -> 'HarmonicLabel':
         pitch_class: int = pitch % 12
         chroma = np.zeros(12, dtype='float32')
         chroma[pitch_class] = 1.0

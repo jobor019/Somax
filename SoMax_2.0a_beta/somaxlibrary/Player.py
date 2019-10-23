@@ -185,7 +185,7 @@ class Player(object):
             raise InvalidPath(f"Cannot create an atom directly in Player.")
         else:
             self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
-                                                     self_influenced)
+                                                     self.corpus, self_influenced)
 
     def delete_atom(self, name):
         '''deletes target atom'''

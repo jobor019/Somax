@@ -322,7 +322,7 @@ class SoMaxServer(Caller):
                 event = content[3]
             else:
                 event = None
-            event = self.players[player_name]['player'].new_event(time, event)
+            event = self.players[player_name].new_event(time, event)
             self.scheduler.write_event(time, player_name, event)
 
     def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):

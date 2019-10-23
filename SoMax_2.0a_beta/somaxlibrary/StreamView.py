@@ -53,7 +53,7 @@ class StreamView(object):
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace],
-                    self_influenced: bool):
+                    corpus: Corpus, self_influenced: bool):
         """creating an atom at required path
         Raises: KeyError, InvalidPath, DuplicateKeyError"""
         self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(path))
@@ -64,7 +64,7 @@ class StreamView(object):
             raise DuplicateKeyError(f"An atom with the name '{new_atom_name}' already exists in "
                                     f"streamview '{parent_streamview.name}'.")
         parent_streamview.atoms[new_atom_name] = Atom(new_atom_name, weight, label_type, activity_type, memory_type,
-                                                      self_influenced=self_influenced)
+                                                      corpus, self_influenced)
 
     def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
         """creating a streamview at required path

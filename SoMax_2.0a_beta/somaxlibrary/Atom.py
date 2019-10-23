@@ -34,6 +34,7 @@ class Atom(object):
 
 
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):
+        self.logger.debug(f"[read]: Reading corpus {corpus}.")
         self.memory_space.read(corpus)
 
     # set current weight of atom

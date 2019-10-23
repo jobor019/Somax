@@ -5,13 +5,14 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Tuple, ClassVar
 
-from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
-from somaxlibrary.Transforms import AbstractTransform, NoTransform
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Exceptions import InvalidLabelInput
+from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
+from somaxlibrary.Transforms import NoTransform
 
 
 class AbstractMemorySpace(ABC):
@@ -87,6 +88,9 @@ class NGramMemorySpace(AbstractMemorySpace):
                     self.structured_data[key] = [value]
 
     def influence(self, label: AbstractLabel, time: float, **kwargs) -> [AbstractInfluence]:
+        # TODO: Label is not AbstractLabel rn, it's an int. Problem
+        if not type(label) == self.label_type:
+            raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
         self.influence_history.append(label)
         if len(self.influence_history) < self.ngram_size:
             return []
@@ -103,6 +107,6 @@ class NGramMemorySpace(AbstractMemorySpace):
                         # TODO: Sends list of single transform only rn
                         matches.append(ClassicInfluence(event, time, [transform]))
                     return matches
-                except KeyError:    # no matches found
+                except KeyError:  # no matches found
                     return []
         return matches

@@ -28,7 +28,7 @@ class CorpusEvent:
         self.chroma: [float] = chroma
         self.pitch: int = pitch
         self.notes: [Note] = self._parse_notes(notes, timing_type)
-        self.labels: {ClassVar: int} = {}  # Classvar[ProperAbstractLabel] TODO Rename
+        self.labels: {ClassVar: int} = {}  # ClassVar[AbstractLabel]
 
     @staticmethod
     def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
