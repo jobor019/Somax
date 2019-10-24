@@ -63,6 +63,7 @@ class NoTransform(AbstractTransform):
     def get_transformation_patterns(cls):
         return [cls()]
 
+# TODO: Implement at a later stage
 #
 # class TransposeTransform(NoTransform):
 #     transposition_range = [-3, 3]

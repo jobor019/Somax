@@ -322,7 +322,8 @@ class SoMaxServer(Caller):
                 event = content[3]
             else:
                 event = None
-            event = self.players[player_name].new_event(time, event)
+            # TODO: Remove event. Should never accept event as input
+            event = self.players[player_name].new_event(time)
             self.scheduler.write_event(time, player_name, event)
 
     def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):

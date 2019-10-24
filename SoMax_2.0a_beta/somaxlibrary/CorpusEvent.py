@@ -58,5 +58,9 @@ class CorpusEvent:
         """
         return self._labels[label_type]
 
+    @property
+    def labels(self):  # returns [AbstractLabel]:
+        return self._labels.values()
+
     def __repr__(self):
         return f"CorpusEvent object with labels {self._labels}."

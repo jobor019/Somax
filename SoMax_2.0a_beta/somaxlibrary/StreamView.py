@@ -2,7 +2,6 @@ import logging
 # The StreamView object is a container that manages several atoms, whose activity
 #   patterns are taken and then mixed. This is mainly motivated to modulate the diverse
 #   activity patterns depending on the transformations.
-from copy import deepcopy
 from functools import reduce
 from typing import Callable, Tuple, ClassVar
 
@@ -11,7 +10,6 @@ from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import NGramMemorySpace
@@ -81,12 +79,20 @@ class StreamView(object):
         parent_streamview.streamviews[new_streamview_name] = StreamView(new_streamview_name, weight, merge_actions)
 
     def update_peaks(self, time: float) -> None:
+        for streamview in self.streamviews.values():
+            streamview.update_peaks(time)
         for atom in self.atoms.values():
-            atom._update_peaks(time)
+            atom.update_peaks(time)
 
-    def merged_peaks(self, time:float, influence_history: [CorpusEvent]) -> [Peak]:
-        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.atoms.values(), 0.0))
+    def merged_peaks(self, time: float, influence_history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
         peaks: [Peak] = []
+
+        # Peaks from child streamviews
+        for streamview in self.streamviews.values():
+            peaks.extend(streamview.merged_peaks(time, influence_history, corpus, **kwargs))
+
+        # Peaks from atoms
+        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.atoms.values(), 0.0))
         for atom in self.atoms.values():
             peak_copies: [Peak] = atom.copy_peaks()
             normalized_weight = atom.weight / weight_sum
@@ -94,8 +100,10 @@ class StreamView(object):
                 peak *= normalized_weight
                 peaks.append(peak)
 
-        self._merge_actions
-
+        # Apply merge actions on this level and return
+        for merge_action in self._merge_actions:
+            peaks = merge_action.merge(peaks, time, influence_history, corpus, **kwargs)
+        return peaks
 
     # # TODO: Only used at one place. Consider replacing/streamlining behaviour
     # def add_atom(self, atom, name=None, copy=False, replace=False):
@@ -164,7 +172,7 @@ class StreamView(object):
         else:
             activities = dict()
             for name, atom in self.atoms.iteritems():
-                activities[name] = atom.get_merged_activity(date, weighted=weighted)
+                activities[name] = atom.merged_peaks(date, weighted=weighted)
         if issubclass(type(activities), Tools.SequencedList):
             activities = {path: activities}
         return activities

@@ -36,7 +36,8 @@ class DistanceMergeAction(AbstractMergeAction):
         self.t_width = t_width
         self.transform_merge_mode = transform_merge_mode  # can 'AND' or 'OR'   # TODO Merge modes
 
-    def merge(self, peaks: [Peak], **_kwargs) -> [Peak]:
+    def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
+        Peak]:
         """(TODO: old temp docstring) Merges events that are similar and sufficiently close in time to each other into a
              single events. Returns all other events unchanged. Unless mode is set to AND, then it deletes both unless
              peaks occur in all layers simultaneously."""
@@ -148,9 +149,9 @@ class PhaseModulationMergeAction(AbstractMergeAction):
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
         self.selectivity = selectivity
 
-    def merge(self, peaks: [Peak], current_time: float, **_kwargs) -> [Peak]:
+    def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [Peak]:
         for peak in peaks:
-            factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (current_time - peak.time)) - 1))
+            factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))
             peak.score *= factor
         return peaks
 

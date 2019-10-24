@@ -19,3 +19,4 @@ class Peak:
 
     def __repr__(self):
         return f"Peak with time '{self.time}', score '{self.score}' and transform '{self.transform}'."
+

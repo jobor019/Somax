@@ -54,7 +54,7 @@ class Corpus:
         for event in events:
             c = CorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
                             event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"], timing_type)
-            parsed_events.append(event["time"][timing_type], c)
+            parsed_events.append(event["time"][timing_type][0], c)
         return parsed_events
 
     def _classify_events(self):
@@ -65,6 +65,12 @@ class Corpus:
     def reset(self):
         self.ordered_events = SequencedList()
         self.content_type = None
+
+    def length(self) -> int:
+        return len(self.ordered_events)
+
+    def event_at(self, index: int):
+        return self.ordered_events.orderedEventList[index]
 
     @property
     def events(self):

@@ -22,19 +22,21 @@ from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus
+from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
 from somaxlibrary.Peak import Peak
+from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
 from somaxlibrary.StreamView import StreamView
+from somaxlibrary.Transforms import AbstractTransform
 
 
 class Player(object):
     max_history_len = 100
 
-    # TODO: Fix signature types once Player-Scheduler-Server refactor is complete
+    # TODO: Fix signature AND INIT types once Player-Scheduler-Server refactor is complete
     def __init__(self, name: str, out_port: int, output_activity: str, triggering: str):
         self.logger = logging.getLogger(__name__)
         # self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
@@ -44,7 +46,7 @@ class Player(object):
 
         self.name: str = name  # name of the player
         self.streamviews: {str: StreamView} = dict()  # streamviews dictionary
-        self.improvisation_memory: [CorpusEvent] = deque('', self.max_history_len)
+        self.improvisation_memory: [(CorpusEvent, AbstractTransform)] = deque('', self.max_history_len)
         self.decide = self.decide_chooseMax  # current decide function
         self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction()]  # final merge actions
 
@@ -54,19 +56,23 @@ class Player(object):
         self.waiting_to_jump: bool = False
 
         self.info_dictionary = dict()
+        self.has_osc: bool = False
+        if not self.has_osc:
+            self.logger.warning("NOTE! OSC IS NOT ENABLED!!")
         self.client = SimpleUDPClient("127.0.0.1", out_port)  # TODO: IP as input argument
         self.out_port = out_port
         self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
 
         self.corpus: Corpus = None
+        self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
-        return self.streamviews[streamview]._get_streamview(path)
+        return self.streamviews[streamview].get_streamview(path)
 
     def _get_atom(self, path: [str]) -> Atom:
         streamview: str = path.pop(0)
-        return self.streamviews[streamview]._get_atom(path)
+        return self.streamviews[streamview].get_atom(path)
 
     def _self_atoms(self) -> [Atom]:
         atoms: [Atom] = []
@@ -78,28 +84,23 @@ class Player(object):
 
     def _update_peaks(self, time: float) -> None:
         for streamview in self.streamviews.values():
-            streamview._update_peaks(time)
+            streamview.update_peaks(time)
 
     def _merged_peaks(self, time: float, influence_history: [CorpusEvent]) -> [Peak]:
         # TODO: (Maybe) Optimize with sort on insertion instead of afterwards.
         pass
 
-
-
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
 
     # TODO: Does currently NOT handle event index if given. Not sure why it would
-    def new_event(self, time: float, event_index: int = None) -> CorpusEvent:
+    def new_event(self, scheduler_time: float, **kwargs) -> CorpusEvent:
         """ Raises: InvalidCorpus """
-        self.logger.debug("[new_event] Player {} attempting to create a new event with date {}."
-                          .format(self.name, time))
+        self.logger.debug("[new_event] Player {} attempting to create a new event at scheduler time '{}'."
+                          .format(self.name, scheduler_time))
 
         if not self.corpus:
             raise InvalidCorpus(f"No Corpus has been loaded in player '{self.name}'.")
-
-        self._update_peaks(time)
-
 
         # TODO: Remove or handle
         # # if event is specified, play it now
@@ -111,51 +112,78 @@ class Player(object):
         #     transforms = [Transforms.NoTransform()]
         #     self.waiting_to_jump = False
 
-        global_activity = self.get_merged_activity(time, merge_actions=self.merge_actions)
+        self._update_peaks(scheduler_time)
+        peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
 
-        # if going to jump, erases peak in neighbour event
         if self.waiting_to_jump:
             self.logger.debug("[new_event] Player {} jumping due to waiting_to_jump set to true.".format(self.name))
-            zetas = global_activity.get_dates_list()
-            states, _ = self.self_streamview._atoms["_self"].memorySpace.get_events(zetas)
-            for i in range(0, len(states)):
-                if states[i].index == self.improvisation_memory[-1][0].index + 1:
-                    del global_activity[i]
 
-            self.waiting_to_jump = False
+        # TODO: Implement as a label/activity pattern
+        # # if going to jump, erases peak in neighbour event
+        # if self.waiting_to_jump:
+        #     self.logger.debug("[new_event] Player {} jumping due to waiting_to_jump set to true.".format(self.name))
+        #     zetas = peaks.get_dates_list()
+        #     states, _ = self.self_streamview._atoms["_self"].memorySpace.get_events(zetas)
+        #     for i in range(0, len(states)):
+        #         if states[i].index == self.improvisation_memory[-1][0].index + 1:
+        #             del peaks[i]
+        #
+        #     self.waiting_to_jump = False
 
-        if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
-            event, transforms = self.decide(global_activity)
-            if event == None:
-                self.logger.debug("[new_event] Player {} no event returned from function decide. "
-                                  "Calling decide_default.".format(self.name))
-                event, transforms = self.decide_default()
-            if type(transforms) != list:
-                transforms = [transforms]
-        else:
-            # if activity is empty, choose default
-            self.logger.debug("[new_event] Player {} no activity found. Calling decide_default.".format(self.name))
-            event, transforms = self.decide_default()
-        for transform in transforms:
-            event = transform.decode(event)
-        # add event to improvisation memory
-        self.improvisation_memory.append((event, transforms))
-        # influences private streamview if auto-influence activated
-        if self.self_influence:
-            self.self_streamview.influence("_self", time, event.label())
-        # sends state num
-        self.send([event.index, event.get_contents().get_zeta(), event.get_contents().get_state_length()], "/state")
-        self.logger.debug("[new_event] Player {} created a new event with content {}."
-                          .format(self.name, event.get_contents()))
-        return event
+        event_and_transform: (CorpusEvent, AbstractTransform) = None
+        for peak_selector in self.peak_selectors:
+            event_and_transform = peak_selector.decide(peaks,self.improvisation_memory, self.corpus, **kwargs)
+            if event_and_transform:
+                break
+        if not event_and_transform:
+            # TODO: Ensure that this never happens so that this error message can be removed
+            raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
+
+        self.improvisation_memory.append(event_and_transform)
+
+        # TODO: Multiple transforms
+        event: CorpusEvent = event_and_transform[0]
+        transform: AbstractTransform = event_and_transform[1]
+        output_event: CorpusEvent = transform.decode(event)
+
+        self._influence_self(output_event, scheduler_time)
+
+        if self.has_osc:
+            self.send(None, None)  # TODO: Needs to know midi or audio here
+            raise NotImplementedError("Not implemented???")
+
+        return output_event
+
+        # for transform in transforms:
+        #     event = transform.decode(event)
+        # # add event to improvisation memory
+        # self.improvisation_memory.append((event, transforms))
+        # # influences private streamview if auto-influence activated
+        # if self.self_influence:
+        #     self.self_streamview.influence("_self", scheduler_time, event.label())
+        # # sends state num
+        # self.send([event.index, event.get_contents().get_zeta(), event.get_contents().get_state_length()], "/state")
+        # self.logger.debug("[new_event] Player {} created a new event with content {}."
+        #                   .format(self.name, event.get_contents()))
+        # return event
 
     # def new_content(self, date):
     #     ''' returns new contents'''
     #     event = new_event(date)
     #     return event.get_contents().get_contents()
 
+    def _influence_self(self, event: CorpusEvent, time: float) -> None:
+        atoms: [Atom] = self._self_atoms()
+        labels: [AbstractLabel] = event.labels
+        for atom in atoms:
+            for label in labels:
+                try:
+                    atom.influence(label, time)
+                except InvalidLabelInput:
+                    continue
+
     # TODO: Pass time from SoMaxServer (gotten through Scheduler)
-    def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs):
+    def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs) -> None:
         """ Raises: InvalidLabelInput."""
         self._get_atom(path).influence(label, time, **kwargs)
 
@@ -273,30 +301,24 @@ class Player(object):
             activities = dict()
             for n, a in self.streamviews.iteritems():
                 w = a.weight if weighted else 1.0
-                activities[n] = a.get_merged_activity(date, weighted=weighted).mul(w, 0)
+                activities[n] = a.merged_peaks(date, weighted=weighted).mul(w, 0)
             if "_self" in self.self_streamview._atoms:
                 w = self.self_streamview.weight if weighted else 1.0
-                activities["_self"] = self.self_streamview.get_merged_activity(date, weighted=weighted).mul(w, 0)
+                activities["_self"] = self.self_streamview.merged_peaks(date, weighted=weighted).mul(w, 0)
         return activities
 
-    def get_merged_activity(self, date, weighted=True, filters=None, merge_actions=[DistanceMergeAction()]):
-        '''getting activites of all streamviews of the player, merging with corresponding merge actions and optionally weighting'''
-        self.logger.debug("[get_merged_activity] Initialized with date {}".format(date))
-        global_activity = Tools.SequencedList()
-        weight_sum = self.get_weights_sum()
-        if filters == None:
-            filters = self.streamviews.keys()
-        for f in filters:
-            activity = self.streamviews[f].get_merged_activity(date, weighted=weighted)
-            w = self.streamviews[f].weight / weight_sum if weighted else 1.0
-            global_activity = global_activity + activity.mul(w, 0)
-        si_w = self.self_streamview.weight / weight_sum if weighted else 1.0
-        global_activity = global_activity + self.self_streamview.get_merged_activity(date, weighted=True).mul(si_w,
-                                                                                                              0)
-        for m in merge_actions:
-            global_activity = m.merge(global_activity)
-        self.logger.debug("[get_merged_activity] Returning with content {}".format(global_activity))
-        return global_activity
+    def merged_peaks(self, time: float, history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
+        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.streamviews.values(), 0.0))
+        peaks: [Peak] = []
+        for streamview in self.streamviews.values():
+            normalized_weight = streamview.weight / weight_sum
+            for peak in streamview.merged_peaks(time, history, corpus, **kwargs):
+                peak *= normalized_weight
+                peaks.append(peak)
+
+        for merge_action in self.merge_actions:
+            peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
+        return peaks
 
     def reset(self, time=None):
         '''reset improvisation memory and all sub-streamview'''
