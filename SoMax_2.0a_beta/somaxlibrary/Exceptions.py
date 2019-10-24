@@ -11,3 +11,13 @@ class InvalidJsonFormat(Exception):
 class InvalidLabelInput(Exception):
     def __init__(self, error):
         super(InvalidLabelInput, self).__init__(error)
+
+
+class InvalidCorpus(Exception):
+    def __init__(self, error):
+        super(InvalidCorpus, self).__init__(error)
+
+
+class TransformError(Exception):
+    def __init__(self, error):
+        super(TransformError, self).__init__(error)

@@ -119,13 +119,13 @@ class MelodicLabel(AbstractLabel):
         if type(data) == str:
             data = data.split(" ")  # split string with subspaces in case of list
         if issubclass(type(data), AbstractEvent):
-            label = cls.get_label_from_data(data.get_label(), mod12)
+            label = cls.get_label_from_data(data.label(), mod12)
         elif issubclass(type(data), AbstractLabel):
             if issubclass(type(data), MelodicLabel):
                 label = deepcopy(data)
             else:
                 # try to make object from label's label
-                label = cls.get_label_from_data(data.get_label(), mod12)
+                label = cls.get_label_from_data(data.label(), mod12)
         elif type(data) == list or type(data) == tuple:
             influence_type = str(data[0])
             # midi == [[0, 127], vel, channel]
@@ -234,7 +234,7 @@ class HarmonicLabel(AbstractLabel):
         if type(data) == str:
             data = data.split(" ")
         if issubclass(type(data), AbstractEvent):
-            label = cls.get_label_from_data(data.get_label())
+            label = cls.get_label_from_data(data.label())
         elif issubclass(type(data), AbstractLabel):
             if type(data) == MelodicLabel:
                 pitch = data.label

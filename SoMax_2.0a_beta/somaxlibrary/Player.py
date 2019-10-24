@@ -21,11 +21,13 @@ from somaxlibrary import Transforms, Tools
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.Exceptions import InvalidPath
+from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary.Peak import Peak
 from somaxlibrary.StreamView import StreamView
 
 
@@ -42,7 +44,7 @@ class Player(object):
 
         self.name: str = name  # name of the player
         self.streamviews: {str: StreamView} = dict()  # streamviews dictionary
-        self.improvisation_memory = deque('', self.max_history_len)
+        self.improvisation_memory: [CorpusEvent] = deque('', self.max_history_len)
         self.decide = self.decide_chooseMax  # current decide function
         self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction()]  # final merge actions
 
@@ -58,69 +60,89 @@ class Player(object):
 
         self.corpus: Corpus = None
 
-    def get_streamview(self, path: [str]) -> StreamView:
+    def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
-        return self.streamviews[streamview].get_streamview(path)
+        return self.streamviews[streamview]._get_streamview(path)
 
-    def get_atom(self, path: [str]) -> Atom:
+    def _get_atom(self, path: [str]) -> Atom:
         streamview: str = path.pop(0)
-        return self.streamviews[streamview].get_atom(path)
+        return self.streamviews[streamview]._get_atom(path)
+
+    def _self_atoms(self) -> [Atom]:
+        atoms: [Atom] = []
+        for streamview in self.streamviews.values():
+            for atom in streamview.atoms.values():
+                if atom.self_influenced:
+                    atoms.append(atom)
+        return atoms
+
+    def _update_peaks(self, time: float) -> None:
+        for streamview in self.streamviews.values():
+            streamview._update_peaks(time)
+
+    def _merged_peaks(self, time: float, influence_history: [CorpusEvent]) -> [Peak]:
+        # TODO: (Maybe) Optimize with sort on insertion instead of afterwards.
+        pass
+
+
 
     ######################################################
     ###### GENERATION AND INFLUENCE METHODS
 
-    # TODO: Completely broken
-    def new_event(self, date, event_index=None):
-        '''returns a new event'''
+    # TODO: Does currently NOT handle event index if given. Not sure why it would
+    def new_event(self, time: float, event_index: int = None) -> CorpusEvent:
+        """ Raises: InvalidCorpus """
         self.logger.debug("[new_event] Player {} attempting to create a new event with date {}."
-                          .format(self.name, date))
+                          .format(self.name, time))
 
-        # if not any memory is loaded
-        if not "_self" in self.self_streamview._atoms.keys():
-            return None
+        if not self.corpus:
+            raise InvalidCorpus(f"No Corpus has been loaded in player '{self.name}'.")
 
-        # if event is specified, play it now
-        if event_index != None:
-            self.reset()
-            event_index = int(event_index)
-            z_, event = self.self_streamview._atoms["_self"].memorySpace[event_index]
-            # using actual transformation?
-            transforms = [Transforms.NoTransform()]
+        self._update_peaks(time)
+
+
+        # TODO: Remove or handle
+        # # if event is specified, play it now
+        # if event_index != None:
+        #     self.reset()
+        #     event_index = int(event_index)
+        #     z_, event = self.self_streamview._atoms["_self"].memorySpace[event_index]
+        #     # using actual transformation?
+        #     transforms = [Transforms.NoTransform()]
+        #     self.waiting_to_jump = False
+
+        global_activity = self.get_merged_activity(time, merge_actions=self.merge_actions)
+
+        # if going to jump, erases peak in neighbour event
+        if self.waiting_to_jump:
+            self.logger.debug("[new_event] Player {} jumping due to waiting_to_jump set to true.".format(self.name))
+            zetas = global_activity.get_dates_list()
+            states, _ = self.self_streamview._atoms["_self"].memorySpace.get_events(zetas)
+            for i in range(0, len(states)):
+                if states[i].index == self.improvisation_memory[-1][0].index + 1:
+                    del global_activity[i]
+
             self.waiting_to_jump = False
-        else:
-            # get global activity
-            global_activity = self.get_merged_activity(date, merge_actions=self.merge_actions)
 
-            # if going to jump, erases peak in neighbour event
-            if self.waiting_to_jump:
-                self.logger.debug("[new_event] Player {} jumping due to waiting_to_jump set to true.".format(self.name))
-                zetas = global_activity.get_dates_list()
-                states, _ = self.self_streamview._atoms["_self"].memorySpace.get_events(zetas)
-                for i in range(0, len(states)):
-                    if states[i].index == self.improvisation_memory[-1][0].index + 1:
-                        del global_activity[i]
-
-                self.waiting_to_jump = False
-
-            if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
-                event, transforms = self.decide(global_activity)
-                if event == None:
-                    self.logger.debug("[new_event] Player {} no event returned from function decide. "
-                                      "Calling decide_default.".format(self.name))
-                    event, transforms = self.decide_default()
-                if type(transforms) != list:
-                    transforms = [transforms]
-            else:
-                # if activity is empty, choose default
-                self.logger.debug("[new_event] Player {} no activity found. Calling decide_default.".format(self.name))
+        if len(global_activity) != 0 and len(self.improvisation_memory) > 0:
+            event, transforms = self.decide(global_activity)
+            if event == None:
+                self.logger.debug("[new_event] Player {} no event returned from function decide. "
+                                  "Calling decide_default.".format(self.name))
                 event, transforms = self.decide_default()
-            for transform in transforms:
-                event = transform.decode(event)
+            if type(transforms) != list:
+                transforms = [transforms]
+        else:
+            # if activity is empty, choose default
+            self.logger.debug("[new_event] Player {} no activity found. Calling decide_default.".format(self.name))
+            event, transforms = self.decide_default()
+        for transform in transforms:
+            event = transform.decode(event)
         # add event to improvisation memory
         self.improvisation_memory.append((event, transforms))
         # influences private streamview if auto-influence activated
         if self.self_influence:
-            self.self_streamview.influence("_self", date, event.get_label())
+            self.self_streamview.influence("_self", time, event.label())
         # sends state num
         self.send([event.index, event.get_contents().get_zeta(), event.get_contents().get_state_length()], "/state")
         self.logger.debug("[new_event] Player {} created a new event with content {}."
@@ -134,9 +156,8 @@ class Player(object):
 
     # TODO: Pass time from SoMaxServer (gotten through Scheduler)
     def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs):
-        """Raises: """
-        self.get_atom(path).influence(label, time, **kwargs)
-
+        """ Raises: InvalidLabelInput."""
+        self._get_atom(path).influence(label, time, **kwargs)
 
         # self.logger.debug("[influence] Player {} initialized call to influence with path {}, args {} and kwargs {}"
         #                   .format(self.name, path, args, kwargs))

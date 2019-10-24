@@ -65,7 +65,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                           f"label type {label_type}, history length {history_len} and transforms {transforms}")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
         self.ngram_size: int = history_len
-        self.influence_history: deque = deque([], history_len)
+        self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
     def __repr__(self):
         return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
@@ -75,7 +75,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.structured_data = {}
         labels: deque = deque([], self.ngram_size)
         for event in self.corpus.events:
-            label: int = event.get_label(self.label_type)
+            label: int = event.label(self.label_type)
             labels.append(label)
             if len(labels) < self.ngram_size:
                 continue
@@ -88,7 +88,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                     self.structured_data[key] = [value]
 
     def influence(self, label: AbstractLabel, time: float, **kwargs) -> [AbstractInfluence]:
-        # TODO: Label is not AbstractLabel rn, it's an int. Problem
+        """ Raises: InvalidLabelInput"""
         if not type(label) == self.label_type:
             raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
         self.influence_history.append(label)

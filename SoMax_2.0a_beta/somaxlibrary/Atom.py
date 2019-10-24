@@ -1,18 +1,18 @@
+import copy
 import logging
 from typing import ClassVar
 
 from somaxlibrary import MemorySpaces
 from somaxlibrary.ActivityPattern import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Peak import Peak
 
+
 # Atom is the core object that contains an activity pattern and a memory space.
 # He basically does two things : managing influences and updating activity.
-from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
@@ -32,7 +32,6 @@ class Atom(object):
         if corpus:
             self.read(corpus, label_type)
 
-
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):
         self.logger.debug(f"[read]: Reading corpus {corpus}.")
         self.memory_space.read(corpus)
@@ -44,6 +43,7 @@ class Atom(object):
 
     # influences the memory with incoming data
     def influence(self, label: AbstractLabel, time: float, **kwargs):
+        """ Raises: InvalidLabelInput"""
         # we get the activity matched_events created by influence
         matched_events: [AbstractInfluence] = self.memory_space.influence(label, time, **kwargs)
         # TODO: Technically, this could be done at new_event instead (no need to do it twice - costly)
@@ -58,12 +58,21 @@ class Atom(object):
         # returns weighted activity
         return activity.mul(w, 0)
 
-    # sugar
     def get_activities(self, date, weighted=True):
         return self.get_activity(date, weighted)
 
     def get_merged_activity(self, date, weighted=True):
         return self.get_activity(date, weighted)
+
+    def update_peaks(self, time: float) -> None:
+        self.activity_pattern.update_peaks(time)
+
+    def copy_peaks(self) -> [Peak]:
+        """Returns shallow copies of all peaks. """
+        peak_copies: [Peak] = []
+        for peak in self.activity_pattern.peaks:
+            peak_copies.append(copy.copy(peak))
+        return peak_copies
 
     # own copy method
     # def copy(self, name):

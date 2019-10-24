@@ -10,10 +10,12 @@ from somaxlibrary import Tools
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
+from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidPath
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import NGramMemorySpace
+from somaxlibrary.Peak import Peak
 from somaxlibrary.Tools import SequencedList
 
 
@@ -39,7 +41,7 @@ class StreamView(object):
 
         target_name: str = path.pop(0)
         if path:  # Path is not empty: descend recursively
-            return self.streamviews[target_name].get_streamview(path)
+            return self.streamviews[target_name]._get_streamview(path)
         else:
             return self.streamviews[target_name]
 
@@ -47,7 +49,7 @@ class StreamView(object):
         """ Raises: KeyError. Technically also IndexError, but should not occur if input is well-formatted (expected)"""
         target_name: str = path.pop(0)
         if path:  # Path is not empty: descend recursively
-            return self.streamviews[target_name].get_atom(path)
+            return self.streamviews[target_name]._get_atom(path)
         else:
             return self.atoms[target_name]
 
@@ -77,6 +79,23 @@ class StreamView(object):
             raise DuplicateKeyError(f"A streamview with the name {new_streamview_name} already exists in "
                                     f"streamview {parent_streamview.name}.")
         parent_streamview.streamviews[new_streamview_name] = StreamView(new_streamview_name, weight, merge_actions)
+
+    def update_peaks(self, time: float) -> None:
+        for atom in self.atoms.values():
+            atom._update_peaks(time)
+
+    def merged_peaks(self, time:float, influence_history: [CorpusEvent]) -> [Peak]:
+        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.atoms.values(), 0.0))
+        peaks: [Peak] = []
+        for atom in self.atoms.values():
+            peak_copies: [Peak] = atom.copy_peaks()
+            normalized_weight = atom.weight / weight_sum
+            for peak in peak_copies:
+                peak *= normalized_weight
+                peaks.append(peak)
+
+        self._merge_actions
+
 
     # # TODO: Only used at one place. Consider replacing/streamlining behaviour
     # def add_atom(self, atom, name=None, copy=False, replace=False):
