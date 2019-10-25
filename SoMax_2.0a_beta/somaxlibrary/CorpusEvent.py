@@ -30,6 +30,9 @@ class CorpusEvent:
         self.notes: [Note] = self._parse_notes(notes, timing_type)
         self._labels = {}  # {ClassVar[AbstractLabel]: AbstractLabel}, precompiled for performance
 
+    def __repr__(self):
+        return f"CorpusEvent object with labels {self._labels}."
+
     @staticmethod
     def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
         parsed_notes: [Note] = []
@@ -62,5 +65,13 @@ class CorpusEvent:
     def labels(self):  # returns [AbstractLabel]:
         return self._labels.values()
 
-    def __repr__(self):
-        return f"CorpusEvent object with labels {self._labels}."
+    def held_to(self) -> [Note]:
+        pass    # TODO: Return all notes that have onsets points before the start of the state
+
+    def held_from(self) -> [Note]:
+        pass    # TODO: Return all notes that have note offs after the end of the state
+
+
+
+
+

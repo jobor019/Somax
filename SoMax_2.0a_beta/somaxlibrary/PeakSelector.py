@@ -20,6 +20,7 @@ class MaxPeakSelector(AbstractPeakSelector):
         if not peaks:
             return None
         max_peak: Peak = max(peaks, lambda p: p.score)
+        # TODO: Will need random, otherwise likely to skew output
         raise NotImplementedError("Not implemented???") # TODO. Return None if empty!!
 
 

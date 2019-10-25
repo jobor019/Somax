@@ -4,7 +4,6 @@ from enum import Enum
 from typing import Dict, ClassVar
 
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Exceptions import InvalidJsonFormat
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Tools import SequencedList
 

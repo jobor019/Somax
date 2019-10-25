@@ -42,7 +42,7 @@ class Player(object):
         # self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
         #                   .format(name, out_port))
         self.output_activity = output_activity
-        self.triggering = triggering
+        self.trigger_mode = triggering
 
         self.name: str = name  # name of the player
         self.streamviews: {str: StreamView} = dict()  # streamviews dictionary

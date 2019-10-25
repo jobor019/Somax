@@ -354,7 +354,7 @@ class SoMaxServer(Caller):
 
     def set_self_influence(self, player, si):
         # TODO: IO Error handling
-        self.logger.debug(f"[set_self_influence] Attemptint to set influence of player {player} to {si}.")
+        self.logger.debug(f"[set_self_influence] Attempting to set influence of player {player} to {si}.")
         self.players[player].set_self_influence(si)
 
     def set_weight(self, player: str, streamview: str, weight: float):
