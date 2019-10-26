@@ -16,7 +16,7 @@ class TempoEvent(ScheduledEvent):
         self.tempo = tempo
 
 
-class ScheduledPlayerEvent(ABC):
+class ScheduledPlayerEvent(ScheduledEvent):
 
     def __init__(self, trigger_time: float, player: Player):
         super(ScheduledPlayerEvent, self).__init__(trigger_time)

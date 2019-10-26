@@ -89,7 +89,10 @@ class SoMaxServer(Caller):
         self.players[name] = Player(name, out_port, output_activity=None, triggering=self.DEFAULT_TRIGGERING_MODE)
         # TODO info_dict
         # self.send_info_dict()
-        # player.send_info_dict()ﬁ
+        # player.send_info_dict()
+
+    @staticmethod
+    def _osc_callback(self):
 
     def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0, merge_actions: str = ""):
         # TODO: IO Error handling

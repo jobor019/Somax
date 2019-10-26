@@ -15,8 +15,6 @@ from collections import deque
 from functools import reduce
 from typing import ClassVar
 
-from pythonosc.udp_client import SimpleUDPClient
-
 from somaxlibrary import Transforms, Tools
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
@@ -30,21 +28,21 @@ from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeA
 from somaxlibrary.Peak import Peak
 from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
 from somaxlibrary.StreamView import StreamView
+from somaxlibrary.Target import Target
 from somaxlibrary.Transforms import AbstractTransform
+from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerMode
 
 
-class Player(object):
-    max_history_len = 100
+class Player(ScheduledMidiObject):
+    max_history_len = 100  # TODO: Don't think this is ever used
 
     # TODO: Fix signature AND INIT types once Player-Scheduler-Server refactor is complete
-    def __init__(self, name: str, out_port: int, output_activity: str, triggering: str):
+    def __init__(self, name: str, target: Target, triggering_mode: TriggerMode = TriggerMode.MANUAL):
+        super(Player, self).__init__(triggering_mode)  # TODO
         self.logger = logging.getLogger(__name__)
-        # self.logger.debug("[__init__] Creating player {} with scheduler {} and outgoing port {}."
-        #                   .format(name, out_port))
-        self.output_activity = output_activity
-        self.trigger_mode = triggering
-
         self.name: str = name  # name of the player
+        self.target: Target = target
+
         self.streamviews: {str: StreamView} = dict()  # streamviews dictionary
         self.improvisation_memory: [(CorpusEvent, AbstractTransform)] = deque('', self.max_history_len)
         self.decide = self.decide_chooseMax  # current decide function
@@ -55,16 +53,10 @@ class Player(object):
         self.nextstate_mod: float = 1.5
         self.waiting_to_jump: bool = False
 
-        self.info_dictionary = dict()
-        self.has_osc: bool = False
-        if not self.has_osc:
-            self.logger.warning("NOTE! OSC IS NOT ENABLED!!")
-        self.client = SimpleUDPClient("127.0.0.1", out_port)  # TODO: IP as input argument
-        self.out_port = out_port
-        self.logger.info("Created player with name {} and outgoing port {}.".format(name, out_port))
+        self.info_dictionary = dict()  # TODO
 
         self.corpus: Corpus = None
-        self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO
+        self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
@@ -132,7 +124,7 @@ class Player(object):
 
         event_and_transform: (CorpusEvent, AbstractTransform) = None
         for peak_selector in self.peak_selectors:
-            event_and_transform = peak_selector.decide(peaks,self.improvisation_memory, self.corpus, **kwargs)
+            event_and_transform = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)
             if event_and_transform:
                 break
         if not event_and_transform:
@@ -489,3 +481,10 @@ class Player(object):
         if address is None:
             address = "/" + self.name
         self.client.send_message(address, content)
+
+    def send_midi(self, note: int, velocity: int, channel: int):
+        if self.has_osc:
+            raise NotImplementedError("OSC Not implemented in player")
+            # TODO: Implement with MaxOsc
+        else:
+            self.logger.warning("Could not send OSC ")

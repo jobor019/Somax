@@ -16,6 +16,9 @@ class Note:
     def __repr__(self):
         return f"Note object with pitch {self.pitch}"
 
+    def __eq__(self, other):
+        return self.pitch == other.pitch and self.channel == other.channel
+
 
 class CorpusEvent:
     def __init__(self, state_index, tempo, onset, duration, chroma, pitch, notes: [{str: Any}],
@@ -66,10 +69,10 @@ class CorpusEvent:
         return self._labels.values()
 
     def held_to(self) -> [Note]:
-        pass    # TODO: Return all notes that have onsets points before the start of the state
+        return [note for note in self.notes if note.onset < 0.0]
 
     def held_from(self) -> [Note]:
-        pass    # TODO: Return all notes that have note offs after the end of the state
+        return [note for note in self.notes if note.onset + note.duration > self.duration]
 
 
 
