@@ -12,15 +12,15 @@ from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 
 
 class Scheduler:
-    DEFAULT_CALLBACK_INTERVAL = 0.001  # seconds
-    TRIGGER_PRETIME = 0.1  # seconds
+    DEFAULT_CALLBACK_INTERVAL: float = 0.001  # seconds
+    TRIGGER_PRETIME: float = 0.1  # seconds
 
-    def __init__(self, tempo: float = 120.0, callback_interval: int = DEFAULT_CALLBACK_INTERVAL):
+    def __init__(self, tempo: float = 120.0, callback_interval: float = DEFAULT_CALLBACK_INTERVAL):
         self.logger = logging.getLogger(__name__)
-        self._internal_time: float = time.time()
+        self._last_callback_time: float = time.time()
         self.tempo: float = tempo
         self.beat: float = 0.0
-        self.callback_interval: int = callback_interval  # in seconds
+        self.callback_interval: float = callback_interval  # in seconds
         self.running: bool = False
         self.queue: [ScheduledEvent] = []  # TODO: NO PREMATURE OPTIMIZIATION PLEASE
         self.tempo_master: Player = None
@@ -30,8 +30,8 @@ class Scheduler:
         self._process_internal_events()
 
     def _process_internal_events(self) -> None:
-        events: [ScheduledEvent] = [e for e in self.queue if e.time <= self.beat]
-        self.queue = [e for e in self.queue if e.time > self.beat]
+        events: [ScheduledEvent] = [e for e in self.queue if e.trigger_time <= self.beat]
+        self.queue = [e for e in self.queue if e.trigger_time > self.beat]
         for event in events:
             if type(event) == TempoEvent:
                 self._process_tempo_event(event)
@@ -49,7 +49,7 @@ class Scheduler:
 
     def _process_midi_event(self, midi_event: MidiEvent) -> None:
         player: Player = midi_event.player
-        player.send_midi()
+        player.send([midi_event.note, midi_event.velocity, midi_event.channel])
 
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
         pass  # TODO
@@ -62,12 +62,11 @@ class Scheduler:
             self.logger.error(str(e))
             return
 
-        self.add_corpus_event(player, trigger_event.trigger_time, event)
+        self.add_corpus_event(player, trigger_event.target_time, event)
 
         if player.trigger_mode == TriggerMode.AUTOMATIC:
-            event_scaled_duration: float = event.duration * self.tempo / 60.0
-            next_trigger_time: float = trigger_event.trigger_time + event_scaled_duration
-            next_target_time: float = trigger_event.target_time + event_scaled_duration
+            next_trigger_time: float = trigger_event.trigger_time + event.duration
+            next_target_time: float = trigger_event.target_time + event.duration
             self._add_trigger_event(player, next_trigger_time, next_target_time)
 
     def _process_osc_event(self, osc_event: OscEvent) -> None:
@@ -97,14 +96,29 @@ class Scheduler:
             # Queue midi events for note ons/offs
             for note in note_offs_previous:
                 self.queue.append(MidiEvent(trigger_time, player, note.pitch, 0, note.channel))
+                print(f"NoteOff for pitch {note.pitch} created at beat {trigger_time}. Current beat {self.beat}.")
             for note in note_ons:
                 self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel))
+                print(
+                    f"NoteOn for pitch {note.pitch} created at beat {trigger_time + note.onset}. Current beat {self.beat}.")
             for note in note_offs:
                 position_in_state: float = note.onset + note.duration
+                print(
+                    f"NoteOff for pitch {note.pitch} created at beat {position_in_state + trigger_time}. Current beat {self.beat}.")
                 self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel))
 
-    def add_trigger_event(self, player: Player, target_time: float):
-        self._add_trigger_event(player, target_time - self.TRIGGER_PRETIME, target_time)
+    def add_trigger_event(self, player: Player):
+        if not self._has_trigger(player):
+            self._add_trigger_event(player, self.beat - self.TRIGGER_PRETIME * self.tempo / 60.0, self.beat)
+
+    def _has_trigger(self, player: Player) -> bool:  # TODO: Unoptimized approach
+        for event in self.queue:
+            try:
+                if event.player == player:
+                    return True
+            except AttributeError:
+                continue
+        return False
 
     def _add_trigger_event(self, player: Player, trigger_time: float, target_time: float):
         self.queue.append(TriggerEvent(trigger_time, player, target_time))
@@ -113,8 +127,10 @@ class Scheduler:
         pass  # TODO
 
     def _update_time(self):
-        delta_time: float = time.time() - self._internal_time
-        self.beat = delta_time * self.tempo / 60.0
+        t: float = time.time()
+        delta_time: float = t - self._last_callback_time
+        self._last_callback_time = t
+        self.beat += delta_time * self.tempo / 60.0
 
     async def start(self, callback_interval: int = None) -> None:
         self.running = True

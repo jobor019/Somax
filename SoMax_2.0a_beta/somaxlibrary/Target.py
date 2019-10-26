@@ -21,11 +21,11 @@ class OscTarget(Target):
         self._max_formatter: MaxFormatter = MaxFormatter()
 
     def send(self, content: Any, **_kwargs):
-        msg: str = self._max_formatter.format_llll(content)    # TODO: llll probably not ideal
-        self._client.send_message(content, msg)
+        msg: str = self._max_formatter.format_llll(*content)    # TODO: llll probably not ideal
+        self._client.send_message(self.address, msg)
 
 
-class DebugTarget(Target):
+class CallableTarget(Target):
 
     def __init__(self, callback_func: Callable):
         self.callback_func: Callable = callback_func

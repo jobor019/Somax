@@ -13,12 +13,12 @@ from collections import deque
 #           given a set of activity profiles
 #       - communication units : connecting with Max, external compatibility
 from functools import reduce
-from typing import ClassVar
+from typing import ClassVar, Any
 
 from somaxlibrary import Transforms, Tools
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
-from somaxlibrary.Corpus import Corpus
+from somaxlibrary.Corpus import Corpus, ContentType
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel
@@ -37,7 +37,8 @@ class Player(ScheduledMidiObject):
     max_history_len = 100  # TODO: Don't think this is ever used
 
     # TODO: Fix signature AND INIT types once Player-Scheduler-Server refactor is complete
-    def __init__(self, name: str, target: Target, triggering_mode: TriggerMode = TriggerMode.MANUAL):
+    def __init__(self, name: str, target: Target, triggering_mode: TriggerMode = TriggerMode.MANUAL,
+                 corpus: Corpus = None):
         super(Player, self).__init__(triggering_mode)  # TODO
         self.logger = logging.getLogger(__name__)
         self.name: str = name  # name of the player
@@ -55,7 +56,7 @@ class Player(ScheduledMidiObject):
 
         self.info_dictionary = dict()  # TODO
 
-        self.corpus: Corpus = None
+        self.corpus: Corpus = corpus
         self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
 
     def _get_streamview(self, path: [str]) -> StreamView:
@@ -139,10 +140,6 @@ class Player(ScheduledMidiObject):
         output_event: CorpusEvent = transform.decode(event)
 
         self._influence_self(output_event, scheduler_time)
-
-        if self.has_osc:
-            self.send(None, None)  # TODO: Needs to know midi or audio here
-            raise NotImplementedError("Not implemented???")
 
         return output_event
 
@@ -477,14 +474,5 @@ class Player(ScheduledMidiObject):
     ######################################################
     ###### OSC METHODS
 
-    def send(self, content, address=None):
-        if address is None:
-            address = "/" + self.name
-        self.client.send_message(address, content)
-
-    def send_midi(self, note: int, velocity: int, channel: int):
-        if self.has_osc:
-            raise NotImplementedError("OSC Not implemented in player")
-            # TODO: Implement with MaxOsc
-        else:
-            self.logger.warning("Could not send OSC ")
+    def send(self, content: Any) -> None:
+        self.target.send(content)

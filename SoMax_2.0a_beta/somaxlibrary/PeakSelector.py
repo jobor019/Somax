@@ -30,5 +30,5 @@ class DefaultPeakSelector(AbstractPeakSelector):
         if not influence_history:
             return corpus.event_at(0), NoTransform()
         last_event, last_transform = influence_history[-1]
-        next_state_idx: int = last_event.state_index + 1 % corpus.length()
+        next_state_idx: int = (last_event.state_index + 1) % corpus.length()
         return corpus.event_at(next_state_idx), last_transform
