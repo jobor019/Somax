@@ -24,7 +24,7 @@ from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfigura
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
 from somaxlibrary.Peak import Peak
 from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
 from somaxlibrary.StreamView import StreamView
@@ -36,28 +36,25 @@ from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerM
 class Player(ScheduledMidiObject):
     max_history_len = 100  # TODO: Don't think this is ever used
 
-    # TODO: Fix signature AND INIT types once Player-Scheduler-Server refactor is complete
-    def __init__(self, name: str, target: Target, triggering_mode: TriggerMode = TriggerMode.MANUAL,
-                 corpus: Corpus = None):
-        super(Player, self).__init__(triggering_mode)  # TODO
+    def __init__(self, name: str, target: Target, triggering_mode: TriggerMode = TriggerMode.MANUAL):
+        super(Player, self).__init__(triggering_mode)
         self.logger = logging.getLogger(__name__)
+        self.logger.info(f"Created Player with name '{name}.'")
         self.name: str = name  # name of the player
         self.target: Target = target
 
-        self.streamviews: {str: StreamView} = dict()  # streamviews dictionary
-        self.improvisation_memory: [(CorpusEvent, AbstractTransform)] = deque('', self.max_history_len)
-        self.decide = self.decide_chooseMax  # current decide function
-        self.merge_actions = [DistanceMergeAction(), PhaseModulationMergeAction()]  # final merge actions
-
-        # current streamview is the private streamview were is caught the
-        #    generation atom, from which events are generated and is auto-influenced
-        self.nextstate_mod: float = 1.5
-        self.waiting_to_jump: bool = False
-
-        self.info_dictionary = dict()  # TODO
-
-        self.corpus: Corpus = corpus
+        self.streamviews: {str: StreamView} = dict()
+        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.max_history_len)
+        self.merge_actions: [AbstractMergeAction] = [DistanceMergeAction(), PhaseModulationMergeAction()]
+        self.corpus: Corpus = None
         self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
+
+        # self.nextstate_mod: float = 1.5   # TODO
+        # self.waiting_to_jump: bool = False    # TODO
+
+        # self.info_dictionary = dict()  # TODO
+
+
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)

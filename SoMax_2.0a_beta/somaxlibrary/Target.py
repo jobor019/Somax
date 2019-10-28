@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Callable
 
@@ -16,13 +17,14 @@ class OscTarget(Target):
 
     def __init__(self, address: str, port: int, ip: str = "127.0.0.1"):
         # TODO: Maybe error handling (invalid address, etc.
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"Creating new OscTarget with address '{address}', port '{port}' and ip '{ip}'.")
         self.address: str = address
         self._client = SimpleUDPClient(ip, port)
         self._max_formatter: MaxFormatter = MaxFormatter()
 
     def send(self, content: Any, **_kwargs):
-        msg: str = self._max_formatter.format_llll(*content)    # TODO: llll probably not ideal
-        self._client.send_message(self.address, msg)
+        self._client.send_message(self.address, content)
 
 
 class CallableTarget(Target):

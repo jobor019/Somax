@@ -1,24 +1,25 @@
 import argparse
+import asyncio
 import logging
 import logging.config
 from functools import reduce
 from typing import ClassVar, Any
 
 from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import BlockingOSCUDPServer
-from pythonosc.udp_client import SimpleUDPClient
+from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from IOParser import IOParser
-from somaxlibrary.ActivityPattern import ClassicActivityPattern, AbstractActivityPattern
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput
-from somaxlibrary.Labels import AbstractLabel, MelodicLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
-from somaxlibrary.MemorySpaces import NGramMemorySpace, AbstractMemorySpace
-from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
+from somaxlibrary.MemorySpaces import AbstractMemorySpace
+from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Player import Player
-from somaxlibrary.SoMaxScheduler import SomaxScheduler
-from somaxlibrary.Transforms import NoTransform
+from somaxlibrary.Target import Target, OscTarget
+from somaxlibrary.scheduler.ScheduledObject import TriggerMode
+from somaxlibrary.scheduler.Scheduler import Scheduler
 
 """ 
 SoMaxServer is the top class of the SoMax system.
@@ -32,36 +33,34 @@ It has to be initialized with an OSC incoming port and an OSC outcoming port.
 class SoMaxServer(Caller):
     max_activity_length = 500  # TODO: What is this?
 
-    DEFAULT_IP = "127.0.0.1"
-    DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
-    DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
-    DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
-    DEFAULT_TRANSFORMS: (ClassVar, ...) = (NoTransform,)
-    DEFAULT_TRIGGERING_MODE = "automatic"
-    DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
-
-    def __init__(self, in_port: int, out_port: int):
+    def __init__(self, in_port: int, ip: str = IOParser.DEFAULT_IP):
         super(SoMaxServer, self).__init__()
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initializing SoMaxServer with input port {} and output port {}.".format(in_port, out_port))
+        self.logger.info(f"Initializing SoMaxServer with input port '{in_port}' and ip '{ip}'.")
         self.players: {str: Player} = dict()
-        self.scheduler = SomaxScheduler(self.players)
+        self.scheduler = Scheduler()
         self.builder = CorpusBuilder()
+        self.ip: str = ip
+        self.in_port: int = in_port
+        self.server: AsyncIOOSCUDPServer = None
+        self.io_parser: IOParser = IOParser()
+        # self.send_info_dict()     # TODO: Handle info dict laters
+        # Note: No calls below here will ever be executed.
 
-        self.original_tempo: bool = False
+    async def run(self) -> None:
+        self.logger.info("Starting SoMaxServer...")
+        osc_dispatcher: Dispatcher = Dispatcher()
+        osc_dispatcher.map("/server", self._process_osc)
+        osc_dispatcher.set_default_handler(self._unmatched_osc)
+        self.server: AsyncIOOSCUDPServer = AsyncIOOSCUDPServer((self.ip, self.in_port), osc_dispatcher,
+                                                               asyncio.get_event_loop())
 
-        osc_dispatcher = Dispatcher()
-        osc_dispatcher.map("/server", self._main_callback)
-        osc_dispatcher.set_default_handler(self._unmatched_callback)
+        transport, _ = await self.server.create_serve_endpoint()
+        await self.scheduler.init_async_loop()
+        transport.close()
+        self.logger.info("SoMaxServer was successfully terminated.")
 
-        self.server = BlockingOSCUDPServer((self.DEFAULT_IP, in_port), osc_dispatcher)
-        self.client = SimpleUDPClient(self.DEFAULT_IP, out_port)
-
-        # TODO: Ev. verify that connection is up and running
-        self.logger.info("Initialization of SoMaxServer was successful.")
-        # self.send_info_dict()     # TODO: Handle info dict later
-
-    def _main_callback(self, _address, *args):
+    def _process_osc(self, _address, *args):
         # TODO: Move string formatting elsewhere
         args_formatted: [str] = []
         for arg in args:
@@ -72,7 +71,7 @@ class SoMaxServer(Caller):
         args_str: str = " ".join([str(arg) for arg in args_formatted])
         self.call(args_str)
 
-    def _unmatched_callback(self, address: str, *_args, **_kwargs) -> None:
+    def _unmatched_osc(self, address: str, *_args, **_kwargs) -> None:
         self.logger.info("The address {} does not exist.".format(address))
 
     # TODO: Send properly over OSC
@@ -83,27 +82,28 @@ class SoMaxServer(Caller):
     # CREATION OF PLAYERS/STREAMVIEWS/ATOMS
     ######################################################
 
-    def new_player(self, name, out_port):
+    def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = ""):
         # TODO: Check if player already exists
-        # TODO: IO Error handling
-        self.players[name] = Player(name, out_port, output_activity=None, triggering=self.DEFAULT_TRIGGERING_MODE)
+        # TODO Parse IP, port
+        address: str = self.io_parser.parse_osc_address(name)
+        trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
+        target: Target = OscTarget(address, port, ip)
+        self.players[name] = Player(name, target, trig_mode)
         # TODO info_dict
         # self.send_info_dict()
         # player.send_info_dict()
 
     @staticmethod
     def _osc_callback(self):
+        pass  # TODO
 
-    def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0, merge_actions: str = ""):
-        # TODO: IO Error handling
+    def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0,
+                          merge_actions=""):
         self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
                           .format(player, path, weight, merge_actions))
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        try:
-            merge_actions = IOParser.parse_merge_actions(merge_actions)
-        except KeyError:
-            self.logger.warning(f"Could not parse merge actions from string '{merge_actions}'. Setting to default.")
-            merge_actions = self.DEFAULT_MERGE_ACTIONS
+        merge_actions: [AbstractMergeAction] = self.io_parser.parse_merge_actions(merge_actions)
+
         try:
             self.players[player].create_streamview(path_and_name, weight, merge_actions)
         except KeyError:
@@ -113,41 +113,20 @@ class SoMaxServer(Caller):
                     activity_type: str = "", memory_type: str = "", self_influenced: bool = False):
         self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-
+        label_type: ClassVar[AbstractLabel] = self.io_parser.parse_label_type(label_type)
+        activity_type: ClassVar[AbstractActivityPattern] = self.io_parser.parse_activity_type(activity_type)
+        memory_type: ClassVar[AbstractMemorySpace] = self.io_parser.parse_memspace_type(memory_type)
         try:
-            label_type: ClassVar[AbstractLabel] = IOParser.parse_label_type(label_type)
-        except KeyError:
-            self.logger.warning(f"Unable to parse '{label_type}' as a Label Type. Setting to default.")
-            label_type = self.DEFAULT_LABEL_TYPE
-
-        try:
-            activity_type: ClassVar[AbstractActivityPattern] = IOParser.parse_activity_type(activity_type)
-        except KeyError:
-            self.logger.warning(f"Unable to parse '{activity_type}' as an Activity Pattern. Setting to default.")
-            activity_type = self.DEFAULT_ACTIVITY_TYPE
-
-        try:
-            memory_type: ClassVar[AbstractMemorySpace] = IOParser.parse_memspace_type(memory_type)
-        except KeyError:
-            self.logger.warning(f"Unable to parse '{memory_type}' as a MemorySpace. Setting to default.")
-            memory_type = self.DEFAULT_MEMORY_TYPE
-        try:
-            self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type, self_influenced)
+            self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type,
+                                             self_influenced)
         except InvalidPath as e:
             self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
         except KeyError:
             self.logger.error(f"Could not create atom at path {path}. The parent streamview does not exist.")
 
-
-
     ######################################################
     # PROCESS METHODS
     ######################################################
-
-    def run(self):
-        """runs the SoMax server"""
-        # TODO: IO Error handling
-        self.server.serve_forever()
 
     def play(self):
         """starts the scheduler and triggers first event if in automatic mode"""
@@ -343,7 +322,6 @@ class SoMaxServer(Caller):
         time: float = self.scheduler.get_time()
         self.players[player].influence(path_and_name, label, time, **kwargs)
 
-
     def jump(self, player):
         # TODO: IO Error handling
         self.logger.debug("[jump] called for player {0}.".format(player))
@@ -486,4 +464,4 @@ if __name__ == "__main__":
     out_port = args.out_port[0]
     somax_server = SoMaxServer(in_port, out_port)
 
-    somax_server.run()
+    # somax_server.run()

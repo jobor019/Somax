@@ -36,6 +36,9 @@ class DistanceMergeAction(AbstractMergeAction):
         self.t_width = t_width
         self.transform_merge_mode = transform_merge_mode  # can 'AND' or 'OR'   # TODO Merge modes
 
+    def __repr__(self):
+        return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
+
     def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
         """(TODO: old temp docstring) Merges events that are similar and sufficiently close in time to each other into a

@@ -11,7 +11,6 @@ import somaxlibrary.MergeActions
 import somaxlibrary.GenCorpus
 import somaxlibrary.CorpusBuilder
 import somaxlibrary.Corpus
-import somaxlibrary.DictClasses
 import somaxlibrary.Exceptions
 
 reload(MemorySpaces)

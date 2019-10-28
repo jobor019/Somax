@@ -15,19 +15,33 @@ class Scheduler:
     DEFAULT_CALLBACK_INTERVAL: float = 0.001  # seconds
     TRIGGER_PRETIME: float = 0.1  # seconds
 
-    def __init__(self, tempo: float = 120.0, callback_interval: float = DEFAULT_CALLBACK_INTERVAL):
+    def __init__(self, tempo: float = 120.0):
         self.logger = logging.getLogger(__name__)
         self._last_callback_time: float = time.time()
         self.tempo: float = tempo
         self.beat: float = 0.0
-        self.callback_interval: float = callback_interval  # in seconds
         self.running: bool = False
-        self.queue: [ScheduledEvent] = []  # TODO: NO PREMATURE OPTIMIZIATION PLEASE
+        self.queue: [ScheduledEvent] = []  # TODO: NO PREMATURE OPTIMIZATION PLEASE
         self.tempo_master: Player = None
+        self.terminated = False
+
+    async def init_async_loop(self, callback_interval: int = DEFAULT_CALLBACK_INTERVAL):
+        self.logger.debug(f"Scheduler started with callback interval '{callback_interval}'.")
+        while not self.terminated:
+            await asyncio.sleep(callback_interval)
+            if self.running:
+                self._callback()
+
+    def terminate(self):
+        self.terminated = True
+
+    def start(self) -> None:
+        self.running = True
 
     def _callback(self):
-        self._update_time()
-        self._process_internal_events()
+        if self.running:
+            self._update_time()
+            self._process_internal_events()
 
     def _process_internal_events(self) -> None:
         events: [ScheduledEvent] = [e for e in self.queue if e.trigger_time <= self.beat]
@@ -96,15 +110,10 @@ class Scheduler:
             # Queue midi events for note ons/offs
             for note in note_offs_previous:
                 self.queue.append(MidiEvent(trigger_time, player, note.pitch, 0, note.channel))
-                print(f"NoteOff for pitch {note.pitch} created at beat {trigger_time}. Current beat {self.beat}.")
             for note in note_ons:
                 self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel))
-                print(
-                    f"NoteOn for pitch {note.pitch} created at beat {trigger_time + note.onset}. Current beat {self.beat}.")
             for note in note_offs:
                 position_in_state: float = note.onset + note.duration
-                print(
-                    f"NoteOff for pitch {note.pitch} created at beat {position_in_state + trigger_time}. Current beat {self.beat}.")
                 self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel))
 
     def add_trigger_event(self, player: Player):
@@ -132,12 +141,6 @@ class Scheduler:
         self._last_callback_time = t
         self.beat += delta_time * self.tempo / 60.0
 
-    async def start(self, callback_interval: int = None) -> None:
-        self.running = True
-        self.callback_interval = self.callback_interval if callback_interval is None else callback_interval
-        while self.running:
-            self._callback()
-            await asyncio.sleep(self.callback_interval)
 
     def pause(self) -> None:
         self.running = False
