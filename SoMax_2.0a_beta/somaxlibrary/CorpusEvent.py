@@ -55,7 +55,6 @@ class CorpusEvent:
             self._labels[label_class] = label
 
     def label(self, label_type: ClassVar):  # returns: AbstractLabel
-        # TODO: Update docstring when renaming ProperLabel
         """Valid keys are any class objects (note: object, not instance) existing in AbstractLabel
 
         Raises

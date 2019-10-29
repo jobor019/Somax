@@ -1,9 +1,9 @@
 from importlib import reload
 
+# TODO: Update with to current classes
 import somaxlibrary.MemorySpaces
 import somaxlibrary.StreamView
 import somaxlibrary.Tools
-import somaxlibrary.SoMaxScheduler
 import somaxlibrary.Player
 import somaxlibrary.Transforms
 import somaxlibrary.Atom
@@ -16,7 +16,6 @@ import somaxlibrary.Exceptions
 reload(MemorySpaces)
 reload(StreamView)
 reload(Tools)
-reload(SoMaxScheduler)
 reload(Player)
 reload(Transforms)
 reload(Atom)

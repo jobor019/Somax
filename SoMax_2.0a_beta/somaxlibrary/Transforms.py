@@ -83,7 +83,7 @@ class NoTransform(AbstractTransform):
         return obj
 
 
-# TODO: Structure up according old implementation below
+# TODO: Structure according to old implementation below with chroma
 class TransposeTransform(AbstractTransform):
     def __init__(self, semitones: int):
         super(TransposeTransform, self).__init__()
@@ -123,7 +123,6 @@ class TransposeTransform(AbstractTransform):
         return obj
 
 # TODO: Implement at a later stage
-#
 # class TransposeTransform(NoTransform):
 #     transposition_range = [-3, 3]
 #
@@ -142,7 +141,6 @@ class TransposeTransform(AbstractTransform):
 #         return hash((__class__, self.semitone, self.mod12))
 #
 #     def __eq__(self, other):
-#         # TODO: Potentially very slow
 #         if type(other) == NoTransform:
 #             return self.semitone == 0
 #         if type(other) == TransposeTransform:
@@ -151,8 +149,6 @@ class TransposeTransform(AbstractTransform):
 #
 #
 #     def encode(self, obj: Union[CorpusEvent, AbstractLabel]):
-#         # TODO: Note: Should handle Events and Labels. Thus needs access to chroma etc from label.
-#         #       Becomes quite complex to implement new Labels if one needs to modify all existing Transforms too.
 #         if isinstance(obj, DeprecatedEvents.AbstractEvent):
 #             new_thing = deepcopy(obj)
 #             new_thing.label = self.encode(new_thing.label)

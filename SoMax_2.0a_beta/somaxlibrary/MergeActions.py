@@ -11,8 +11,6 @@ from somaxlibrary.Peak import Peak
 
 
 class AbstractMergeAction(ABC):
-    # TODO: Maybe pass Corpus at construction time instead of at each merge.
-    # TODO: Maybe add transform merge modes and merge action merge modes
 
     @abstractmethod
     def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [

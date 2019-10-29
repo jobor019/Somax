@@ -22,7 +22,6 @@ from somaxlibrary.scheduler.Scheduler import Scheduler
 
 
 class SoMaxServer(Caller):
-    max_activity_length = 500  # TODO: What is this?
 
     def __init__(self, in_port: int, ip: str = IOParser.DEFAULT_IP):
         super(SoMaxServer, self).__init__()
@@ -87,7 +86,7 @@ class SoMaxServer(Caller):
 
     @staticmethod
     def _osc_callback(self):
-        pass  # TODO
+        pass  # TODO: implement
 
     def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0,
                           merge_actions=""):
@@ -132,29 +131,14 @@ class SoMaxServer(Caller):
     # TIMING METHODS
     ######################################################
 
-    # TODO: Remove?
-    # def set_timing(self, timing):
-    #     """set timing type"""
-    #     # TODO: IO Error handling
-    #     if timing == "relative" or timing == "absolute":
-    #         self.scheduler.timing_type = timing
-
     # TODO: Reimplement
     # def set_tempo(self, tempo):
-    #     # TODO: IO Error handling
     #     tempo = float(tempo)
     #     self.scheduler.set_tempo(tempo)
     #     self.client.send_message("/tempo", tempo)
 
-    # TODO: Remove?
-    # def set_timescale(self, timescale):
-    #     # TODO: IO Error handling
-    #     timescale = float(timescale)
-    #     self.scheduler.set_timescale(timescale)
-
     # TODO: Reimplement
     # def set_original_tempo(self, original_tempo):
-    #     # TODO: IO Error handling
     #     self.original_tempo = bool(original_tempo)
     #     self.scheduler.set_original_tempo(self.original_tempo)
 
@@ -162,7 +146,7 @@ class SoMaxServer(Caller):
     # FEEDBACK METHODS
     ######################################################
 
-    # TODO: Not updated for new osc protocol
+    # TODO:Reimplement
     # def set_activity_feedback(self, _address, content):
     #     path, player = content[0:2]
     #     if path == "None":
@@ -225,18 +209,17 @@ class SoMaxServer(Caller):
     # EVENTS METHODS
     ######################################################
 
-    def triggering_mode(self, player, mode):
-        # TODO: IO Error cleanup
-        if mode == "reactive" or mode == "automatic":
-            self.players[player]['triggering'] = mode
-            self.scheduler.triggers[player] = mode
-            self.logger.debug("Triggering mode set to {} for player {}.".format(mode, player))
-        else:
-            self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
+    # TODO: Reimplement
+    # def triggering_mode(self, player, mode):
+    #     if mode == "reactive" or mode == "automatic":
+    #         self.players[player]['triggering'] = mode
+    #         self.scheduler.triggers[player] = mode
+    #         self.logger.debug("Triggering mode set to {} for player {}.".format(mode, player))
+    #     else:
+    #         self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
 
     # TODO: Reimplement or remove
     # def new_event(self, player_name, time=None, event=None):
-    #     # TODO: IO Error handling
     #     self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
     #                       .format(player_name, time, event))
     #     time = self.scheduler.time if time is None else time
@@ -255,7 +238,6 @@ class SoMaxServer(Caller):
             return
         # TODO: Error handling
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        # TODO: We don't need time on insert, only on update (called in new_event)
         time: float = self.scheduler.time
         self.players[player].influence(path_and_name, label, time, **kwargs)
 
@@ -264,7 +246,6 @@ class SoMaxServer(Caller):
         self.logger.debug("[jump] called for player {0}.".format(player))
         self.players[player].jump()
 
-    # TODO: Add path for reading files into specific atoms etc
     def read_file(self, player: str, filepath: str):
         # TODO: IO Error handling
         self.logger.debug(f"[read_file] called for player '{player}' and file '{filepath}'.")
@@ -296,14 +277,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Launch and manage a SoMaxServer')
     parser.add_argument('in_port', metavar='IN_PORT', type=int, nargs=1,
                         help='in port used by the server')
-    parser.add_argument('out_port', metavar='OUT_PORT', type=int, nargs=1,
-                        help='out port used by the server')
+    # TODO: Ip as input argument
 
     logging.config.fileConfig('logging.ini', disable_existing_loggers=False)
 
     args = parser.parse_args()
     in_port = args.in_port[0]
-    out_port = args.out_port[0]
-    somax_server = SoMaxServer(in_port, out_port)
-
-    # somax_server.run()
+    somax_server = SoMaxServer(in_port)
+    asyncio.run(somax_server.run())

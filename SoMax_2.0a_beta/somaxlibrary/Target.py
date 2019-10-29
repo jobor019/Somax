@@ -16,7 +16,7 @@ class Target(ABC):
 class OscTarget(Target):
 
     def __init__(self, address: str, port: int, ip: str = "127.0.0.1"):
-        # TODO: Maybe error handling (invalid address, etc.
+        # TODO: Maybe error handling (invalid address, etc.) BUT NOT HERE.
         self.logger = logging.getLogger(__name__)
         self.logger.debug(f"Creating new OscTarget with address '{address}', port '{port}' and ip '{ip}'.")
         self.address: str = address

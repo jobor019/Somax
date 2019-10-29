@@ -19,7 +19,7 @@ class StreamView(object):
                           .format(name, weight, merge_actions))
 
         self.name = name
-        self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []  # TODO: Maybe remove
+        self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []
         self.atoms: {str: Atom} = dict()
         self.streamviews: {str: StreamView} = {}
         self.weight = weight

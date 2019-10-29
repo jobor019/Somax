@@ -98,8 +98,8 @@ class MelodicLabel(AbstractLabel):
 
 class HarmonicLabel(AbstractLabel):
     # Static variables
-    SOM_DATA = np.loadtxt('tables/misc_hsom', dtype=float, delimiter=",")  # TODO: Optimize import
-    SOM_CLASSES = np.loadtxt('tables/misc_hsom_c', dtype=int, delimiter=",")  # TODO: Optimize import
+    SOM_DATA = np.loadtxt('tables/misc_hsom', dtype=float, delimiter=",")
+    SOM_CLASSES = np.loadtxt('tables/misc_hsom_c', dtype=int, delimiter=",")
     NODE_SPECIFICITY = 2.0
 
     def __repr__(self):

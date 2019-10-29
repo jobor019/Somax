@@ -14,7 +14,7 @@ from somaxlibrary.Transforms import AbstractTransform
 class AbstractActivityPattern(ABC):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.peaks: [Peak] = []  # TODO: Ev. optimize. Was sorted in earlier implementations
+        self.peaks: [Peak] = []
 
     @abstractmethod
     def insert(self, influences: [AbstractInfluence]) -> None:

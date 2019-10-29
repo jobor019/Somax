@@ -22,7 +22,7 @@ from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerM
 
 
 class Player(ScheduledMidiObject):
-    max_history_len = 100  # TODO: Don't think this is ever used
+    MAX_HISTORY_LEN = 100
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
         super(Player, self).__init__(triggering_mode)
@@ -32,7 +32,7 @@ class Player(ScheduledMidiObject):
         self.target: Target = target
 
         self.streamviews: {str: StreamView} = dict()
-        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.max_history_len)
+        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
         self.merge_actions: [AbstractMergeAction] = [DistanceMergeAction(), PhaseModulationMergeAction()]
         self.corpus: Corpus = None
         self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
@@ -69,11 +69,6 @@ class Player(ScheduledMidiObject):
         for streamview in self.streamviews.values():
             streamview.update_peaks(time)
 
-    def _merged_peaks(self, time: float, influence_history: [CorpusEvent]) -> [Peak]:
-        # TODO: (Maybe) Optimize with sort on insertion instead of afterwards.
-        pass
-
-    # TODO: Does currently NOT handle event index if given. Not sure why it would
     def new_event(self, scheduler_time: float, **kwargs) -> CorpusEvent:
         """ Raises: InvalidCorpus """
         self.logger.debug("[new_event] Player {} attempting to create a new event at scheduler time '{}'."
@@ -114,7 +109,6 @@ class Player(ScheduledMidiObject):
                 except InvalidLabelInput:
                     continue
 
-    # TODO: Pass time from SoMaxServer (gotten through Scheduler)
     def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs) -> None:
         """ Raises: InvalidLabelInput."""
         if not path:
@@ -151,11 +145,10 @@ class Player(ScheduledMidiObject):
                                                      self.corpus, self_influenced)
 
     def read_file(self, filepath: str):
-        """ raises: OSError # TODO: Major cleanup on OSChandling"""
         self.corpus = Corpus(filepath)
         for streamview in self.streamviews.values():
             streamview.read(self.corpus)
-        # TODO: Temp removed
+        # TODO: info dict
         # self.update_memory_length()
         # self.send_info_dict()
 
@@ -172,7 +165,7 @@ class Player(ScheduledMidiObject):
             peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
         return peaks
 
-    # TODO
+    # TODO: Reimplement as activity
     # def jump(self):
     #     self.logger.debug("[jump] Jump set to True.")
     #     self.waiting_to_jump = True
