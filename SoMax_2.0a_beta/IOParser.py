@@ -23,7 +23,6 @@ class IOParser:
 
     # TODO: Change to nonstatic to be able to handle logging whenever needed
 
-
     def _parse_single(self, to_parse: str, parent_class: ClassVar, value_if_invalid: Any) -> ClassVar:
         if not to_parse:
             return value_if_invalid
@@ -45,7 +44,6 @@ class IOParser:
             except KeyError:
                 self.logger.warning(f"Could not parse merge actions from string '{merge_actions}'. Setting to default.")
             return self.DEFAULT_MERGE_ACTIONS
-
 
     def parse_activity_type(self, activity_type: str) -> ClassVar[AbstractActivityPattern]:
         return self._parse_single(activity_type, AbstractActivityPattern, self.DEFAULT_ACTIVITY_TYPE)
@@ -87,7 +85,9 @@ class IOParser:
 
     @staticmethod
     def parse_streamview_atom_path(path: str) -> [str]:
-        if ":" in path:
+        if not path:
+            return []
+        elif ":" in path:
             return path.split(":")
         else:
             return [path]

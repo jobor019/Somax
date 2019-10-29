@@ -29,13 +29,13 @@ class Scheduler:
         self.logger.debug(f"Scheduler started with callback interval '{callback_interval}'.")
         while not self.terminated:
             await asyncio.sleep(callback_interval)
-            if self.running:
-                self._callback()
+            self._callback()
 
     def terminate(self):
         self.terminated = True
 
     def start(self) -> None:
+        self.logger.info(f"Scheduler Started. Current beat is '{self.beat}'.")
         self.running = True
 
     def _callback(self):
@@ -136,11 +136,17 @@ class Scheduler:
         pass  # TODO
 
     def _update_time(self):
-        t: float = time.time()
-        delta_time: float = t - self._last_callback_time
-        self._last_callback_time = t
-        self.beat += delta_time * self.tempo / 60.0
+        if self.running:
+            t: float = time.time()
+            delta_time: float = t - self._last_callback_time
+            self._last_callback_time = t
+            self.beat += delta_time * self.tempo / 60.0
 
+    @property
+    def time(self) -> float:
+        if self.running:
+            self._update_time()
+        return self.beat
 
     def pause(self) -> None:
         self.running = False

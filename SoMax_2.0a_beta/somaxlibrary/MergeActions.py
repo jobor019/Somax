@@ -45,7 +45,7 @@ class DistanceMergeAction(AbstractMergeAction):
              single events. Returns all other events unchanged. Unless mode is set to AND, then it deletes both unless
              peaks occur in all layers simultaneously."""
         self.logger.debug("[merge] Merging activity with peaks '{}'.".format(peaks))
-        peaks.sort(key=lambda p: (p.time, p.transform.hash))
+        peaks.sort(key=lambda p: (p.time, p.precomputed_transform_hash))
         if len(peaks) <= 1:
             return peaks
         prev = peaks[0]

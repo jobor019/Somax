@@ -1,12 +1,15 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Union
+
+from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.MaxOscLib import InvalidInputError
 
 
 class AbstractTransform(ABC):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.precomputed_hash: int = hash(self)  # Precomputed for performance reasons
 
     @abstractmethod
     def __hash__(self):
@@ -19,13 +22,37 @@ class AbstractTransform(ABC):
         """Notes: Strictly not needed in current implementation, but should always be implemented when __hash__ is"""
         raise NotImplementedError("AbstractTransform.__eq__ is abstract.")
 
-    @abstractmethod
-    def encode(self, obj: Any) -> Any:
-        raise NotImplementedError("AbstractTransform.encode is abstract")
+    def transform(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
+        if isinstance(obj, AbstractLabel):
+            return self._transform_label(obj)
+        elif isinstance(obj, CorpusEvent):
+            return self._transform_event(obj)
+        else:
+            raise InvalidInputError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
+
+    def inverse(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
+        if isinstance(obj, AbstractLabel):
+            return self._inverse_label(obj)
+        elif isinstance(obj, CorpusEvent):
+            return self._inverse_event(obj)
+        else:
+            raise InvalidInputError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
 
     @abstractmethod
-    def decode(self, obj: Any) -> Any:
-        raise NotImplementedError("AbstractTransform.decode is abstract")
+    def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
+        raise NotImplementedError("AbstractTransform._transform_label is abstract.")
+
+    @abstractmethod
+    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
+        raise NotImplementedError("AbstractTransform._transform_label is abstract.")
+
+    @abstractmethod
+    def _inverse_label(self, obj: AbstractLabel) -> AbstractLabel:
+        raise NotImplementedError("AbstractTransform._transform_label is abstract.")
+
+    @abstractmethod
+    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+        raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
 
 class NoTransform(AbstractTransform):
@@ -35,7 +62,7 @@ class NoTransform(AbstractTransform):
         # self.admitted_types = [Events.AbstractLabel, Events.AbstractContents]  # dictionary of admitted label classes
 
     def __repr__(self):
-        return "No Transformation"
+        return "NoTransform()"
 
     def __hash__(self):
         return hash(__class__)
@@ -43,25 +70,19 @@ class NoTransform(AbstractTransform):
     def __eq__(self, a):
         return type(a) == type(self)
 
-    def encode(self, obj):
-        """
-        Raises
-        ------
-        TransformError: TODO
-        """
+    def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
 
-    def decode(self, obj):
-        """
-        Raises
-        ------
-        TransformError: TODO
-        """
+    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
         return obj
 
-    @classmethod
-    def get_transformation_patterns(cls):
-        return [cls()]
+    def _inverse_label(self, obj: AbstractLabel) -> AbstractLabel:
+        return obj
+
+    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+        return obj
+
+
 
 # TODO: Implement at a later stage
 #

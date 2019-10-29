@@ -3,6 +3,7 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from collections import deque
+from copy import copy
 from typing import Tuple, ClassVar
 
 from somaxlibrary.Corpus import Corpus
@@ -15,6 +16,7 @@ from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.Transforms import NoTransform
 
 
+# TODO: Abstract Influence type. Dependent on (determined by?) ActivityPattern. CUrrently hardcoded in NGram.
 class AbstractMemorySpace(ABC):
     """ MemorySpaces determine how events are matched to labels """
 
@@ -25,7 +27,7 @@ class AbstractMemorySpace(ABC):
         self.corpus: Corpus = corpus
         self.label_type: ClassVar[AbstractLabel] = label_type
         # TODO: Should also check that they work for this label
-        self.transforms: [AbstractTransform] = transforms if transforms else [NoTransform()]
+        self.transforms: [(AbstractTransform, ...)] = transforms if transforms else [(NoTransform(),)]
         # self.available = True       # TODO: Implement if needed, save for later
 
     @abstractmethod
@@ -59,7 +61,7 @@ class AbstractMemorySpace(ABC):
 
 class NGramMemorySpace(AbstractMemorySpace):
     def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = MelodicLabel,
-                 transforms: [AbstractTransform] = None, history_len: int = 3, **_kwargs):
+                 transforms: [(AbstractTransform, ...)] = None, history_len: int = 3, **_kwargs):
         super(NGramMemorySpace, self).__init__(corpus, label_type, transforms)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type}, history length {history_len} and transforms {transforms}")
@@ -75,8 +77,8 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.structured_data = {}
         labels: deque = deque([], self.ngram_size)
         for event in self.corpus.events:
-            label: int = event.label(self.label_type)
-            labels.append(label)
+            label: AbstractLabel = event.label(self.label_type)
+            labels.append(label.label)
             if len(labels) < self.ngram_size:
                 continue
             else:
@@ -96,16 +98,17 @@ class NGramMemorySpace(AbstractMemorySpace):
             return []
         else:
             matches: [AbstractInfluence] = []
-            # TODO (Once tested): handle transposes
-            # TODO 2: Handle combinations of transforms, not just individual transforms
-            for transform in self.transforms:
-                # Inverse transform of input (equivalent to transform of memory)
-                key: Tuple[int, ...] = tuple(transform.decode(self.influence_history))
+            for transform_tuple in self.transforms:
+                # Inverse transform_tuple of input (equivalent to transform_tuple of memory)
+                transformed_labels: [AbstractLabel] = list(copy(self.influence_history))
+                for transform in reversed(transform_tuple):
+                    transformed_labels = [transform.inverse(l) for l in transformed_labels]
+                key: Tuple[int, ...] = tuple(l.label for l in transformed_labels)
                 try:
                     matching_events: [CorpusEvent] = self.structured_data[key]
                     for event in matching_events:
-                        # TODO: Sends list of single transform only rn
-                        matches.append(ClassicInfluence(event, time, [transform]))
+                        # TODO: Generalize rather than specific ClassicInfluence.
+                        matches.append(ClassicInfluence(event, time, transform_tuple))
                     return matches
                 except KeyError:  # no matches found
                     return []

@@ -97,7 +97,7 @@ class StreamView(object):
             peak_copies: [Peak] = atom.copy_peaks()
             normalized_weight = atom.weight / weight_sum
             for peak in peak_copies:
-                peak *= normalized_weight
+                peak.score *= normalized_weight
                 peaks.append(peak)
 
         # Apply merge actions on this level and return

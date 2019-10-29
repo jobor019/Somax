@@ -89,6 +89,9 @@ class SoMaxServer(Caller):
         trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
         target: Target = OscTarget(address, port, ip)
         self.players[name] = Player(name, target, trig_mode)
+
+        if trig_mode == TriggerMode.AUTOMATIC:
+            self.scheduler.add_trigger_event(self.players[name])
         # TODO info_dict
         # self.send_info_dict()
         # player.send_info_dict()
@@ -128,15 +131,8 @@ class SoMaxServer(Caller):
     # PROCESS METHODS
     ######################################################
 
-    def play(self):
-        """starts the scheduler and triggers first event if in automatic mode"""
-        # TODO: IO Error handling
-        self.scheduler.start(-self.scheduler.get_pretime())
-        for player in self.players.values():
-            player.reset(self.scheduler.time)
-            # TODO: Handle once Server-Scheduler-Player refactor is completed
-            # if player['triggering'] == "automatic":
-            #     self.process_intern_event(('ask_for_event', name, 0))
+    def start(self):
+        self.scheduler.start()
 
     def stop(self):
         """stops the scheduler and reset all players"""
@@ -269,48 +265,48 @@ class SoMaxServer(Caller):
         else:
             self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
 
-    def new_event(self, player_name, time=None, event=None):
-        # TODO: IO Error handling
-        self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
-                          .format(player_name, time, event))
-        time = self.scheduler.time if time is None else time
-        if event is not None:
-            self.scheduler.reset(player_name)
-        self.process_intern_event(('ask_for_event', player_name, time, event))
-        self.logger.debug("[new_event] New event created.")
+    # def new_event(self, player_name, time=None, event=None):
+    #     # TODO: IO Error handling
+    #     self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
+    #                       .format(player_name, time, event))
+    #     time = self.scheduler.time if time is None else time
+    #     if event is not None:
+    #         self.scheduler.reset(player_name)
+    #     self.process_intern_event(('ask_for_event', player_name, time, event))
+    #     self.logger.debug("[new_event] New event created.")
 
-    def process_events(self, events):
-        # TODO: Refactor to Scheduler
-        for e in events:
-            self.logger.debug("Processing event {}...".format(e))
-            if e[0] == "server":
-                self.process_intern_event(e[1:])
-            else:
-                player = str(e[0])
-                ct = reduce(lambda x, y: str(x) + " " + str(y), e[1])
+    # def process_events(self, events):
+    #     # TODO: Refactor to Scheduler
+    #     for e in events:
+    #         self.logger.debug("Processing event {}...".format(e))
+    #         if e[0] == "server":
+    #             self.process_intern_event(e[1:])
+    #         else:
+    #             player = str(e[0])
+    #             ct = reduce(lambda x, y: str(x) + " " + str(y), e[1])
+    #
+    #             self.players[player]["player"].send(ct)
 
-                self.players[player]["player"].send(ct)
+    # def process_intern_event(self, content):
+    #     # TODO: Refactor to Scheduler
+    #     self.logger.debug("Processing internal event with content {}.".format(content))
+    #     if content[0] == 'ask_for_event':
+    #         player_name = content[1]
+    #         if len(content) > 2:
+    #             time = content[2]
+    #         else:
+    #             time = self.scheduler.time
+    #         if len(content) > 3:
+    #             event = content[3]
+    #         else:
+    #             event = None
+    #         # TODO: Remove event. Should never accept event as input
+    #         event = self.players[player_name].new_event(time)
+    #         self.scheduler.write_event(time, player_name, event)
 
-    def process_intern_event(self, content):
-        # TODO: Refactor to Scheduler
-        self.logger.debug("Processing internal event with content {}.".format(content))
-        if content[0] == 'ask_for_event':
-            player_name = content[1]
-            if len(content) > 2:
-                time = content[2]
-            else:
-                time = self.scheduler.time
-            if len(content) > 3:
-                event = content[3]
-            else:
-                event = None
-            # TODO: Remove event. Should never accept event as input
-            event = self.players[player_name].new_event(time)
-            self.scheduler.write_event(time, player_name, event)
-
-    def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
-        self.logger.debug(f"[influence] called for player {player} with path {path}, label keyword {label_keyword}, "
-                          f"value {value} and kwargs {kwargs}")
+    def influence(self, player: str, label_keyword: str, value: Any, path: str = "", **kwargs):
+        self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
+                          f"label keyword '{label_keyword}', value '{value}' and kwargs {kwargs}")
         try:
             label: AbstractLabel = AbstractLabel.classify_as(label_keyword, value, **kwargs)
         except InvalidLabelInput as e:
@@ -319,7 +315,7 @@ class SoMaxServer(Caller):
         # TODO: Error handling
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
         # TODO: We don't need time on insert, only on update (called in new_event)
-        time: float = self.scheduler.get_time()
+        time: float = self.scheduler.time
         self.players[player].influence(path_and_name, label, time, **kwargs)
 
     def jump(self, player):

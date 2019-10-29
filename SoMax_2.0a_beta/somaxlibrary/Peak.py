@@ -3,7 +3,7 @@ from somaxlibrary.Transforms import AbstractTransform
 
 class Peak:
 
-    def __init__(self, time: float, score: float, transform: AbstractTransform, creation_time: float):
+    def __init__(self, time: float, score: float, transform: (AbstractTransform, ...), creation_time: float):
         """
         Notes
         -----
@@ -14,9 +14,9 @@ class Peak:
         modified"""
         self.time: float = time  # absolute or relative position in the memory (in report: xi)
         self.score: float = score  # value of peak, decaying over time
-        self.transform: AbstractTransform = transform  # transforms to be applied to peak
+        self.transforms: (AbstractTransform, ...) = transform  # transforms to be applied to peak
         self.last_update_time: float = creation_time
+        self.precomputed_transform_hash = hash(self.transforms)  # precomputed for performance reasons
 
     def __repr__(self):
-        return f"Peak with time '{self.time}', score '{self.score}' and transform '{self.transform}'."
-
+        return f"Peak(time='{self.time}', score='{self.score}' transforms='{self.transforms}')."

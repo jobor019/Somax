@@ -27,7 +27,7 @@ def add_packages(packages, ext=None, **kw):
         except Exception as e:
             print("Running \"{:s}\" failed: {:s}".format(' '.join(cmd), repr(e)))
             continue
-        tokens = tokens.decode('utf8').split()
+        tokens = tokens.inverse('utf8').split()
         for token in tokens:
             key = token[:2]
             try:

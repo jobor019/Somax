@@ -24,6 +24,7 @@ class OscTarget(Target):
         self._max_formatter: MaxFormatter = MaxFormatter()
 
     def send(self, content: Any, **_kwargs):
+        self.logger.debug(f"[send] Sending Message '{content}'")
         self._client.send_message(self.address, content)
 
 
