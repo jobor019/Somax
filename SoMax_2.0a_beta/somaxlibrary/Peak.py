@@ -16,7 +16,7 @@ class Peak:
         self.score: float = score  # value of peak, decaying over time
         self.transforms: (AbstractTransform, ...) = transform  # transforms to be applied to peak
         self.last_update_time: float = creation_time
-        self.precomputed_transform_hash = hash(self.transforms)  # precomputed for performance reasons
+        self.transform_hash = hash(self.transforms)  # precomputed for performance reasons
 
     def __repr__(self):
         return f"Peak(time={self.time}, score={self.score} transforms={self.transforms})."

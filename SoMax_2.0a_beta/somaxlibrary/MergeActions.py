@@ -42,15 +42,15 @@ class DistanceMergeAction(AbstractMergeAction):
     def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
         self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
-        peaks.sort(key=lambda p: (p.precomputed_transform_hash, p.time))
+        peaks.sort(key=lambda p: (p.transform_hash, p.time))
         if len(peaks) <= 1:
             return peaks
-        prev = peaks[0]
         i = 1
         while i < len(peaks):
+            prev = peaks[i-1]
             cur = peaks[i]
-            if abs(cur.time - prev.time) < 0.9 * self.t_width and cur.transforms == prev.transforms:  # TODO: magic nr
-                self.logger.debug(f"Merging peak '{peaks[i-1]}' with peak '{peaks[i]}'.")
+            if abs(cur.time - prev.time) < 0.9 * self.t_width and cur.transform_hash == prev.transform_hash:  # TODO: magic nr
+                self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
                 merged_time: float = (prev.time * prev.score + cur.time * cur.score) / (prev.score + cur.score)
                 merged_score: float = prev.score + cur.score
                 peaks[i - 1] = Peak(merged_time, merged_score, cur.transforms, cur.last_update_time)
