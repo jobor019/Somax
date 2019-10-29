@@ -11,10 +11,6 @@ from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Peak import Peak
 
 
-# Atom is the core object that contains an activity pattern and a memory space.
-# He basically does two things : managing influences and updating activity.
-
-
 class Atom(object):
     def __init__(self, name: str = "atom", weight: float = 1.0,
                  label_type: ClassVar[AbstractLabel] = MelodicLabel,
@@ -37,32 +33,16 @@ class Atom(object):
         self.memory_space.read(corpus)
 
     # set current weight of atom
-    def set_weight(self, weight):
+    def set_weight(self, weight: float):
         self.logger.debug("[set_weight] Atom {} setting weight to {}.".format(self.name, weight))
-        self.weight = float(weight)
+        self.weight = weight
 
     # influences the memory with incoming data
     def influence(self, label: AbstractLabel, time: float, **kwargs):
         """ Raises: InvalidLabelInput"""
-        # we get the activity matched_events created by influence
         matched_events: [AbstractInfluence] = self.memory_space.influence(label, time, **kwargs)
-        # TODO: Technically, this could be done at new_event instead (no need to do it twice - costly)
-        # self.activity_pattern.update_activity(time)  # we update the activity profile to the current time
         if matched_events:
             self.activity_pattern.insert(matched_events)  # we insert the events into the activity profile
-
-    # external method to get back atom's activity
-    def get_activity(self, date, weighted=True):
-        w = self.weight if weighted else 1.0
-        activity = self.activity_pattern.get_activity(date)
-        # returns weighted activity
-        return activity.mul(w, 0)
-
-    def get_activities(self, date, weighted=True):
-        return self.get_activity(date, weighted)
-
-    def get_merged_activity(self, date, weighted=True):
-        return self.get_activity(date, weighted)
 
     def update_peaks(self, time: float) -> None:
         self.activity_pattern.update_peaks(time)
@@ -74,18 +54,7 @@ class Atom(object):
             peak_copies.append(copy.copy(peak))
         return peak_copies
 
-    # own copy method
-    # def copy(self, name):
-    #     atom = Atom(name=name, weight=self.weight, label_type=self.memory_space.label_type,
-    #                 contents_type=self.memory_space.contents_type, event_type=self.memory_space.event_type,
-    #                 activity_type=self.activity_type, memory_type=self.memory_type)
-    #     atom.memory_space = self.memory_type(self.memory_space.get_dates_list(), self.memory_space.get_events_list(),
-    #                                          label_type=self.memory_space.label_type,
-    #                                          contents_type=self.memory_space.contents_type,
-    #                                          event_type=self.memory_space.event_type)
-    #     atom.current_file = self.current_file
-    #     return atom
-
+    # TODO: Reimplement
     # external method to fetch properties of the atom
     # def get_info_dict(self):
     #     infodict = {"activity": self.activityPattern.__desc__(), "memory": self.memory_space.__desc__(),
@@ -104,5 +73,6 @@ class Atom(object):
     # def isAvailable(self):
     #     return self.activityPattern.isAvailable() and self.memory_space.is_available()
 
-    def reset(self, time):
-        self.activity_pattern.reset(time)
+    # TODO: Reimplement
+    # def reset(self, time):
+    #     self.activity_pattern.reset(time)

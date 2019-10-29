@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import logging.config
-from functools import reduce
 from typing import ClassVar, Any
 
 from pythonosc.dispatcher import Dispatcher
@@ -21,14 +20,6 @@ from somaxlibrary.Target import Target, OscTarget
 from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 from somaxlibrary.scheduler.Scheduler import Scheduler
 
-""" 
-SoMaxServer is the top class of the SoMax system.
-It rules the scheduler, the players and communication between them,
-in addition to several macro parameters. Information to players are passed through
-the server, adressing /player_name.
-It has to be initialized with an OSC incoming port and an OSC outcoming port.
-"""
-
 
 class SoMaxServer(Caller):
     max_activity_length = 500  # TODO: What is this?
@@ -45,7 +36,6 @@ class SoMaxServer(Caller):
         self.server: AsyncIOOSCUDPServer = None
         self.io_parser: IOParser = IOParser()
         # self.send_info_dict()     # TODO: Handle info dict laters
-        # Note: No calls below here will ever be executed.
 
     async def run(self) -> None:
         self.logger.info("Starting SoMaxServer...")
@@ -54,7 +44,6 @@ class SoMaxServer(Caller):
         osc_dispatcher.set_default_handler(self._unmatched_osc)
         self.server: AsyncIOOSCUDPServer = AsyncIOOSCUDPServer((self.ip, self.in_port), osc_dispatcher,
                                                                asyncio.get_event_loop())
-
         transport, _ = await self.server.create_serve_endpoint()
         await self.scheduler.init_async_loop()
         transport.close()
@@ -138,56 +127,36 @@ class SoMaxServer(Caller):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
-        # TODO: Migrate this to be called via Scheduler
-        # for name, player in self.players.items():
-        #     player['player'].send("stop")
-
-    # TODO: Merge with stop
-    # def stopServer(self, *_args):
-    #     """Stops the SoMax server"""
-    #     self.client.send_message("/terminate", [])
-    #     self.server.server_close()
 
     ######################################################
     # TIMING METHODS
     ######################################################
 
-    def set_timing(self, timing):
-        """set timing type"""
-        # TODO: IO Error handling
-        if timing == "relative" or timing == "absolute":
-            self.scheduler.timing_type = timing
+    # TODO: Remove?
+    # def set_timing(self, timing):
+    #     """set timing type"""
+    #     # TODO: IO Error handling
+    #     if timing == "relative" or timing == "absolute":
+    #         self.scheduler.timing_type = timing
 
-    def set_time(self, _address, *content):
-        """main time routine. set current time of the scheduler, and takes out events to be played"""
-        # TODO: Refactor to Scheduler/time module
-        time = float(content[0])
-        events = self.scheduler.set_time(time)
-        # self.increment_internal_counter()
-        # if self.intern_counter % 10 == 0:
-        #     self.send_activity_profile(time)
-        # TODO: Move this to Scheduler
-        if events:
-            self.process_events(events)
-        if self.original_tempo:
-            tempo = self.scheduler.tempo
-            self.client.send_message("/tempo", tempo)
+    # TODO: Reimplement
+    # def set_tempo(self, tempo):
+    #     # TODO: IO Error handling
+    #     tempo = float(tempo)
+    #     self.scheduler.set_tempo(tempo)
+    #     self.client.send_message("/tempo", tempo)
 
-    def set_tempo(self, tempo):
-        # TODO: IO Error handling
-        tempo = float(tempo)
-        self.scheduler.set_tempo(tempo)
-        self.client.send_message("/tempo", tempo)
+    # TODO: Remove?
+    # def set_timescale(self, timescale):
+    #     # TODO: IO Error handling
+    #     timescale = float(timescale)
+    #     self.scheduler.set_timescale(timescale)
 
-    def set_timescale(self, timescale):
-        # TODO: IO Error handling
-        timescale = float(timescale)
-        self.scheduler.set_timescale(timescale)
-
-    def set_original_tempo(self, original_tempo):
-        # TODO: IO Error handling
-        self.original_tempo = bool(original_tempo)
-        self.scheduler.set_original_tempo(self.original_tempo)
+    # TODO: Reimplement
+    # def set_original_tempo(self, original_tempo):
+    #     # TODO: IO Error handling
+    #     self.original_tempo = bool(original_tempo)
+    #     self.scheduler.set_original_tempo(self.original_tempo)
 
     ######################################################
     # FEEDBACK METHODS
@@ -265,6 +234,7 @@ class SoMaxServer(Caller):
         else:
             self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
 
+    # TODO: Reimplement or remove
     # def new_event(self, player_name, time=None, event=None):
     #     # TODO: IO Error handling
     #     self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
@@ -274,35 +244,6 @@ class SoMaxServer(Caller):
     #         self.scheduler.reset(player_name)
     #     self.process_intern_event(('ask_for_event', player_name, time, event))
     #     self.logger.debug("[new_event] New event created.")
-
-    # def process_events(self, events):
-    #     # TODO: Refactor to Scheduler
-    #     for e in events:
-    #         self.logger.debug("Processing event {}...".format(e))
-    #         if e[0] == "server":
-    #             self.process_intern_event(e[1:])
-    #         else:
-    #             player = str(e[0])
-    #             ct = reduce(lambda x, y: str(x) + " " + str(y), e[1])
-    #
-    #             self.players[player]["player"].send(ct)
-
-    # def process_intern_event(self, content):
-    #     # TODO: Refactor to Scheduler
-    #     self.logger.debug("Processing internal event with content {}.".format(content))
-    #     if content[0] == 'ask_for_event':
-    #         player_name = content[1]
-    #         if len(content) > 2:
-    #             time = content[2]
-    #         else:
-    #             time = self.scheduler.time
-    #         if len(content) > 3:
-    #             event = content[3]
-    #         else:
-    #             event = None
-    #         # TODO: Remove event. Should never accept event as input
-    #         event = self.players[player_name].new_event(time)
-    #         self.scheduler.write_event(time, player_name, event)
 
     def influence(self, player: str, label_keyword: str, value: Any, path: str = "", **kwargs):
         self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
@@ -349,101 +290,6 @@ class SoMaxServer(Caller):
         self.logger.info("File {0} has been output at location : {1}".format(path, output))
         # TODO: Info dict
         # self.send_info_dict()
-
-    ######################################################
-    # COMMUNICATION METHODS
-    ######################################################
-
-    # TODO: Delete
-    # def increment_internal_counter(self):
-    #     self.intern_counter += 1
-    #     if self.intern_counter > sys.maxsize:
-    #         self.intern_counter = 0
-
-    # TODO: Delete
-    # @staticmethod
-    # def parse_bool(ct):
-    #     if ct == 'True':
-    #         return True
-    #     elif ct == 'False':
-    #         return False
-    #     elif ct == 'None':
-    #         return None
-    #     return ct
-
-    # TODO: Delete
-    # def get(self, path_contents):
-    #     if path_contents is None:
-    #         return self
-    #     if path_contents[0] == "#":
-    #         current_obj = getattr(sm.Transforms, path_contents[1:])
-    #         return current_obj
-    #
-    #     assert (len(path_contents) > 1)
-    #     current_obj = self
-    #     for i in range(0, len(path_contents)):
-    #         if i == 0:
-    #             current_obj = current_obj.streamviews[path_contents[i]]
-    #         else:
-    #             current_obj = current_obj.atoms[path_contents[i]]
-    #     return current_obj
-
-    # TODO: Delete
-    # def parse_arguments(self, contents):
-    #     args = []
-    #     kargs = dict()
-    #     for u in contents:
-    #         try:
-    #             if "." in u:
-    #                 u = float(u)
-    #             else:
-    #                 u = int(u)
-    #         except (ValueError, TypeError):
-    #             pass
-    #         if type(u) == str and "=" in u:
-    #             key, value = u.split("=")
-    #             value = str.replace(value, "%20", " ")
-    #             kargs[key] = self.parse_bool(value)
-    #         else:
-    #             args.append(u)
-    #     args = map(self.parse_bool, args)
-    #     return args, kargs
-
-    # TODO: Delete
-    # def main_callback(self, _address, *contents):
-    #     if len(contents) == 0:
-    #         return
-    #     header = contents[0]
-    #     vals = None
-    #     # start splitting command
-    #     if "=" in header:
-    #         header, vals = header.split("=")
-    #     things = header.split(".")
-    #     attributes = things[0:]
-    #     # target object (None for Player, :path:to:stream/atom for sub-atoms)
-    #     obj = self
-    #     it_range = range(0, len(attributes) - 1) if vals != None else range(0, len(attributes))
-    #     for i in it_range:
-    #         current_attribute = attributes[i]
-    #         name, key = re.match(r"([\w]+)(\[.+\])?", current_attribute).groups()
-    #         obj = getattr(obj, name)
-    #         if key:
-    #             key = key[1:-1]
-    #             try:
-    #                 key = int(key)
-    #             except:  # TODO: Replace or catch relevant exceptions
-    #                 pass
-    #             obj = obj[key]
-    #     if vals is None:
-    #         if callable(obj):
-    #             args, kargs = self.parse_arguments(contents[1:])
-    #             obj(*args, **kargs)  # call function
-    #     else:
-    #         # problem here (same for Player?)
-    #         vals = vals.split(",")
-    #         vals, _ = self.parse_arguments(vals)
-    #         vals = vals[0] if len(vals) == 1 else vals
-    #         setattr(obj, attributes[-1], vals)
 
 
 if __name__ == "__main__":

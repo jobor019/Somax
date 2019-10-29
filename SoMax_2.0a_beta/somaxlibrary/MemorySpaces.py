@@ -28,7 +28,6 @@ class AbstractMemorySpace(ABC):
         self.label_type: ClassVar[AbstractLabel] = label_type
         # TODO: Should also check that they work for this label
         self.transforms: [(AbstractTransform, ...)] = transforms if transforms else [(NoTransform(),)]
-        # self.available = True       # TODO: Implement if needed, save for later
 
     @abstractmethod
     def read(self, corpus: Corpus, **_kwargs) -> None:
@@ -55,7 +54,7 @@ class AbstractMemorySpace(ABC):
     #     pass
 
     # TODO: Implement when needed
-    # def add_transform(self, transform: [AbstractTransform]) -> None:
+    # def add_transform(self, transform: (AbstractTransform,) -> None:
     #     pass
 
 

@@ -47,9 +47,10 @@ class DistanceMergeAction(AbstractMergeAction):
             return peaks
         i = 1
         while i < len(peaks):
-            prev = peaks[i-1]
+            prev = peaks[i - 1]
             cur = peaks[i]
-            if abs(cur.time - prev.time) < 0.9 * self.t_width and cur.transform_hash == prev.transform_hash:  # TODO: magic nr
+            if abs(
+                    cur.time - prev.time) < 0.9 * self.t_width and cur.transform_hash == prev.transform_hash:  # TODO: magic nr
                 self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
                 merged_time: float = (prev.time * prev.score + cur.time * cur.score) / (prev.score + cur.score)
                 merged_score: float = prev.score + cur.score
@@ -61,7 +62,30 @@ class DistanceMergeAction(AbstractMergeAction):
         return peaks
 
 
-# TODO: Never used. Rewrite later!!!
+class PhaseModulationMergeAction(AbstractMergeAction):
+    DEFAULT_SELECTIVITY = 1.0
+
+    def __init__(self, selectivity=DEFAULT_SELECTIVITY):
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
+        self.selectivity = selectivity
+
+    def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
+        Peak]:
+        for peak in peaks:
+            factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))
+            peak.score *= factor
+        return peaks
+
+    # TODO: Parameter setting in general
+    # def set_selectivity(self, selectivity):
+    #     try:
+    #         self.selectivity = float(selectivity)
+    #     except:
+    #         self.logger.error("Phase modulation selectivity must be a number.")
+    #         pass
+
+# TODO: Reimplement!!!
 # class StateMergeAction(AbstractMergeAction):
 #     def __init__(self, memory_space, t_width=0.1, transform_merge_mode='AND'):
 #         self.logger = logging.getLogger(__name__)
@@ -140,26 +164,3 @@ class DistanceMergeAction(AbstractMergeAction):
 #                 current_index += 1
 #                 # print 'current merged pattern at ',current_index, ' : ', merged_pattern[current_index]
 #         return merged_pattern
-
-
-class PhaseModulationMergeAction(AbstractMergeAction):
-    DEFAULT_SELECTIVITY = 1.0
-
-    def __init__(self, selectivity=DEFAULT_SELECTIVITY):
-        self.logger = logging.getLogger(__name__)
-        self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
-        self.selectivity = selectivity
-
-    def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [Peak]:
-        for peak in peaks:
-            factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))
-            peak.score *= factor
-        return peaks
-
-    # TODO: Parameter setting in general
-    # def set_selectivity(self, selectivity):
-    #     try:
-    #         self.selectivity = float(selectivity)
-    #     except:
-    #         self.logger.error("Phase modulation selectivity must be a number.")
-    #         pass
