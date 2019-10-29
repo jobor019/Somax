@@ -21,7 +21,7 @@ class AbstractMemorySpace(ABC):
     """ MemorySpaces determine how events are matched to labels """
 
     def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = AbstractLabel,
-                 transforms: [AbstractTransform] = None, **_kwargs):
+                 transforms: [(AbstractTransform, ...)] = None, **_kwargs):
         """ Note: kwargs can be used if additional information is need to construct the data structure."""
         self.logger = logging.getLogger(__name__)
         self.corpus: Corpus = corpus
@@ -69,6 +69,9 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.ngram_size: int = history_len
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
+        if self.corpus:
+            self.read(self.corpus)
+
     def __repr__(self):
         return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
 
@@ -109,7 +112,6 @@ class NGramMemorySpace(AbstractMemorySpace):
                     for event in matching_events:
                         # TODO: Generalize rather than specific ClassicInfluence.
                         matches.append(ClassicInfluence(event, time, transform_tuple))
-                    return matches
                 except KeyError:  # no matches found
-                    return []
+                    continue
         return matches

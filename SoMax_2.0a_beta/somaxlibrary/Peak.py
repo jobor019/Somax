@@ -19,4 +19,4 @@ class Peak:
         self.precomputed_transform_hash = hash(self.transforms)  # precomputed for performance reasons
 
     def __repr__(self):
-        return f"Peak(time='{self.time}', score='{self.score}' transforms='{self.transforms}')."
+        return f"Peak(time={self.time}, score={self.score} transforms={self.transforms})."

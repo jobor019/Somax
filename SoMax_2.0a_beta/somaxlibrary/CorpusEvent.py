@@ -14,7 +14,7 @@ class Note:
         self.duration: float = duration
 
     def __repr__(self):
-        return f"Note object with pitch {self.pitch}"
+        return f"Note(pitch={self.pitch},velocity={self.velocity},channel={self.channel},onset={self.onset},dur={self.duration})."
 
     def __eq__(self, other):
         return self.pitch == other.pitch and self.channel == other.channel
@@ -34,7 +34,7 @@ class CorpusEvent:
         self._labels = {}  # {ClassVar[AbstractLabel]: AbstractLabel}, precompiled for performance
 
     def __repr__(self):
-        return f"CorpusEvent object with labels {self._labels}."
+        return f"CorpusEvent(labels.values()={self._labels.values()}, ...)."
 
     @staticmethod
     def _parse_notes(notes: [{str: Any}], timing_type: str) -> [Note]:
@@ -66,7 +66,7 @@ class CorpusEvent:
 
     @property
     def labels(self):  # returns [AbstractLabel]:
-        return self._labels.values()
+        return list(self._labels.values())
 
     def held_to(self) -> [Note]:
         return [note for note in self.notes if note.onset < 0.0]

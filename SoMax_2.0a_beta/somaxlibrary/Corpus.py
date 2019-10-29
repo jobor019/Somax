@@ -1,6 +1,5 @@
 import json
 import logging
-from bisect import bisect_left
 from enum import Enum
 from typing import Dict, ClassVar
 
@@ -75,9 +74,6 @@ class Corpus:
     def event_closest(self, time: float):
         # TODO: Very unoptimized
         return self.ordered_events.get_events(time)[0][0]
-
-
-
 
     @property
     def events(self):

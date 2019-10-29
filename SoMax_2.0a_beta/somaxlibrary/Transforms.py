@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.Labels import AbstractLabel, HarmonicLabel, MelodicLabel
 from somaxlibrary.MaxOscLib import InvalidInputError
 
 
@@ -67,8 +67,8 @@ class NoTransform(AbstractTransform):
     def __hash__(self):
         return hash(__class__)
 
-    def __eq__(self, a):
-        return type(a) == type(self)
+    def __eq__(self, other):
+        return type(other) == type(self)
 
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
@@ -83,6 +83,44 @@ class NoTransform(AbstractTransform):
         return obj
 
 
+# TODO: Structure up according old implementation below
+class TransposeTransform(AbstractTransform):
+    def __init__(self, semitones: int):
+        super(TransposeTransform, self).__init__()
+        self.semitones = semitones
+
+    def __hash__(self):
+        return hash((__class__, self.semitones))
+
+    def __eq__(self, other):
+        return type(other) == type(self) and other.semitones == self.semitones
+
+    def __repr__(self):
+        return f"TransposeTransform(semitones={self.semitones})"
+
+    def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
+        if type(obj) == MelodicLabel:
+            return MelodicLabel(obj.label + self.semitones)
+        else:
+            raise NotImplementedError("TransposeTransform is unfinished")
+
+    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
+        obj.pitch += self.semitones
+        for note in obj.notes:
+            note.pitch += self.semitones
+        return obj
+
+    def _inverse_label(self, obj: AbstractLabel) -> AbstractLabel:
+        if type(obj) == MelodicLabel:
+            return MelodicLabel(obj.label - self.semitones)
+        else:
+            raise NotImplementedError("TransposeTransform is unfinished")
+
+    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+        obj.pitch -= self.semitones
+        for note in obj.notes:
+            note.pitch -= self.semitones
+        return obj
 
 # TODO: Implement at a later stage
 #

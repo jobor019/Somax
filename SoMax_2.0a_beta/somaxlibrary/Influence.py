@@ -15,7 +15,7 @@ class AbstractInfluence(ABC):
 
 class ClassicInfluence(AbstractInfluence):
 
-    def __init__(self, event: CorpusEvent, time_of_influence: float, transforms: AbstractTransform, **_kwargs):
+    def __init__(self, event: CorpusEvent, time_of_influence: float, transforms: (AbstractTransform, ...), **_kwargs):
         super(ClassicInfluence, self).__init__(event, time_of_influence, transforms)
 
     def __repr__(self):

@@ -66,6 +66,9 @@ class AbstractLabel(ABC):
 class MelodicLabel(AbstractLabel):
     MAX_LABEL = 140
 
+    def __repr__(self):
+        return f"MelodicLabel(label={self.label})"
+
     @staticmethod
     def _influence_keyword() -> str:
         return "pitch"
@@ -98,6 +101,9 @@ class HarmonicLabel(AbstractLabel):
     SOM_DATA = np.loadtxt('tables/misc_hsom', dtype=float, delimiter=",")  # TODO: Optimize import
     SOM_CLASSES = np.loadtxt('tables/misc_hsom_c', dtype=int, delimiter=",")  # TODO: Optimize import
     NODE_SPECIFICITY = 2.0
+
+    def __repr__(self):
+        return f"HarmonicLabel(label={self.label})"
 
     @staticmethod
     def _influence_keyword() -> str:

@@ -41,11 +41,8 @@ class DistanceMergeAction(AbstractMergeAction):
 
     def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
-        """(TODO: old temp docstring) Merges events that are similar and sufficiently close in time to each other into a
-             single events. Returns all other events unchanged. Unless mode is set to AND, then it deletes both unless
-             peaks occur in all layers simultaneously."""
-        self.logger.debug("[merge] Merging activity with peaks '{}'.".format(peaks))
-        peaks.sort(key=lambda p: (p.time, p.precomputed_transform_hash))
+        self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
+        peaks.sort(key=lambda p: (p.precomputed_transform_hash, p.time))
         if len(peaks) <= 1:
             return peaks
         prev = peaks[0]
@@ -53,6 +50,7 @@ class DistanceMergeAction(AbstractMergeAction):
         while i < len(peaks):
             cur = peaks[i]
             if abs(cur.time - prev.time) < 0.9 * self.t_width and cur.transforms == prev.transforms:  # TODO: magic nr
+                self.logger.debug(f"Merging peak '{peaks[i-1]}' with peak '{peaks[i]}'.")
                 merged_time: float = (prev.time * prev.score + cur.time * cur.score) / (prev.score + cur.score)
                 merged_score: float = prev.score + cur.score
                 peaks[i - 1] = Peak(merged_time, merged_score, cur.transforms, cur.last_update_time)
