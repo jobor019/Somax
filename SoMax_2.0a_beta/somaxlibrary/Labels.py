@@ -126,7 +126,6 @@ class HarmonicLabel(AbstractLabel):
 
     @classmethod
     def _label_from_chroma(cls, chroma: np.array) -> 'HarmonicLabel':
-        # TODO: Optimize and fix idiot behaviour with indtmp weirdsort
         if len(chroma) != 12:
             raise InvalidLabelInput(f"Harmonic Label data could not be classified from content with size {len(chroma)}."
                                     f" Required size is 12.")
@@ -136,9 +135,8 @@ class HarmonicLabel(AbstractLabel):
             chroma /= max_value
         clust_vec = np.exp(-HarmonicLabel.NODE_SPECIFICITY
                            * np.sqrt(np.sum(np.power(chroma - HarmonicLabel.SOM_DATA, 2), axis=1)))
-        indtmp = np.argsort(clust_vec)
         # pick corresponding SOM class from chroma information
-        label = HarmonicLabel.SOM_CLASSES[indtmp[-1]]
+        label = HarmonicLabel.SOM_CLASSES[np.argmax(clust_vec)]
         return cls(label)
 
     @classmethod

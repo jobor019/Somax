@@ -7,10 +7,10 @@ from typing import ClassVar, Any
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
-from IOParser import IOParser
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput
+from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
@@ -26,7 +26,7 @@ class SoMaxServer(Caller):
     def __init__(self, in_port: int, ip: str = IOParser.DEFAULT_IP):
         super(SoMaxServer, self).__init__()
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Initializing SoMaxServer with input port '{in_port}' and ip '{ip}'.")
+        self.logger.info(f"Initializing SoMaxServer with input port {in_port} and ip '{ip}'.")
         self.players: {str: Player} = dict()
         self.scheduler = Scheduler()
         self.builder = CorpusBuilder()
@@ -36,14 +36,14 @@ class SoMaxServer(Caller):
         self.io_parser: IOParser = IOParser()
         # self.send_info_dict()     # TODO: Handle info dict laters
 
-    async def run(self) -> None:
+    async def _run(self) -> None:
         self.logger.info("Starting SoMaxServer...")
         osc_dispatcher: Dispatcher = Dispatcher()
         osc_dispatcher.map("/server", self._process_osc)
         osc_dispatcher.set_default_handler(self._unmatched_osc)
         self.server: AsyncIOOSCUDPServer = AsyncIOOSCUDPServer((self.ip, self.in_port), osc_dispatcher,
                                                                asyncio.get_event_loop())
-        transport, _ = await self.server.create_serve_endpoint()
+        transport, protocol = await self.server.create_serve_endpoint()
         await self.scheduler.init_async_loop()
         transport.close()
         self.logger.info("SoMaxServer was successfully terminated.")
@@ -209,14 +209,17 @@ class SoMaxServer(Caller):
     # EVENTS METHODS
     ######################################################
 
-    # TODO: Reimplement
-    # def triggering_mode(self, player, mode):
-    #     if mode == "reactive" or mode == "automatic":
-    #         self.players[player]['triggering'] = mode
-    #         self.scheduler.triggers[player] = mode
-    #         self.logger.debug("Triggering mode set to {} for player {}.".format(mode, player))
-    #     else:
-    #         self.logger.error("Invalid input. Triggering mode has to be either reactive or automatic.")
+    def trigger_mode(self, player: str, mode: str):
+        trigger_mode: TriggerMode = self.io_parser.parse_trigger_mode(mode)
+        try:
+            previous_trigger_mode: TriggerMode = self.players[player].trigger_mode
+            self.players[player].trigger_mode = trigger_mode
+        except KeyError:
+            self.logger.error(f"Could not set mode. No player named '{player}' exists.")
+            return
+        if previous_trigger_mode != trigger_mode and trigger_mode == TriggerMode.AUTOMATIC:
+            self.scheduler.add_trigger_event(self.players[player])
+        self.logger.debug(f"[trigger_mode]: Trigger mode set to '{trigger_mode}' for player '{player}'.")
 
     # TODO: Reimplement or remove
     # def new_event(self, player_name, time=None, event=None):
@@ -236,20 +239,25 @@ class SoMaxServer(Caller):
         except InvalidLabelInput as e:
             self.logger.error(str(e) + "No action performed.")
             return
-        # TODO: Error handling
+        # TODO: Error handling (KeyError players + path_and_name)
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
         time: float = self.scheduler.time
         self.players[player].influence(path_and_name, label, time, **kwargs)
+        if self.players[player].trigger_mode == TriggerMode.MANUAL:
+            self.scheduler.add_trigger_event(self.players[player])
 
     def jump(self, player):
         # TODO: IO Error handling
         self.logger.debug("[jump] called for player {0}.".format(player))
         self.players[player].jump()
 
-    def read_file(self, player: str, filepath: str):
+    def read_corpus(self, player: str, filepath: str):
         # TODO: IO Error handling
-        self.logger.debug(f"[read_file] called for player '{player}' and file '{filepath}'.")
-        self.players[player].read_file(filepath)
+        self.logger.debug(f"[read_corpus] called for player '{player}' and file '{filepath}'.")
+        try:
+            self.players[player].read_corpus(filepath)
+        except KeyError:
+            self.logger.error(f"Could not load corpus. No player named '{player}' exists.")
 
     def set_self_influence(self, player, si):
         # TODO: IO Error handling
@@ -284,4 +292,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     in_port = args.in_port[0]
     somax_server = SoMaxServer(in_port)
-    asyncio.run(somax_server.run())
+    asyncio.run(somax_server._run())

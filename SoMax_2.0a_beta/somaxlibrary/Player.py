@@ -144,7 +144,7 @@ class Player(ScheduledMidiObject):
             self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
                                                      self.corpus, self_influenced)
 
-    def read_file(self, filepath: str):
+    def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
         for streamview in self.streamviews.values():
             streamview.read(self.corpus)

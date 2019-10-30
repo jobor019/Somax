@@ -14,7 +14,7 @@ class IOParser:
     DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
     DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
     DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
-    DEFAULT_TRANSFORMS: (ClassVar, ...) = (NoTransform,)
+    DEFAULT_TRANSFORM: (ClassVar, ...) = (NoTransform,)
     DEFAULT_TRIGGER = TriggerMode.AUTOMATIC
     DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
 
@@ -63,9 +63,9 @@ class IOParser:
             return self.DEFAULT_TRIGGER
         else:
             try:
-                return TriggerMode(trigger_mode.upper())
+                return TriggerMode(trigger_mode.lower())
             except ValueError:
-                logging.warning(f"Could not parse '{trigger_mode}' as a trigger mode. Setting to default.")
+                self.logger.warning(f"Could not parse '{trigger_mode}' as a trigger mode. Setting to default.")
                 return TriggerMode(self.DEFAULT_TRIGGER)
 
     @staticmethod

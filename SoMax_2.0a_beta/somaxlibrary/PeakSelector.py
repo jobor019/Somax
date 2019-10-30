@@ -13,13 +13,13 @@ class AbstractPeakSelector(ABC):
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def decide(self, peaks: [Peak], influence_history: [(CorpusEvent, AbstractTransform)],
+    def decide(self, peaks: [Peak], influence_history: [(CorpusEvent, (AbstractTransform, ...))],
                corpus: Corpus, **kwargs) -> [CorpusEvent, AbstractTransform]:
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
 
 
 class MaxPeakSelector(AbstractPeakSelector):
-    def decide(self, peaks: [Peak], influence_history: [(CorpusEvent, AbstractTransform)],
+    def decide(self, peaks: [Peak], influence_history: [(CorpusEvent, (AbstractTransform, ...))],
                corpus: Corpus, **_kwargs) -> [CorpusEvent, AbstractTransform]:
         self.logger.debug("[decide] MaxPeakSelector called.")
         if not peaks:
@@ -31,11 +31,11 @@ class MaxPeakSelector(AbstractPeakSelector):
 
 
 class DefaultPeakSelector(AbstractPeakSelector):
-    def decide(self, _peaks: [Peak], influence_history: (CorpusEvent, AbstractTransform),
+    def decide(self, _peaks: [Peak], influence_history: (CorpusEvent, (AbstractTransform, ...)),
                corpus: Corpus, **_kwargs) -> [CorpusEvent, AbstractTransform]:
         self.logger.debug("[decide] DefaultPeakSelector called.")
         if not influence_history:
-            return corpus.event_at(0), NoTransform()
+            return corpus.event_at(0), (NoTransform(),)
         last_event, last_transform = influence_history[-1]
         next_state_idx: int = (last_event.state_index + 1) % corpus.length()
         return corpus.event_at(next_state_idx), last_transform

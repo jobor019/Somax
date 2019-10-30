@@ -30,7 +30,7 @@ class Corpus:
             self.read_file(filepath, timing_type)
 
     def __repr__(self):
-        return f"Corpus object with content type {self.content_type} and {len(self.ordered_events)} states"
+        return f"Corpus(content_type={self.content_type}, len={len(self.ordered_events)})."
 
     def read_file(self, filepath: str, timing_type: str = DEFAULT_TIMING):
         """" Raises: OSError """
@@ -42,10 +42,12 @@ class Corpus:
         except ValueError as e:
             self.logger.debug(e)
             self.logger.error(f"Could not read json file. typeID should be either 'MIDI' or 'Audio'.")
+            return
 
         events = corpus_data["data"]
         self.ordered_events = self._parse_events(events, timing_type)
         self._classify_events()
+        self.logger.debug(f"[read_file] Corpus {self} successfully read.")
 
     @staticmethod
     def _parse_events(events: [Dict], timing_type: str) -> [CorpusEvent]:

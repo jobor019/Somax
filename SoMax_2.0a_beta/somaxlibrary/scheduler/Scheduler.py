@@ -26,7 +26,7 @@ class Scheduler:
         self.terminated = False
 
     async def init_async_loop(self, callback_interval: int = DEFAULT_CALLBACK_INTERVAL):
-        self.logger.debug(f"Scheduler started with callback interval '{callback_interval}'.")
+        self.logger.debug(f"Scheduler initialized with callback interval {callback_interval}.")
         while not self.terminated:
             await asyncio.sleep(callback_interval)
             self._callback()
@@ -35,7 +35,7 @@ class Scheduler:
         self.terminated = True
 
     def start(self) -> None:
-        self.logger.info(f"Scheduler Started. Current beat is '{self.beat}'.")
+        self.logger.info(f"Scheduler Started. Current beat is {self.beat}.")
         self.running = True
 
     def _callback(self):
@@ -117,13 +117,14 @@ class Scheduler:
                 self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel))
 
     def add_trigger_event(self, player: Player):
-        if not self._has_trigger(player):
+        if (player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player)) \
+                or player.trigger_mode == TriggerMode.MANUAL:
             self._add_trigger_event(player, self.beat - self.TRIGGER_PRETIME * self.tempo / 60.0, self.beat)
 
     def _has_trigger(self, player: Player) -> bool:  # TODO: Unoptimized approach
         for event in self.queue:
             try:
-                if event.player == player:
+                if isinstance(event, TriggerEvent) and event.player == player:
                     return True
             except AttributeError:
                 continue

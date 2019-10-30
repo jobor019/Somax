@@ -12,7 +12,7 @@ def test_player_influence_pitch():
     corpus_file = "Tests/test.json"
     fullpath = ["streamview", "atom"]
     p = Player("player", target, TriggerMode.MANUAL)
-    p.read_file(corpus_file)
+    p.read_corpus(corpus_file)
     p.create_streamview([fullpath[0]], 1.0, (DistanceMergeAction, PhaseModulationMergeAction))
     p.create_atom(fullpath, 1.0, MelodicLabel, ClassicActivityPattern, NGramMemorySpace, False)
 
