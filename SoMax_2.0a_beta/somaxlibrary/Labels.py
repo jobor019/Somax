@@ -24,7 +24,7 @@ class AbstractLabel(ABC):
 
     @staticmethod
     @abstractmethod
-    def _influence_keyword() -> str:
+    def _influence_keywords() -> [str]:
         """
         Notes
         -----
@@ -46,14 +46,18 @@ class AbstractLabel(ABC):
         raise NotImplementedError("AbstractLabel.classify is abstract.")
 
     @classmethod
-    def classify_as(cls, influence_keyword: str, data: Any, **kwargs) -> 'AbstractLabel':
+    def classify_as(cls, influence_keyword: str, data: Any, **kwargs) -> ['AbstractLabel']:
         """ Raises: InvalidLabelInput """
         # TODO: [OPTIMIZATION]: ev. refactor this to own class to avoid calling `classes` continuously (if slow)
         classes: [ClassVar] = AbstractLabel.classes().values()
+        labels: ['AbstractLabel'] = []
         for c in classes:  # type: ClassVar[AbstractLabel]
-            if c._influence_keyword() == influence_keyword:
-                return c.classify(data, **kwargs)
-        raise InvalidLabelInput(f"No class exists that matches the influence keyword {influence_keyword}.")
+            if influence_keyword in c._influence_keywords():
+                labels.append(c.classify(data, **kwargs))
+        if labels:
+            return labels
+        else:
+            raise InvalidLabelInput(f"No class exists that matches the influence keyword {influence_keyword}.")
 
     @staticmethod
     def classes() -> {str: ClassVar}:
@@ -70,21 +74,21 @@ class MelodicLabel(AbstractLabel):
         return f"MelodicLabel(label={self.label})"
 
     @staticmethod
-    def _influence_keyword() -> str:
-        return "pitch"
+    def _influence_keywords() -> [str]:
+        return ["pitch"]
 
     @classmethod
-    def classify(cls, data: Union[int, CorpusEvent], mod12: bool = False) -> 'MelodicLabel':
+    def classify(cls, data: Union[int, CorpusEvent], **_kwargs) -> 'MelodicLabel':
         if isinstance(data, CorpusEvent):
-            return MelodicLabel._label_from_event(data)
+            return cls._label_from_event(data)
         elif isinstance(data, int):
-            return MelodicLabel._label_from_pitch(data)
+            return cls._label_from_pitch(data)
         else:
             raise InvalidLabelInput("Melodic Label data could not be classified due to invalid type input.")
 
     @classmethod
     def _label_from_event(cls, event: CorpusEvent, mod12: bool = False) -> 'MelodicLabel':
-        return MelodicLabel._label_from_pitch(event.pitch, mod12)
+        return cls._label_from_pitch(event.pitch, mod12)
 
     @classmethod
     def _label_from_pitch(cls, pitch: int, mod12: bool = False) -> 'MelodicLabel':
@@ -94,6 +98,20 @@ class MelodicLabel(AbstractLabel):
             return cls(pitch % 12)
         else:
             return cls(pitch)
+
+
+class PitchClassLabel(MelodicLabel):
+    def __repr__(self):
+        return f"MelodicMod12Label(label={self.label})"
+
+    @classmethod
+    def classify(cls, data: Union[int, CorpusEvent], **_kwargs) -> 'PitchClassLabel':
+        if isinstance(data, CorpusEvent):
+            return cls._label_from_event(data, mod12=True)
+        elif isinstance(data, int):
+            return cls._label_from_pitch(data, mod12=True)
+        else:
+            raise InvalidLabelInput("Melodic Label data could not be classified due to invalid type input.")
 
 
 class HarmonicLabel(AbstractLabel):
@@ -106,8 +124,8 @@ class HarmonicLabel(AbstractLabel):
         return f"HarmonicLabel(label={self.label})"
 
     @staticmethod
-    def _influence_keyword() -> str:
-        return "chroma"
+    def _influence_keywords() -> [str]:
+        return ["chroma"]
 
     @classmethod
     def classify(cls, data: Union[CorpusEvent, List[float], int], **kwargs) -> 'HarmonicLabel':

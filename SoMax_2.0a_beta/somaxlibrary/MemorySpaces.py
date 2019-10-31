@@ -8,26 +8,26 @@ from typing import Tuple, ClassVar
 
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Exceptions import InvalidLabelInput
+from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
-from somaxlibrary.Transforms import NoTransform
 
 
 # TODO: Abstract Influence type. Dependent on (determined by?) ActivityPattern. CUrrently hardcoded in NGram.
 class AbstractMemorySpace(ABC):
     """ MemorySpaces determine how events are matched to labels """
 
-    def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = AbstractLabel,
-                 transforms: [(AbstractTransform, ...)] = None, **_kwargs):
+    def __init__(self, corpus: Corpus, label_type: ClassVar[AbstractLabel],
+                 transforms: [(ClassVar[AbstractTransform], ...)], **_kwargs):
         """ Note: kwargs can be used if additional information is need to construct the data structure."""
         self.logger = logging.getLogger(__name__)
         self.corpus: Corpus = corpus
         self.label_type: ClassVar[AbstractLabel] = label_type
         # TODO: Should also check that they work for this label
-        self.transforms: [(AbstractTransform, ...)] = transforms if transforms else [(NoTransform(),)]
+        self.transforms: [(AbstractTransform, ...)] = []
+        self.add_transforms(transforms)
 
     @abstractmethod
     def read(self, corpus: Corpus, **_kwargs) -> None:
@@ -44,6 +44,19 @@ class AbstractMemorySpace(ABC):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
+    def add_transforms(self, transforms: [(ClassVar[AbstractTransform], ...)]) -> None:
+        """ raises: TransformError """
+        # Ensure that all transforms are valid for the MemorySpace's label type
+        for transform_tuple in transforms:
+            if not all(self.label_type in t.valid_labels() for t in transform_tuple):
+                raise TransformError(
+                    f"Could not add transform {transform_tuple} to memspace with label type {self.label_type}.")
+        for transform_tuple in transforms:
+            if transform_tuple in self.transforms:
+                self.logger.warning(f"Transform {transform_tuple} was not added as it already exists in memspace.")
+            else:
+                self.transforms.append(transform_tuple)
+
     # TODO: Implement if needed
     # def is_available(self):
     #     return bool(self.available)
@@ -53,17 +66,13 @@ class AbstractMemorySpace(ABC):
     # def _reset(self) -> None:
     #     pass
 
-    # TODO: Implement when needed
-    # def add_transform(self, transform: (AbstractTransform,) -> None:
-    #     pass
-
 
 class NGramMemorySpace(AbstractMemorySpace):
     def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = MelodicLabel,
-                 transforms: [(AbstractTransform, ...)] = None, history_len: int = 3, **_kwargs):
-        super(NGramMemorySpace, self).__init__(corpus, label_type, transforms)
+                 history_len: int = 3, **_kwargs):
+        super(NGramMemorySpace, self).__init__(corpus, label_type)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
-                          f"label type {label_type}, history length {history_len} and transforms {transforms}")
+                          f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
         self.ngram_size: int = history_len
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
@@ -95,6 +104,8 @@ class NGramMemorySpace(AbstractMemorySpace):
         """ Raises: InvalidLabelInput"""
         if not type(label) == self.label_type:
             raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
+        else:
+            self.logger.debug(f"[influence] Influencing memory space with label {self.label_type} with label {label}.")
         self.influence_history.append(label)
         if len(self.influence_history) < self.ngram_size:
             return []

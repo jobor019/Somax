@@ -35,10 +35,20 @@ class AudioEvent(ScheduledPlayerEvent):
         self.duration: float = duration
 
 
-class TriggerEvent(ScheduledPlayerEvent):
+class AbstractTriggerEvent(ScheduledPlayerEvent, ABC):
     def __init__(self, trigger_time: float, player: Player, target_time: float):
-        super().__init__(trigger_time, player)
+        super(AbstractTriggerEvent, self).__init__(trigger_time, player)
         self.target_time: float = target_time
+
+
+class AutomaticTriggerEvent(AbstractTriggerEvent):
+    def __init__(self, trigger_time: float, player: Player, target_time: float):
+        super().__init__(trigger_time, player, target_time)
+
+
+class ManualTriggerEvent(AbstractTriggerEvent):
+    def __init__(self, trigger_time: float, player: Player):
+        super(ManualTriggerEvent, self).__init__(trigger_time, player, trigger_time)
 
 
 class OscEvent(ScheduledEvent):

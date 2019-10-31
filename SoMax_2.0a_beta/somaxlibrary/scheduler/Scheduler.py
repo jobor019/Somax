@@ -6,8 +6,9 @@ from somaxlibrary.Corpus import ContentType
 from somaxlibrary.CorpusEvent import CorpusEvent, Note
 from somaxlibrary.Exceptions import InvalidCorpus
 from somaxlibrary.Player import Player
-from somaxlibrary.scheduler.ScheduledEvent import ScheduledEvent, MidiEvent, AudioEvent, TriggerEvent, OscEvent, \
-    TempoEvent
+from somaxlibrary.scheduler.ScheduledEvent import ScheduledEvent, MidiEvent, AudioEvent, AutomaticTriggerEvent, \
+    OscEvent, \
+    TempoEvent, ManualTriggerEvent, AbstractTriggerEvent
 from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 
 
@@ -47,13 +48,14 @@ class Scheduler:
         events: [ScheduledEvent] = [e for e in self.queue if e.trigger_time <= self.beat]
         self.queue = [e for e in self.queue if e.trigger_time > self.beat]
         for event in events:
+            # TODO: isinstance on all
             if type(event) == TempoEvent:
                 self._process_tempo_event(event)
             if type(event) == MidiEvent:
                 self._process_midi_event(event)
             elif type(event) == AudioEvent:
                 self._process_audio_event(event)
-            elif type(event) == TriggerEvent:
+            elif isinstance(event, AbstractTriggerEvent):
                 self._process_trigger_event(event)
             elif type(event) == OscEvent:
                 self._process_osc_event(event)
@@ -68,7 +70,7 @@ class Scheduler:
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
         pass  # TODO
 
-    def _process_trigger_event(self, trigger_event: TriggerEvent) -> None:
+    def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
         player: Player = trigger_event.player
         try:
             event: CorpusEvent = player.new_event(trigger_event.target_time)
@@ -78,10 +80,10 @@ class Scheduler:
 
         self.add_corpus_event(player, trigger_event.target_time, event)
 
-        if player.trigger_mode == TriggerMode.AUTOMATIC:
+        if isinstance(trigger_event, AutomaticTriggerEvent) and player.trigger_mode == TriggerMode.AUTOMATIC:
             next_trigger_time: float = trigger_event.trigger_time + event.duration
             next_target_time: float = trigger_event.target_time + event.duration
-            self._add_trigger_event(player, next_trigger_time, next_target_time)
+            self._add_automatic_trigger_event(player, next_trigger_time, next_target_time)
 
     def _process_osc_event(self, osc_event: OscEvent) -> None:
         pass
@@ -117,21 +119,27 @@ class Scheduler:
                 self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel))
 
     def add_trigger_event(self, player: Player):
-        if (player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player)) \
-                or player.trigger_mode == TriggerMode.MANUAL:
-            self._add_trigger_event(player, self.beat - self.TRIGGER_PRETIME * self.tempo / 60.0, self.beat)
+        if player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player):
+            self._add_automatic_trigger_event(player, self.beat - self.TRIGGER_PRETIME * self.tempo / 60.0, self.beat)
+        elif player.trigger_mode == TriggerMode.MANUAL:
+            self._add_manual_trigger_event(player, self.beat)
+        else:
+            self.logger.debug("Could not add trigger.")
 
     def _has_trigger(self, player: Player) -> bool:  # TODO: Unoptimized approach
         for event in self.queue:
             try:
-                if isinstance(event, TriggerEvent) and event.player == player:
+                if isinstance(event, AutomaticTriggerEvent) and event.player == player:
                     return True
             except AttributeError:
                 continue
         return False
 
-    def _add_trigger_event(self, player: Player, trigger_time: float, target_time: float):
-        self.queue.append(TriggerEvent(trigger_time, player, target_time))
+    def _add_automatic_trigger_event(self, player: Player, trigger_time: float, target_time: float):
+        self.queue.append(AutomaticTriggerEvent(trigger_time, player, target_time))
+
+    def _add_manual_trigger_event(self, player: Player, trigger_time: float):
+        self.queue.append(ManualTriggerEvent(trigger_time, player))
 
     def _sanity_check(self):
         pass  # TODO
@@ -154,4 +162,12 @@ class Scheduler:
 
     def stop(self) -> None:
         self.running = False
+        remamining_queue: [ScheduledEvent] = self.queue[:]
+        self.queue = []
         self.beat = 0
+        for event in remamining_queue[:]:
+            # Add new triggers for all existing automatically triggered
+            if isinstance(event, AutomaticTriggerEvent):
+                self.add_trigger_event(event.player)
+            if isinstance(event, MidiEvent) and event.velocity == 0:
+                self._process_midi_event(event)

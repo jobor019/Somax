@@ -4,19 +4,20 @@ import logging
 import logging.config
 from typing import ClassVar, Any
 
+from maxosc.MaxOsc import Caller
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput
+from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError
 from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
-from somaxlibrary.MaxOscLib import Caller
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Player import Player
 from somaxlibrary.Target import Target, OscTarget
+from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 from somaxlibrary.scheduler.Scheduler import Scheduler
 
@@ -24,7 +25,7 @@ from somaxlibrary.scheduler.Scheduler import Scheduler
 class SoMaxServer(Caller):
 
     def __init__(self, in_port: int, ip: str = IOParser.DEFAULT_IP):
-        super(SoMaxServer, self).__init__()
+        super(SoMaxServer, self).__init__(parse_parenthesis_as_list=False)
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Initializing SoMaxServer with input port {in_port} and ip '{ip}'.")
         self.players: {str: Player} = dict()
@@ -100,20 +101,43 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"Could not create streamview for player '{player}' at path '{path}'.")
 
-    def create_atom(self, player: str, path: str, weight: float = 1.0, label_type: str = "",
-                    activity_type: str = "", memory_type: str = "", self_influenced: bool = False):
+    def create_atom(self, player: str, path: str, weight: float = 1.0, label: str = "",
+                    activity_type: str = "", memory_type: str = "", self_influenced: bool = False,
+                    transforms: (str, ...) = (""), transform_parse_mode=""):
         self.logger.debug(f"[create_atom] called for player {player} with path {path}.")
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        label_type: ClassVar[AbstractLabel] = self.io_parser.parse_label_type(label_type)
+        label: ClassVar[AbstractLabel] = self.io_parser.parse_label_type(label)
         activity_type: ClassVar[AbstractActivityPattern] = self.io_parser.parse_activity_type(activity_type)
         memory_type: ClassVar[AbstractMemorySpace] = self.io_parser.parse_memspace_type(memory_type)
+
         try:
-            self.players[player].create_atom(path_and_name, weight, label_type, activity_type, memory_type,
-                                             self_influenced)
+            transforms: [(ClassVar[AbstractTransform], ...)] = self.io_parser.parse_transforms(transforms,
+                                                                                               transform_parse_mode)
+        except IOError as e:
+            self.logger.error(f"{str(e)} Setting Transforms to default.")
+            transforms: [(ClassVar[AbstractTransform], ...)] = IOParser.DEFAULT_TRANSFORMS
+        try:
+            self.players[player].create_atom(path_and_name, weight, label, activity_type, memory_type,
+                                             self_influenced, transforms)
         except InvalidPath as e:
             self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
         except KeyError:
-            self.logger.error(f"Could not create atom at path {path}. The parent streamview does not exist.")
+            self.logger.error(f"Could not create atom at path {path}. The parent streamview/player does not exist.")
+        except DuplicateKeyError as e:
+            self.logger.error(f"{str(e)}. No atom was created.")
+
+    def add_transform(self, player: str, path: str, transforms: [str], parse_mode=""):
+        self.logger.debug(f"[add_transform] called for player {player} with path {path}.")
+        path_and_name: [str] = self.io_parser.parse_streamview_atom_path(path)
+        try:
+            transforms: [(ClassVar[AbstractTransform], ...)] = self.io_parser.parse_transforms(transforms, parse_mode)
+        except IOError as e:
+            self.logger.error(f"{str(e)} No Transform was added.")
+            return
+        try:
+            self.players[player].add_transforms(path_and_name, transforms)
+        except KeyError:
+            self.logger.error(f"Could not add transform at path {path}. The parent streamview/player does not exist.")
 
     ######################################################
     # PROCESS METHODS
@@ -235,14 +259,15 @@ class SoMaxServer(Caller):
         self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
                           f"label keyword '{label_keyword}', value '{value}' and kwargs {kwargs}")
         try:
-            label: AbstractLabel = AbstractLabel.classify_as(label_keyword, value, **kwargs)
+            labels: [AbstractLabel] = AbstractLabel.classify_as(label_keyword, value, **kwargs)
         except InvalidLabelInput as e:
             self.logger.error(str(e) + "No action performed.")
             return
         # TODO: Error handling (KeyError players + path_and_name)
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
         time: float = self.scheduler.time
-        self.players[player].influence(path_and_name, label, time, **kwargs)
+        for label in labels:
+            self.players[player].influence(path_and_name, label, time, **kwargs)
         if self.players[player].trigger_mode == TriggerMode.MANUAL:
             self.scheduler.add_trigger_event(self.players[player])
 

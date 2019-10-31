@@ -1,5 +1,6 @@
+import itertools
 import logging
-from typing import Tuple, ClassVar, Any, Union, List
+from typing import ClassVar, Any, Union, List
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern, ClassicActivityPattern
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel
@@ -14,9 +15,12 @@ class IOParser:
     DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
     DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
     DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
-    DEFAULT_TRANSFORM: (ClassVar, ...) = (NoTransform,)
+    DEFAULT_TRANSFORMS: [(ClassVar, ...)] = [(NoTransform,)]
     DEFAULT_TRIGGER = TriggerMode.AUTOMATIC
     DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
+
+    PARSE_DEFAULT = "default"
+    PARSE_COMBINATIONS = "combinations"
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -79,9 +83,30 @@ class IOParser:
     def parse_ip(ip: str) -> str:
         raise NotImplementedError("parse_ip is not implemented.")  # TODO
 
-    @staticmethod
-    def parse_transforms(transforms: str) -> Tuple[AbstractTransform]:
-        raise IOError
+    def parse_transforms(self, transforms: (str, ...), parse_mode: str) -> [(ClassVar[AbstractTransform],...)]:
+        """ Raises: IOError """
+        if not parse_mode or parse_mode.lower() == self.PARSE_DEFAULT:
+            return self._parse_transform_default(transforms)
+        elif parse_mode.lower() == self.PARSE_COMBINATIONS:
+            all_combinations: [(str, ...)] = []
+            for i in range(1, len(transforms) + 1):
+                all_combinations.extend(list(itertools.combinations(transforms, r=i)))
+            all_transforms: [(ClassVar[AbstractTransform],...)] = []
+            for transform_tuple in all_combinations:
+                all_transforms.append(self._parse_transform_default(transform_tuple))
+            return all_transforms
+        else:
+            raise IOError(f"The parse mode '{parse_mode}' is not valid.")
+
+    def _parse_transform_default(self, transforms: (str, ...)) -> [(ClassVar[AbstractTransform],...)]:
+        output_transforms: [AbstractTransform] = []
+        valid_classes: {str: ClassVar} = AbstractTransform.classes()
+        for transform in transforms:
+            try:
+                output_transforms.append(valid_classes[transform])
+            except KeyError:
+                raise IOError(f"A transform with the name '{transform}' does not exist.")
+        return tuple(output_transforms)
 
     @staticmethod
     def parse_streamview_atom_path(path: str) -> [str]:

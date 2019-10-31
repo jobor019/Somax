@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 from pythonosc.udp_client import SimpleUDPClient
 
-from somaxlibrary.MaxOscLib import MaxFormatter
+from maxosc.MaxFormatter import MaxFormatter
 
 
 class Target(ABC):

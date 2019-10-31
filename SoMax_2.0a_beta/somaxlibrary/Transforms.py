@@ -1,10 +1,12 @@
+import inspect
 import logging
+import sys
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, ClassVar
 
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Labels import AbstractLabel, HarmonicLabel, MelodicLabel
-from somaxlibrary.MaxOscLib import InvalidInputError
+from somaxlibrary.Exceptions import TransformError
+from somaxlibrary.Labels import AbstractLabel, MelodicLabel, PitchClassLabel
 
 
 class AbstractTransform(ABC):
@@ -22,13 +24,18 @@ class AbstractTransform(ABC):
         """Notes: Strictly not needed in current implementation, but should always be implemented when __hash__ is"""
         raise NotImplementedError("AbstractTransform.__eq__ is abstract.")
 
+    @staticmethod
+    @abstractmethod
+    def valid_labels() -> [ClassVar[AbstractLabel]]:
+        raise NotImplementedError("AbstractTransform.valid_labels is abstract.")
+
     def transform(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
         if isinstance(obj, AbstractLabel):
             return self._transform_label(obj)
         elif isinstance(obj, CorpusEvent):
             return self._transform_event(obj)
         else:
-            raise InvalidInputError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
+            raise TransformError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
 
     def inverse(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
         if isinstance(obj, AbstractLabel):
@@ -36,7 +43,7 @@ class AbstractTransform(ABC):
         elif isinstance(obj, CorpusEvent):
             return self._inverse_event(obj)
         else:
-            raise InvalidInputError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
+            raise TransformError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
 
     @abstractmethod
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
@@ -54,6 +61,13 @@ class AbstractTransform(ABC):
     def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
         raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
+    @staticmethod
+    def classes() -> {str: ClassVar}:
+        """Returns class objects for all non-abstract classes in this module."""
+        return dict(inspect.getmembers(sys.modules[__name__],
+                                       lambda member: inspect.isclass(member) and not inspect.isabstract(
+                                           member) and member.__module__ == __name__))
+
 
 class NoTransform(AbstractTransform):
     def __init__(self):
@@ -69,6 +83,10 @@ class NoTransform(AbstractTransform):
 
     def __eq__(self, other):
         return type(other) == type(self)
+
+    @staticmethod
+    def valid_labels() -> [ClassVar[AbstractLabel]]:
+        return list(AbstractLabel.classes().values())     # all transforms are valid
 
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
@@ -98,9 +116,15 @@ class TransposeTransform(AbstractTransform):
     def __repr__(self):
         return f"TransposeTransform(semitones={self.semitones})"
 
+    @staticmethod
+    def valid_labels() -> [ClassVar[AbstractLabel]]:
+        return [MelodicLabel, PitchClassLabel]
+
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         if type(obj) == MelodicLabel:
             return MelodicLabel(obj.label + self.semitones)
+        elif type(obj) == PitchClassLabel:
+            return PitchClassLabel((obj.label + self.semitones) % 12)
         else:
             raise NotImplementedError("TransposeTransform is unfinished")
 
@@ -113,6 +137,8 @@ class TransposeTransform(AbstractTransform):
     def _inverse_label(self, obj: AbstractLabel) -> AbstractLabel:
         if type(obj) == MelodicLabel:
             return MelodicLabel(obj.label - self.semitones)
+        elif type(obj) == PitchClassLabel:
+            return PitchClassLabel((obj.label - self.semitones) % 12)
         else:
             raise NotImplementedError("TransposeTransform is unfinished")
 

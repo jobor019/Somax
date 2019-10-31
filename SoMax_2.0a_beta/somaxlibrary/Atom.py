@@ -9,19 +9,18 @@ from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Peak import Peak
+from somaxlibrary.Transforms import AbstractTransform
 
 
 class Atom(object):
-    def __init__(self, name: str = "atom", weight: float = 1.0,
-                 label_type: ClassVar[AbstractLabel] = MelodicLabel,
-                 activity_type: ClassVar[AbstractActivityPattern] = ClassicActivityPattern,
-                 memory_type: ClassVar[AbstractMemorySpace] = MemorySpaces.NGramMemorySpace,
-                 corpus: Corpus = None, self_influenced: bool = False):
+    def __init__(self, name: str, weight: float, label_type: ClassVar[AbstractLabel],
+                 activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
+                 corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform],...)]):
         self.logger = logging.getLogger(__name__)
         self.logger.debug(f"[__init__ Creating atom '{name}'.")
         self.weight: float = weight
         self.activity_pattern: AbstractActivityPattern = activity_type()  # creates activity
-        self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type)
+        self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type, transforms)
         self.name = name
         self.active = False
         self.self_influenced: bool = self_influenced

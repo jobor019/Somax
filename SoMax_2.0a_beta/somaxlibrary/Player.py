@@ -8,9 +8,9 @@ from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel
-from somaxlibrary.MaxOscLib import DuplicateKeyError
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
 from somaxlibrary.Peak import Peak
@@ -110,10 +110,13 @@ class Player(ScheduledMidiObject):
                     continue
 
     def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs) -> None:
-        """ Raises: InvalidLabelInput."""
+        """ Raises: InvalidLabelInput, KeyError"""
         if not path:
             for atom in self._all_atoms():
-                atom.influence(label, time, **kwargs)
+                try:
+                    atom.influence(label, time, **kwargs)
+                except InvalidLabelInput as e:
+                    self.logger.debug(f"[influence] {str(e)} Likely expected behaviour, only in rare cases an issue.")
         else:
             self._get_atom(path).influence(label, time, **kwargs)
 
@@ -132,7 +135,7 @@ class Player(ScheduledMidiObject):
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
-                    self_influenced: bool):
+                    self_influenced: bool, transforms: [(ClassVar[AbstractTransform],...)]):
         """creates atom at target path
         raises: InvalidPath, KeyError, DuplicateKeyError"""
         self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
@@ -142,7 +145,7 @@ class Player(ScheduledMidiObject):
             raise InvalidPath(f"Cannot create an atom directly in Player.")
         else:
             self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
-                                                     self.corpus, self_influenced)
+                                                     self.corpus, self_influenced, transforms)
 
     def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
@@ -164,6 +167,17 @@ class Player(ScheduledMidiObject):
         for merge_action in self.merge_actions:
             peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
         return peaks
+
+    def add_transform(self, path: [str], transform: (AbstractTransform, ...)) -> None:
+        """ raises TransformError, KeyError"""
+        if not path:
+            for atom in self._all_atoms():
+                try:
+                    atom.memory_space.add_transforms(transform)
+                except TransformError as e:
+                    self.logger.error(f"{str(e)}")
+        else:
+            self._get_atom(path).memory_space.add_transforms(transform)
 
     # TODO: Reimplement as activity
     # def jump(self):

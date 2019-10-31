@@ -26,3 +26,8 @@ class TransformError(Exception):
 class InvalidConfiguration(Exception):
     def __init__(self, error):
         super(InvalidConfiguration, self).__init__(error)
+
+
+class DuplicateKeyError(Exception):
+    def __init__(self, error):
+        super(DuplicateKeyError, self).__init__(error)
