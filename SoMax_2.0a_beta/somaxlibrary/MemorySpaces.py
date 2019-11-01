@@ -10,7 +10,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
-from somaxlibrary.Labels import AbstractLabel, MelodicLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
@@ -68,9 +68,9 @@ class AbstractMemorySpace(ABC):
 
 
 class NGramMemorySpace(AbstractMemorySpace):
-    def __init__(self, corpus: Corpus = None, label_type: ClassVar[AbstractLabel] = MelodicLabel,
-                 history_len: int = 3, **_kwargs):
-        super(NGramMemorySpace, self).__init__(corpus, label_type)
+    def __init__(self, corpus: Corpus, label_type: ClassVar[AbstractLabel],
+                 transforms: [(ClassVar[AbstractTransform], ...)], history_len: int = 3, **_kwargs):
+        super(NGramMemorySpace, self).__init__(corpus, label_type, transforms)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}

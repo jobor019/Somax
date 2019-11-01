@@ -32,15 +32,18 @@ class Player(ScheduledMidiObject):
         self.target: Target = target
 
         self.streamviews: {str: StreamView} = dict()
-        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
         self.merge_actions: [AbstractMergeAction] = [DistanceMergeAction(), PhaseModulationMergeAction()]
         self.corpus: Corpus = None
         self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
+
+        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
+        self._previous_peaks: [Peak] = []
 
         # self.nextstate_mod: float = 1.5   # TODO
         # self.waiting_to_jump: bool = False    # TODO
 
         # self.info_dictionary = dict()  # TODO
+
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
@@ -90,6 +93,7 @@ class Player(ScheduledMidiObject):
             raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
 
         self.improvisation_memory.append(event_and_transforms)
+        self._previous_peaks: [Peak] = peaks
 
         event: CorpusEvent = deepcopy(event_and_transforms[0])
         transforms: (AbstractTransform, ...) = event_and_transforms[1]
@@ -135,7 +139,7 @@ class Player(ScheduledMidiObject):
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
-                    self_influenced: bool, transforms: [(ClassVar[AbstractTransform],...)]):
+                    self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
         """creates atom at target path
         raises: InvalidPath, KeyError, DuplicateKeyError"""
         self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
@@ -178,6 +182,25 @@ class Player(ScheduledMidiObject):
                     self.logger.error(f"{str(e)}")
         else:
             self._get_atom(path).memory_space.add_transforms(transform)
+
+
+    @property
+    def previous_peaks_raw(self) -> [(float, float, int)]:
+        peaks: [(int, float, int)] = []
+        transform_indices: {int: int} = {}
+        transform_tuple_index: int = 0
+        for peak in self._previous_peaks:
+            if peak.transforms not in transform_indices:
+                transform_indices[peak.transform_hash] = transform_tuple_index
+                transform_tuple_index += 1
+            state: int = self.corpus.event_closest(peak.time).state_index
+            score: float = peak.score
+            transform_index: int = transform_indices[peak.transform_hash]
+            peaks.append((state, score, transform_index))
+        return peaks
+
+    def send_gui(self):
+        self.target.send_gui(self.previous_peaks_raw)
 
     # TODO: Reimplement as activity
     # def jump(self):
@@ -300,6 +323,3 @@ class Player(ScheduledMidiObject):
     #         self.streamviews[head].set_weight(tail, weight)
     #     self.send_info_dict()
     #     return True
-
-    def send(self, content: Any) -> None:
-        self.target.send(content)

@@ -21,18 +21,20 @@ class ScheduledPlayerEvent(ScheduledEvent):
 
 
 class MidiEvent(ScheduledPlayerEvent):
-    def __init__(self, trigger_time: float, player: Player, note: int, velocity: int, channel: int):
+    def __init__(self, trigger_time: float, player: Player, note: int, velocity: int, channel: int, state: int):
         super(MidiEvent, self).__init__(trigger_time, player)
         self.note: int = note
         self.velocity: int = velocity
         self.channel: int = channel
+        self.state: int = state
 
 
 class AudioEvent(ScheduledPlayerEvent):
-    def __init__(self, trigger_time: float, player: Player, onset: float, duration: float):
+    def __init__(self, trigger_time: float, player: Player, onset: float, duration: float, state: int):
         super(AudioEvent, self).__init__(trigger_time, player)
         self.onset: float = onset
         self.duration: float = duration
+        self.state: int = state
 
 
 class AbstractTriggerEvent(ScheduledPlayerEvent, ABC):

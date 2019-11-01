@@ -16,7 +16,7 @@ from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Player import Player
-from somaxlibrary.Target import Target, OscTarget
+from somaxlibrary.Target import Target, SimpleOscTarget
 from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 from somaxlibrary.scheduler.Scheduler import Scheduler
@@ -49,6 +49,16 @@ class SoMaxServer(Caller):
         transport.close()
         self.logger.info("SoMaxServer was successfully terminated.")
 
+    async def _gui_callback(self, interval: float = 0.2) -> None:
+        # TODO: Temporary solution
+        self.logger.info("Initializing GUI callback.")
+        while True:
+            for player in self.players.values():
+                player.send_gui()
+            await asyncio.sleep(interval)
+
+
+
     def _process_osc(self, _address, *args):
         # TODO: Move string formatting elsewhere
         args_formatted: [str] = []
@@ -76,7 +86,7 @@ class SoMaxServer(Caller):
         # TODO Parse IP, port
         address: str = self.io_parser.parse_osc_address(name)
         trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
-        target: Target = OscTarget(address, port, ip)
+        target: Target = SimpleOscTarget(address, port, ip)
         self.players[name] = Player(name, target, trig_mode)
 
         if trig_mode == TriggerMode.AUTOMATIC:
@@ -317,4 +327,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     in_port = args.in_port[0]
     somax_server = SoMaxServer(in_port)
-    asyncio.run(somax_server._run())
+
+    async def gather():
+        await asyncio.gather(somax_server._run(), somax_server._gui_callback())
+    asyncio.run(gather())
+

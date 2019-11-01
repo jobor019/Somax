@@ -102,7 +102,7 @@ class MelodicLabel(AbstractLabel):
 
 class PitchClassLabel(MelodicLabel):
     def __repr__(self):
-        return f"MelodicMod12Label(label={self.label})"
+        return f"PitchClassLabel(label={self.label})"
 
     @classmethod
     def classify(cls, data: Union[int, CorpusEvent], **_kwargs) -> 'PitchClassLabel':

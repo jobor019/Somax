@@ -15,7 +15,7 @@ class IOParser:
     DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
     DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
     DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
-    DEFAULT_TRANSFORMS: [(ClassVar, ...)] = [(NoTransform,)]
+    DEFAULT_TRANSFORMS: [(ClassVar, ...)] = [(NoTransform(),)]      # objects, not classes
     DEFAULT_TRIGGER = TriggerMode.AUTOMATIC
     DEFAULT_MEMORY_TYPE: ClassVar = NGramMemorySpace
 
@@ -85,18 +85,20 @@ class IOParser:
 
     def parse_transforms(self, transforms: (str, ...), parse_mode: str) -> [(ClassVar[AbstractTransform],...)]:
         """ Raises: IOError """
-        if not parse_mode or parse_mode.lower() == self.PARSE_DEFAULT:
-            return self._parse_transform_default(transforms)
-        elif parse_mode.lower() == self.PARSE_COMBINATIONS:
-            all_combinations: [(str, ...)] = []
-            for i in range(1, len(transforms) + 1):
-                all_combinations.extend(list(itertools.combinations(transforms, r=i)))
-            all_transforms: [(ClassVar[AbstractTransform],...)] = []
-            for transform_tuple in all_combinations:
-                all_transforms.append(self._parse_transform_default(transform_tuple))
-            return all_transforms
-        else:
-            raise IOError(f"The parse mode '{parse_mode}' is not valid.")
+        # TODO: Should return OBJECTS, not classes. Needs to handle input arguments (for example pc of transpose)
+        return self.DEFAULT_TRANSFORMS
+        # if not parse_mode or parse_mode.lower() == self.PARSE_DEFAULT:
+        #     return self._parse_transform_default(transforms)
+        # elif parse_mode.lower() == self.PARSE_COMBINATIONS:
+        #     all_combinations: [(str, ...)] = []
+        #     for i in range(1, len(transforms) + 1):
+        #         all_combinations.extend(list(itertools.combinations(transforms, r=i)))
+        #     all_transforms: [(ClassVar[AbstractTransform],...)] = []
+        #     for transform_tuple in all_combinations:
+        #         all_transforms.append(self._parse_transform_default(transform_tuple))
+        #     return all_transforms
+        # else:
+        #     raise IOError(f"The parse mode '{parse_mode}' is not valid.")
 
     def _parse_transform_default(self, transforms: (str, ...)) -> [(ClassVar[AbstractTransform],...)]:
         output_transforms: [AbstractTransform] = []

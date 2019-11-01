@@ -65,7 +65,8 @@ class Scheduler:
 
     def _process_midi_event(self, midi_event: MidiEvent) -> None:
         player: Player = midi_event.player
-        player.send([midi_event.note, midi_event.velocity, midi_event.channel])
+        player.target.send_midi([midi_event.note, midi_event.velocity, midi_event.channel])
+        player.target.send_state(midi_event.state)
 
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
         pass  # TODO
@@ -100,7 +101,7 @@ class Scheduler:
             self.add_tempo_event(trigger_time, corpus_event.tempo)
 
         if player.corpus.content_type == ContentType.AUDIO:
-            event: ScheduledEvent = AudioEvent(trigger_time, player, corpus_event.onset, corpus_event.duration)
+            event: ScheduledEvent = AudioEvent(trigger_time, player, corpus_event.onset, corpus_event.duration, corpus_event.state_index)
             self.queue.append(event)
         elif player.corpus.content_type == ContentType.MIDI:
             # Handle held notes from previous state:
@@ -111,12 +112,12 @@ class Scheduler:
 
             # Queue midi events for note ons/offs
             for note in note_offs_previous:
-                self.queue.append(MidiEvent(trigger_time, player, note.pitch, 0, note.channel))
+                self.queue.append(MidiEvent(trigger_time, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_ons:
-                self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel))
+                self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
             for note in note_offs:
                 position_in_state: float = note.onset + note.duration
-                self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel))
+                self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel, corpus_event.state_index))
 
     def add_trigger_event(self, player: Player):
         if player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player):
