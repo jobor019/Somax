@@ -58,7 +58,7 @@ Each item of the list "data" contains a dictionary representing a single state, 
 
 "time": Consists of two numbers:
     0. Absolute position of state beginning in ms
-    1. Tempo in BPM                                      <!-- is this is  -->
+    1. Duration in ms
 
 "notes": List of dicts, where each dict contains two entries:
     "note": [nn, vel, ch],

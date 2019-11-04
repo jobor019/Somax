@@ -81,9 +81,10 @@ class SoMaxServer(Caller):
     # CREATION OF PLAYERS/STREAMVIEWS/ATOMS
     ######################################################
 
-    def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = ""):
-        # TODO: Check if player already exists
-        # TODO Parse IP, port
+    def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = "", override: bool = False):
+        if name in self.players and not override:
+            self.logger.error(f"A player with the name '{name}' already exists.")
+            return
         address: str = self.io_parser.parse_osc_address(name)
         trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
         target: Target = SimpleOscTarget(address, port, ip)
@@ -110,6 +111,8 @@ class SoMaxServer(Caller):
             self.players[player].create_streamview(path_and_name, weight, merge_actions)
         except KeyError:
             self.logger.error(f"Could not create streamview for player '{player}' at path '{path}'.")
+        except DuplicateKeyError as e:
+            self.logger.error(f"{str(e)} No streamview was created.")
 
     def create_atom(self, player: str, path: str, weight: float = 1.0, label: str = "",
                     activity_type: str = "", memory_type: str = "", self_influenced: bool = False,
@@ -329,6 +332,7 @@ if __name__ == "__main__":
     somax_server = SoMaxServer(in_port)
 
     async def gather():
-        await asyncio.gather(somax_server._run(), somax_server._gui_callback())
+        # await asyncio.gather(somax_server._run(), somax_server._gui_callback())
+        await asyncio.gather(somax_server._run())
     asyncio.run(gather())
 
