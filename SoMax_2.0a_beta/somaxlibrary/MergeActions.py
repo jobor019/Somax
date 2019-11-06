@@ -6,14 +6,14 @@ from abc import abstractmethod, ABC
 from typing import ClassVar
 
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Peak import Peak
 
 
 class AbstractMergeAction(ABC):
 
     @abstractmethod
-    def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
+    def merge(self, peaks: [Peak], time: float, history: [NoteCorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
         Peak]:
         raise NotImplementedError("AbstractMergeAction.peaks is abstract.")
 
@@ -37,7 +37,7 @@ class DistanceMergeAction(AbstractMergeAction):
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
 
-    def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
+    def merge(self, peaks: [Peak], _time: float, _history: [NoteCorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
         self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
         peaks.sort(key=lambda p: (p.transform_hash, p.time))
@@ -68,7 +68,7 @@ class PhaseModulationMergeAction(AbstractMergeAction):
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
         self.selectivity = selectivity
 
-    def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
+    def merge(self, peaks: [Peak], time: float, _history: [NoteCorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
         for peak in peaks:
             factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))

@@ -4,7 +4,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Union, ClassVar
 
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Exceptions import TransformError
 from somaxlibrary.Labels import AbstractLabel, MelodicLabel, PitchClassLabel
 
@@ -29,18 +29,18 @@ class AbstractTransform(ABC):
     def valid_labels() -> [ClassVar[AbstractLabel]]:
         raise NotImplementedError("AbstractTransform.valid_labels is abstract.")
 
-    def transform(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
+    def transform(self, obj: Union[AbstractLabel, NoteCorpusEvent]) -> Union[AbstractLabel, NoteCorpusEvent]:
         if isinstance(obj, AbstractLabel):
             return self._transform_label(obj)
-        elif isinstance(obj, CorpusEvent):
+        elif isinstance(obj, NoteCorpusEvent):
             return self._transform_event(obj)
         else:
             raise TransformError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
 
-    def inverse(self, obj: Union[AbstractLabel, CorpusEvent]) -> Union[AbstractLabel, CorpusEvent]:
+    def inverse(self, obj: Union[AbstractLabel, NoteCorpusEvent]) -> Union[AbstractLabel, NoteCorpusEvent]:
         if isinstance(obj, AbstractLabel):
             return self._inverse_label(obj)
-        elif isinstance(obj, CorpusEvent):
+        elif isinstance(obj, NoteCorpusEvent):
             return self._inverse_event(obj)
         else:
             raise TransformError("Transforms can only handle instances of AbstractLabel or CorpusEvent")
@@ -50,7 +50,7 @@ class AbstractTransform(ABC):
         raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
     @abstractmethod
-    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _transform_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
     @abstractmethod
@@ -58,7 +58,7 @@ class AbstractTransform(ABC):
         raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
     @abstractmethod
-    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _inverse_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         raise NotImplementedError("AbstractTransform._transform_label is abstract.")
 
     @staticmethod
@@ -91,13 +91,13 @@ class NoTransform(AbstractTransform):
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
 
-    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _transform_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         return obj
 
     def _inverse_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
 
-    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _inverse_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         return obj
 
 
@@ -128,7 +128,7 @@ class TransposeTransform(AbstractTransform):
         else:
             raise NotImplementedError("TransposeTransform is unfinished")
 
-    def _transform_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _transform_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         obj.pitch += self.semitones
         for note in obj.notes:
             note.pitch += self.semitones
@@ -142,7 +142,7 @@ class TransposeTransform(AbstractTransform):
         else:
             raise NotImplementedError("TransposeTransform is unfinished")
 
-    def _inverse_event(self, obj: CorpusEvent) -> CorpusEvent:
+    def _inverse_event(self, obj: NoteCorpusEvent) -> NoteCorpusEvent:
         obj.pitch -= self.semitones
         for note in obj.notes:
             note.pitch -= self.semitones

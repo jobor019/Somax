@@ -7,7 +7,7 @@ from typing import ClassVar, Any
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
 from somaxlibrary.Labels import AbstractLabel
@@ -36,7 +36,7 @@ class Player(ScheduledMidiObject):
         self.corpus: Corpus = None
         self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
 
-        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
+        self.improvisation_memory: deque[(NoteCorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
         self._previous_peaks: [Peak] = []
 
         # self.nextstate_mod: float = 1.5   # TODO
@@ -72,7 +72,7 @@ class Player(ScheduledMidiObject):
         for streamview in self.streamviews.values():
             streamview.update_peaks(time)
 
-    def new_event(self, scheduler_time: float, **kwargs) -> CorpusEvent:
+    def new_event(self, scheduler_time: float, **kwargs) -> NoteCorpusEvent:
         """ Raises: InvalidCorpus """
         self.logger.debug("[new_event] Player {} attempting to create a new event at scheduler time '{}'."
                           .format(self.name, scheduler_time))
@@ -83,7 +83,7 @@ class Player(ScheduledMidiObject):
         self._update_peaks(scheduler_time)
         peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
 
-        event_and_transforms: (CorpusEvent, AbstractTransform) = None
+        event_and_transforms: (NoteCorpusEvent, AbstractTransform) = None
         for peak_selector in self.peak_selectors:
             event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)
             if event_and_transforms:
@@ -95,7 +95,7 @@ class Player(ScheduledMidiObject):
         self.improvisation_memory.append(event_and_transforms)
         self._previous_peaks: [Peak] = peaks
 
-        event: CorpusEvent = deepcopy(event_and_transforms[0])
+        event: NoteCorpusEvent = deepcopy(event_and_transforms[0])
         transforms: (AbstractTransform, ...) = event_and_transforms[1]
         for transform in transforms:
             event = transform.transform(event)
@@ -103,7 +103,7 @@ class Player(ScheduledMidiObject):
         self._influence_self(event, scheduler_time)
         return event
 
-    def _influence_self(self, event: CorpusEvent, time: float) -> None:
+    def _influence_self(self, event: NoteCorpusEvent, time: float) -> None:
         atoms: [Atom] = self._self_atoms()
         labels: [AbstractLabel] = event.labels
         for atom in atoms:
@@ -159,7 +159,7 @@ class Player(ScheduledMidiObject):
         # self.update_memory_length()
         # self.send_info_dict()
 
-    def merged_peaks(self, time: float, history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
+    def merged_peaks(self, time: float, history: [NoteCorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
         weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.streamviews.values(), 0.0))
         peaks: [Peak] = []
         for streamview in self.streamviews.values():

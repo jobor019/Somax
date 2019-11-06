@@ -1,13 +1,13 @@
 from somaxlibrary.ActivityPattern import ClassicActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Influence import ClassicInfluence
 from somaxlibrary.Transforms import NoTransform
 
 
 def test_classic_decay():
     corpus: Corpus = Corpus("Tests/test.json")
-    event: CorpusEvent = corpus.event_at(0)
+    event: NoteCorpusEvent = corpus.event_at(0)
     transforms = (NoTransform(),)
     influences = [ClassicInfluence(event, 0, transforms)]
     pattern = ClassicActivityPattern()
@@ -28,8 +28,8 @@ def test_classic_decay():
 
 def test_classic_decay_two():
     corpus: Corpus = Corpus("Tests/test.json")
-    event1: CorpusEvent = corpus.event_at(0)
-    event2: CorpusEvent = corpus.event_at(1)
+    event1: NoteCorpusEvent = corpus.event_at(0)
+    event2: NoteCorpusEvent = corpus.event_at(1)
     transforms = (NoTransform(),)
     influence1 = [ClassicInfluence(event1, 0, transforms)]
     influence2 = [ClassicInfluence(event2, 2, transforms)]

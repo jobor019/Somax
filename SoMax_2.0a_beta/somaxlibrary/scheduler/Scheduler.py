@@ -3,7 +3,7 @@ import logging
 import time
 
 from somaxlibrary.Corpus import ContentType
-from somaxlibrary.CorpusEvent import CorpusEvent, Note
+from somaxlibrary.CorpusEvent import NoteCorpusEvent, Note
 from somaxlibrary.Exceptions import InvalidCorpus
 from somaxlibrary.Player import Player
 from somaxlibrary.scheduler.ScheduledEvent import ScheduledEvent, MidiEvent, AudioEvent, AutomaticTriggerEvent, \
@@ -74,7 +74,7 @@ class Scheduler:
     def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
         player: Player = trigger_event.player
         try:
-            event: CorpusEvent = player.new_event(trigger_event.target_time)
+            event: NoteCorpusEvent = player.new_event(trigger_event.target_time)
         except InvalidCorpus as e:
             self.logger.error(str(e))
             return
@@ -95,7 +95,7 @@ class Scheduler:
     def add_osc_event(self):
         pass  # TODO
 
-    def add_corpus_event(self, player: Player, trigger_time: float, corpus_event: CorpusEvent):
+    def add_corpus_event(self, player: Player, trigger_time: float, corpus_event: NoteCorpusEvent):
         self._update_time()
         if player is self.tempo_master:
             self.add_tempo_event(trigger_time, corpus_event.tempo)

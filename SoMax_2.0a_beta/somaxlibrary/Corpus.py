@@ -3,7 +3,8 @@ import logging
 from enum import Enum
 from typing import Dict, ClassVar
 
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent, PulseCorpusEvent
+from somaxlibrary.Exceptions import InvalidJsonFormat
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Tools import SequencedList
 
@@ -23,7 +24,8 @@ class Corpus:
         :param timing_type: "relative" or "absolute"
         """
         self.logger = logging.getLogger(__name__)
-        self.ordered_events: SequencedList[float, CorpusEvent] = SequencedList()
+        self.ordered_events: SequencedList[float, NoteCorpusEvent] = SequencedList()
+        self.pulse_events: SequencedList[float, PulseCorpusEvent] = SequencedList()
         self.content_type: ContentType = None
 
         if filepath:
@@ -36,25 +38,40 @@ class Corpus:
         """" Raises: OSError """
         self.reset()
         with open(filepath, 'r') as jfile:
-            corpus_data = json.load(jfile)
+            corpus_data: Dict = json.load(jfile)
         try:
-            self.content_type = ContentType(corpus_data["typeID"])
+            self.content_type: ContentType = ContentType(corpus_data["typeID"])
         except ValueError as e:
+            # TODO: Raise. catch at top level
             self.logger.debug(e)
             self.logger.error(f"Could not read json file. typeID should be either 'MIDI' or 'Audio'.")
             return
 
-        events = corpus_data["data"]
-        self.ordered_events = self._parse_events(events, timing_type)
-        self._classify_events()
-        self.logger.debug(f"[read_file] Corpus {self} successfully read.")
+        try:
+            note_events = corpus_data["note_segmented"]["data"]
+            self.ordered_events = self._parse_note_events(note_events, timing_type)
+            self._classify_events()
+            pulse_events = corpus_data["beat_segmented"]["data"]
+            self.pulse_events = self._parse_pulse_events(pulse_events, timing_type)
+            self.logger.debug(f"[read_file] Corpus {self} successfully read.")
+        except KeyError:
+            raise InvalidJsonFormat("The file uses an old formatting standard. Try rebuilding the corpus.")
 
     @staticmethod
-    def _parse_events(events: [Dict], timing_type: str) -> [CorpusEvent]:
-        parsed_events: SequencedList[float, CorpusEvent] = SequencedList()
+    def _parse_note_events(events: [Dict], timing_type: str) -> [NoteCorpusEvent]:
+        parsed_events: SequencedList[float, NoteCorpusEvent] = SequencedList()
         for event in events:
-            c = CorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
-                            event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"], timing_type)
+            c = NoteCorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
+                                event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"], timing_type)
+            parsed_events.append(event["time"][timing_type][0], c)
+        return parsed_events
+
+    @staticmethod
+    def _parse_pulse_events(events: [Dict], timing_type: str):
+        parsed_events: SequencedList[float, PulseCorpusEvent] = SequencedList()
+        for event in events:
+            c = PulseCorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
+                                event["time"][timing_type][1], event["chroma"], event["pitch"])
             parsed_events.append(event["time"][timing_type][0], c)
         return parsed_events
 

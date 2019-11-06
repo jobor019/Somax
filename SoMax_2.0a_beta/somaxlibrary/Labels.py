@@ -5,7 +5,7 @@ from typing import Any, Union, List, ClassVar
 
 import numpy as np
 
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput
 
 
@@ -33,7 +33,7 @@ class AbstractLabel(ABC):
 
     @classmethod
     @abstractmethod
-    def classify(cls, data: Union[CorpusEvent, Any], **kwargs) -> 'AbstractLabel':
+    def classify(cls, data: Union[NoteCorpusEvent, Any], **kwargs) -> 'AbstractLabel':
         """ # TODO
         Raises
         ------
@@ -78,8 +78,8 @@ class MelodicLabel(AbstractLabel):
         return ["pitch"]
 
     @classmethod
-    def classify(cls, data: Union[int, CorpusEvent], **_kwargs) -> 'MelodicLabel':
-        if isinstance(data, CorpusEvent):
+    def classify(cls, data: Union[int, NoteCorpusEvent], **_kwargs) -> 'MelodicLabel':
+        if isinstance(data, NoteCorpusEvent):
             return cls._label_from_event(data)
         elif isinstance(data, int):
             return cls._label_from_pitch(data)
@@ -87,7 +87,7 @@ class MelodicLabel(AbstractLabel):
             raise InvalidLabelInput("Melodic Label data could not be classified due to invalid type input.")
 
     @classmethod
-    def _label_from_event(cls, event: CorpusEvent, mod12: bool = False) -> 'MelodicLabel':
+    def _label_from_event(cls, event: NoteCorpusEvent, mod12: bool = False) -> 'MelodicLabel':
         return cls._label_from_pitch(event.pitch, mod12)
 
     @classmethod
@@ -105,8 +105,8 @@ class PitchClassLabel(MelodicLabel):
         return f"PitchClassLabel(label={self.label})"
 
     @classmethod
-    def classify(cls, data: Union[int, CorpusEvent], **_kwargs) -> 'PitchClassLabel':
-        if isinstance(data, CorpusEvent):
+    def classify(cls, data: Union[int, NoteCorpusEvent], **_kwargs) -> 'PitchClassLabel':
+        if isinstance(data, NoteCorpusEvent):
             return cls._label_from_event(data, mod12=True)
         elif isinstance(data, int):
             return cls._label_from_pitch(data, mod12=True)
@@ -128,8 +128,8 @@ class HarmonicLabel(AbstractLabel):
         return ["chroma"]
 
     @classmethod
-    def classify(cls, data: Union[CorpusEvent, List[float], int], **kwargs) -> 'HarmonicLabel':
-        if isinstance(data, CorpusEvent):
+    def classify(cls, data: Union[NoteCorpusEvent, List[float], int], **kwargs) -> 'HarmonicLabel':
+        if isinstance(data, NoteCorpusEvent):
             return HarmonicLabel._label_from_event(data)
         elif type(data) is list or isinstance(data, np.ndarray):
             return HarmonicLabel._label_from_chroma(np.array(data))
@@ -139,7 +139,7 @@ class HarmonicLabel(AbstractLabel):
             raise InvalidLabelInput(f"Harmonic Label data could not be classified due to incorrect type.")
 
     @classmethod
-    def _label_from_event(cls, event: CorpusEvent) -> 'HarmonicLabel':
+    def _label_from_event(cls, event: NoteCorpusEvent) -> 'HarmonicLabel':
         return HarmonicLabel._label_from_chroma(event.chroma)
 
     @classmethod

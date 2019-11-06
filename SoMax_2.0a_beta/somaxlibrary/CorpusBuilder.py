@@ -38,14 +38,21 @@ class CorpusBuilder(object):
         _, ext = os.path.splitext(path)
         if ext in self.midi_exts:
             # TODO: Note! This line has been altered and will currently run harmonic, not melodic parsing.
-            file_json = self.read_harmonic_data(path, name, **options)
+            note_segmented_corpus_dict = self.read_midi(path, name, **options)
+            beat_segmented_corpus_dict = self.read_harmonic_data(path, name, **options)
+            corpus_dict = {"name": note_segmented_corpus_dict["name"],
+                           "typeID": note_segmented_corpus_dict["typeID"],
+                           "note_segmented": note_segmented_corpus_dict,
+                           "beat_segmented": beat_segmented_corpus_dict}
         elif ext in self.audio_exts:
-            file_json = self.read_audio(path, name, **options)
+            # TODO: Not properly supported yet
+            corpus_dict = self.read_audio(path, name, **options)
         else:
+            # TODO: Raise error, not print error.
             print("[ERROR] File format not recognized in corpus construction")
-        return file_json
+        return corpus_dict
 
-    def read_midi(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1,2,3,4], bg_channels=range(1, 17), tStep=20,
+    def read_midi(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1], bg_channels=range(1, 17), tStep=20,
                   tDelay=40.0, legato=100.0, tolerance=30.0):
         # absolute: *[1], relative: *[0]
         parser = SomaxMidiParser()
@@ -72,7 +79,7 @@ class CorpusBuilder(object):
         lastSliceOnset = list(lastNoteOnset)
         state_nb = 0
         global_time = time_offset
-        corpus = dict({'name': "", 'typeID': "MIDI", 'size': 1, 'data': []})
+        corpus = dict({'name': name, 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
             {"state": 0, "tempo": 120, "time": {"absolute": [-1, 0], "relative": [-1, 0]}, "seg": [1, 0],
              "beat": [0.0, 0.0, 0, 0], \
@@ -201,6 +208,15 @@ class CorpusBuilder(object):
         #   entangled in a way so rewriting will be very difficult.
         #   Once everything is working, design proper test for these and rewrite code from scratch.
         # TODO: Also note that nn, vel and ch are not used at all in the _h file. Could be replaced with zeros (or empty)
+        #
+        # TODO: Finally, the note content ("notes" dict) is not used __at all__ in any real-time performance, only to
+        #   calculate chroma at the end. Hence, this should be removed entirely from the json file.
+        #
+        # On fgmatrix vs matrix. fgmatrix is the per-note sliced matrix, matrix is the per-beat sliced matrix. Hence
+        #  fgmatrix[:, 1] and fgmatrix[:, 0] varies in duration and length, while matrix[:,0] is equivalent to the index
+        #  of the slice and matrix[:,1] is always 1.
+        #  Note that 0 (onset in tick) and 1 (duration in tick) correspond to relative time. But this doesn't
+        #  necessarily hold for note onsets
 
         # absolute: *[1], relative: *[0]
         parser = SomaxMidiParser()
@@ -209,7 +225,7 @@ class CorpusBuilder(object):
         midi_data = array(parser.get_matrix())
         fgmatrix, bgmatrix = splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
 
-        corpus = dict({'name': "", 'typeID': "MIDI", 'size': 1, 'data': []})
+        corpus = dict({'name': name, 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
             {"state": 0, "tempo": 120, "time": {"absolute": [-1, 0], "relative": [-1, 0]}, "seg": [1, 0],
              "beat": [0.0, 0.0, 0, 0], \
@@ -221,7 +237,7 @@ class CorpusBuilder(object):
 
         matrix = zeros((cd.size, 10))
         matrix[:, 0] = cd
-        matrix[:, 1] = 1.0
+        matrix[:, 1] = 1.0      # the length of each slice when beat-segmented is always exactly one beat.
         matrix[:, 2] = 1
         matrix[:, 3] = 60
         matrix[:, 4] = 100
@@ -276,8 +292,8 @@ class CorpusBuilder(object):
                 global_time = matrix[i][5]
                 nextState["state"] = int(stateIdx)
                 nextState["time"] = dict()
-                nextState["time"]["absolute"] = list([global_time, fgmatrix[i][6]])
-                nextState["time"]["relative"] = list([fgmatrix[i][0], fgmatrix[i][1]])
+                nextState["time"]["absolute"] = list([global_time, matrix[i][6]])
+                nextState["time"]["relative"] = list([matrix[i][0], matrix[i][1]])
                 nextState["tempo"] = fgmatrix[i][7]
                 frameNbTmp = ceil((matrix[i][5] + tDelay - tRef) / tStep)
                 if frameNbTmp <= 0:
@@ -287,7 +303,7 @@ class CorpusBuilder(object):
                 nextState["pitch"] = 0
                 nextState["notes"] = []
                 # previousSliceDuration = matrix[i][5] - lastSliceOnset
-                previousSliceDuration = [fgmatrix[i][0] - lastSliceOnset[0], matrix[i][5] - lastSliceOnset[1]]
+                previousSliceDuration = [matrix[i][0] - lastSliceOnset[0], matrix[i][5] - lastSliceOnset[1]]
                 numNotesInPreviousSlice = len(corpus["data"][stateIdx - 1]["notes"])
                 for k in range(0, numNotesInPreviousSlice):
                     if ((corpus["data"][stateIdx - 1]["notes"][k]["time"]["absolute"][0] +
@@ -331,15 +347,15 @@ class CorpusBuilder(object):
                 note_to_add["channel"] = matrix[i][2]
                 note_to_add["time"] = dict()
                 note_to_add["time"]["absolute"] = [0, matrix[i][6]]
-                note_to_add["time"]["relative"] = [0, fgmatrix[i][1]]
+                note_to_add["time"]["relative"] = [0, matrix[i][1]]
                 nextState["notes"].append(note_to_add)
                 corpus["data"].append(dict(nextState))
 
                 # update variables used during the slicing process
                 # lastNoteOnset = matrix[i][5]
                 # lastSliceOnset = matrix[i][5]
-                lastNoteOnset = [fgmatrix[i][0], matrix[i][5]]
-                lastSliceOnset = [fgmatrix[i][0], matrix[i][5]]
+                lastNoteOnset = [matrix[i][0], matrix[i][5]]
+                lastSliceOnset = [matrix[i][0], matrix[i][5]]
 
             # note in current slice ; updates current slice
             else:

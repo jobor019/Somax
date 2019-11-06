@@ -7,7 +7,7 @@ from copy import copy
 from typing import Tuple, ClassVar
 
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
@@ -73,7 +73,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         super(NGramMemorySpace, self).__init__(corpus, label_type, transforms)
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type} and history length {history_len}.")
-        self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
+        self.structured_data: {Tuple[int, ...]: [NoteCorpusEvent]} = {}
         self.ngram_size: int = history_len
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
@@ -94,7 +94,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                 continue
             else:
                 key: Tuple[int, ...] = tuple(labels)
-                value: CorpusEvent = event
+                value: NoteCorpusEvent = event
                 if key in self.structured_data:
                     self.structured_data[key].append(value)
                 else:
@@ -118,7 +118,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                     transformed_labels = [transform.inverse(l) for l in transformed_labels]
                 key: Tuple[int, ...] = tuple(l.label for l in transformed_labels)
                 try:
-                    matching_events: [CorpusEvent] = self.structured_data[key]
+                    matching_events: [NoteCorpusEvent] = self.structured_data[key]
                     for event in matching_events:
                         # TODO: Generalize rather than specific ClassicInfluence.
                         matches.append(ClassicInfluence(event, time, transform_tuple))

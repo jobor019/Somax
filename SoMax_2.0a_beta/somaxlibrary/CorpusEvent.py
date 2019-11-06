@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from typing import Any, ClassVar
 
 from somaxlibrary.Exceptions import InvalidLabelInput
@@ -20,9 +21,8 @@ class Note:
         return self.pitch == other.pitch and self.channel == other.channel
 
 
-class CorpusEvent:
-    def __init__(self, state_index, tempo, onset, duration, chroma, pitch, notes: [{str: Any}],
-                 timing_type: str):
+class AbstractCorpusEvent(ABC):
+    def __init__(self, state_index, tempo, onset, duration, chroma, pitch):
         self.logger = logging.getLogger(__name__)
         self.state_index: int = state_index
         self.tempo: float = tempo
@@ -30,6 +30,17 @@ class CorpusEvent:
         self.duration: float = duration
         self.chroma: [float] = chroma
         self.pitch: int = pitch
+
+
+class PulseCorpusEvent(AbstractCorpusEvent):
+    def __init__(self, state_index, tempo, onset, duration, chroma, pitch):
+        super(PulseCorpusEvent, self).__init__(state_index, tempo, onset, duration, chroma, pitch)
+
+
+class NoteCorpusEvent(AbstractCorpusEvent):
+    def __init__(self, state_index, tempo, onset, duration, chroma, pitch, notes: [{str: Any}],
+                 timing_type: str):
+        super(NoteCorpusEvent, self).__init__(state_index, tempo, onset, duration, chroma, pitch)
         self.notes: [Note] = self._parse_notes(notes, timing_type)
         self._labels = {}  # {ClassVar[AbstractLabel]: AbstractLabel}, precompiled for performance
 
@@ -73,8 +84,3 @@ class CorpusEvent:
 
     def held_from(self) -> [Note]:
         return [note for note in self.notes if note.onset + note.duration > self.duration]
-
-
-
-
-

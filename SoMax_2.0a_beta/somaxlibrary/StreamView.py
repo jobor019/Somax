@@ -5,7 +5,7 @@ from typing import Callable, Tuple, ClassVar
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.CorpusEvent import NoteCorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import NGramMemorySpace
@@ -79,7 +79,7 @@ class StreamView(object):
         for atom in self.atoms.values():
             atom.update_peaks(time)
 
-    def merged_peaks(self, time: float, influence_history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
+    def merged_peaks(self, time: float, influence_history: [NoteCorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
         peaks: [Peak] = []
 
         # Peaks from child streamviews
