@@ -4,11 +4,14 @@ import sys
 from abc import ABC, abstractmethod
 from collections import deque
 from copy import copy
-from typing import Tuple, ClassVar
+from typing import Tuple, ClassVar, Dict
 
+from Parameter import Parameter
+from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Peak import Peak
@@ -16,7 +19,7 @@ from somaxlibrary.Transforms import AbstractTransform
 
 
 # TODO: Abstract Influence type. Dependent on (determined by?) ActivityPattern. CUrrently hardcoded in NGram.
-class AbstractMemorySpace(ABC):
+class AbstractMemorySpace(ABC, Parametric, HasMaxDict):
     """ MemorySpaces determine how events are matched to labels """
 
     def __init__(self, corpus: Corpus, label_type: ClassVar[AbstractLabel],
@@ -43,6 +46,11 @@ class AbstractMemorySpace(ABC):
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
+
+    def max_dict(self) -> Dict:
+        return {"label": self.label_type.__name__,
+                "transforms": "TODO",  # TODO
+                "parameters": self.parameters}
 
     def add_transforms(self, transforms: [(ClassVar[AbstractTransform], ...)]) -> None:
         """ raises: TransformError """
@@ -74,16 +82,18 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
-        self.ngram_size: int = history_len
+        self._ngram_size: Parameter = Parameter(history_len, 1, None, 'int', "Number of events to hard-match. (TODO)")  # TODO
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
+        self._parse_parameters()
 
-        if self.corpus:
-            self.read(self.corpus)
+        self.corpus: Corpus = None
+        if corpus:
+            self.read(corpus)
 
     def __repr__(self):
         return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
 
-    def read(self, corpus: Corpus, **kwargs) -> None:
+    def read(self, corpus: Corpus, **_kwargs) -> None:
         self.corpus = corpus
         self.structured_data = {}
         labels: deque = deque([], self.ngram_size)
@@ -100,7 +110,7 @@ class NGramMemorySpace(AbstractMemorySpace):
                 else:
                     self.structured_data[key] = [value]
 
-    def influence(self, label: AbstractLabel, time: float, **kwargs) -> [AbstractInfluence]:
+    def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [AbstractInfluence]:
         """ Raises: InvalidLabelInput"""
         if not type(label) == self.label_type:
             raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
@@ -125,3 +135,13 @@ class NGramMemorySpace(AbstractMemorySpace):
                 except KeyError:  # no matches found
                     continue
         return matches
+
+    @property
+    def ngram_size(self):
+        return self._ngram_size.value
+
+    @ngram_size.setter
+    def ngram_size(self, new_size: int):
+        self._ngram_size.value = new_size
+        self.read(self.corpus)
+

@@ -2,19 +2,23 @@ import logging
 from functools import reduce
 from typing import Callable, Tuple, ClassVar
 
+from Parameter import Parameter
+from Parametric import Parametric
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class StreamView(object):
+class StreamView(Parametric, HasMaxDict):
     def __init__(self, name: str, weight: float = 1.0, merge_actions: Tuple[Callable, ...] = None):
+        super(StreamView, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating streamview {} with weight {} and merge actions {}"
                           .format(name, weight, merge_actions))
@@ -23,10 +27,30 @@ class StreamView(object):
         self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []
         self.atoms: {str: Atom} = dict()
         self.streamviews: {str: StreamView} = {}
-        self.weight = weight
+        self._weight: Parameter = Parameter(weight, 0.0, None, 'float', "Relative scaling of streamview peaks.")
+        self._parse_parameters()
 
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self.atoms)
+
+    def max_dict(self):
+        streamviews = {}
+        atoms = {}
+        merge_actions = {}
+        parameters = {}
+        for name, streamview in self.streamviews.items():
+            streamviews[name] = streamview.max_dict()
+        for name, atom in self.atoms.items():
+            atoms[name] = atom.max_dict()
+        for merge_action in self._merge_actions:
+            key: str = type(merge_action).__name__
+            merge_actions[key] = merge_action.max_dict()
+        for name, parameter in self.parameters().items():
+            parameters[name] = parameter.max_dict()
+        return {self.name: {"streamviews": streamviews,
+                            "atoms": atoms,
+                            "merge_actions": merge_actions,
+                            "parameters": parameters}}
 
     def get_streamview(self, path: [str]) -> 'StreamView':
         """ Raises: KeyError. Technically also IndexError, but should not occur if input is well-formatted (expected)"""
@@ -104,6 +128,15 @@ class StreamView(object):
         self.logger.debug(f"[read] Init read in streamview {self.name} with corpus {corpus}")
         for atom in self.atoms.values():
             atom.read(corpus)
+
+    @property
+    def weight(self) -> float:
+        return self._weight.value
+
+    @weight.setter
+    def weight(self, value: float):
+        self._weight.value = value
+
 
     # TODO: Reimplement
     # def delete_atom(self, name):

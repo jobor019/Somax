@@ -2,16 +2,19 @@ import inspect
 import logging
 import sys
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import ClassVar, Dict
 
 import numpy as np
 
+from Parameter import Parameter
+from Parametric import Parametric
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class AbstractActivityPattern(ABC):
+class AbstractActivityPattern(ABC, Parametric, HasMaxDict):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.peaks: [Peak] = []
@@ -35,32 +38,36 @@ class AbstractActivityPattern(ABC):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
+    def max_dict(self) -> Dict:
+        return {"parameters": self.parameters}
+
 
 class ClassicActivityPattern(AbstractActivityPattern):
-    TAU_MEM_DECAY: float = 2.0  # TODO: Settable param
-    T_WIDTH: float = 0.1  # TODO: Settable param
-    EXTINCTION_THRESH: float = 0.1  # TODO: Settable param
-    DEFAULT_SCORE: float = 1.0
 
     def __init__(self):
         super(ClassicActivityPattern, self).__init__()
         self.logger.debug("[__init__]: ClassicActivityPattern initialized.")
+        self.tau_mem_decay: Parameter = Parameter(2.0, 0.0, None, 'float', "Very unclear param")  # TODO
+        self.extinction_threshold: Parameter = Parameter(0.1, 0.0, None, 'float', "Score below which peaks are removed")
+        self.default_score: Parameter = Parameter(1.0, None, None, 'float', "Value of a new peaks upon creation.")
+        self.peaks: [Peak] = []
+        self._parse_parameters()
 
     def insert(self, influences: [AbstractInfluence]) -> None:
         self.logger.debug(f"[insert]: Inserting {len(influences)} influences.")
         for influence in influences:
             onset: float = influence.event.onset
-            score: float = self.DEFAULT_SCORE
+            score: float = self.default_score.value
             transforms: AbstractTransform = influence.transforms
             creation_time: float = influence.time_of_influence
             self.peaks.append(Peak(time=onset, score=score, transform=transforms, creation_time=creation_time))
 
     def update_peaks(self, new_time: float) -> None:
         for peak in self.peaks:
-            peak.score *= np.exp(-np.divide(new_time - peak.last_update_time, self.TAU_MEM_DECAY))
+            peak.score *= np.exp(-np.divide(new_time - peak.last_update_time, self.tau_mem_decay.value))
             peak.time += new_time - peak.last_update_time
             peak.last_update_time = new_time
-        self.peaks = [peak for peak in self.peaks if peak.score > self.EXTINCTION_THRESH]
+        self.peaks = [peak for peak in self.peaks if peak.score > self.extinction_threshold.value]
 
     def reset(self) -> None:
         self.peaks = []

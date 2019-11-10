@@ -2,7 +2,7 @@ import logging
 from collections import deque
 from copy import deepcopy
 from functools import reduce
-from typing import ClassVar, Any
+from typing import ClassVar, Any, Dict
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
@@ -10,6 +10,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
@@ -21,7 +22,7 @@ from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerMode
 
 
-class Player(ScheduledMidiObject):
+class Player(ScheduledMidiObject, HasMaxDict):
     MAX_HISTORY_LEN = 100
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
@@ -43,6 +44,22 @@ class Player(ScheduledMidiObject):
         # self.waiting_to_jump: bool = False    # TODO
 
         # self.info_dictionary = dict()  # TODO
+
+    def max_dict(self) -> Dict:
+        streamviews = {}
+        merge_actions = {}
+        peak_selectors = {}
+        for name, streamview in self.streamviews.items():
+            streamviews[name] = streamview.max_dict()
+        for merge_action in self.merge_actions:
+            key: str = type(merge_action).__name__
+            merge_actions[key] = merge_action.max_dict()
+        for peak_selector in self.peak_selectors:
+            key: str = type(peak_selector).__name__
+            peak_selectors[key] = peak_selector.max_dict()
+        return {self.name: {"streamviews": streamviews,
+                            "merge_actions": merge_actions,
+                            "peak_selectors": peak_selectors}}
 
 
     def _get_streamview(self, path: [str]) -> StreamView:

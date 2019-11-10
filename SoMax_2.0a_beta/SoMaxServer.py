@@ -100,6 +100,8 @@ class SoMaxServer(Caller):
     def _osc_callback(self):
         pass  # TODO: implement
 
+    # TODO: Clean up default arguments.
+    # TODO: Rather player and path as one argument: player:s1:atom1, etc
     def create_streamview(self, player: str, path: str = "streamview", weight: float = 1.0,
                           merge_actions=""):
         self.logger.debug("[create_streamview] called for player {0} with name {1}, weight {2} and merge actions {3}."
@@ -299,15 +301,29 @@ class SoMaxServer(Caller):
         except InvalidJsonFormat as e:
             self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
 
-    def set_self_influence(self, player, si):
-        # TODO: IO Error handling
-        self.logger.debug(f"[set_self_influence] Attempting to set influence of player {player} to {si}.")
-        self.players[player].set_self_influence(si)
+    def set_param(self, path: str, value: Any):
+        self.logger.debug(f"[set_param] attempting to set param at '{path}' to {value}.")
+        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            player: str = path_parsed.pop(0)
+            self.players[player].set_param(path)
+        except (IndexError, KeyError):
+            self.logger.error(f"Invalid path")  # TODO Proper message
+        # except    # TODO: Handle more errors once Parametric is implemented
 
-    def set_weight(self, player: str, streamview: str, weight: float):
-        # TODO: IO Error handling
-        self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
-        self.players[player].set_weight(streamview, weight)
+
+
+    # TODO: Legacy, remove
+    # def set_self_influence(self, player, si):
+    #     # TODO: IO Error handling
+    #     self.logger.debug(f"[set_self_influence] Attempting to set influence of player {player} to {si}.")
+    #     self.players[player].set_self_influence(si)
+
+    # TODO: Legacy, remove
+    # def set_weight(self, player: str, streamview: str, weight: float):
+    #     # TODO: IO Error handling
+    #     self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
+    #     self.players[player].set_weight(streamview, weight)
 
     ######################################################
     # CORPUS METHODS

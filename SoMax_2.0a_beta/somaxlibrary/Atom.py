@@ -1,10 +1,12 @@
 import copy
 import logging
-from typing import ClassVar
+from typing import ClassVar, Dict
 
-from somaxlibrary import MemorySpaces
-from somaxlibrary.ActivityPattern import AbstractActivityPattern, ClassicActivityPattern
+from Parameter import Parameter
+from Parametric import Parametric
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
@@ -12,20 +14,30 @@ from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class Atom(object):
+class Atom(Parametric, HasMaxDict):
     def __init__(self, name: str, weight: float, label_type: ClassVar[AbstractLabel],
                  activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
-                 corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform],...)]):
+                 corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
+        super(Atom, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug(f"[__init__ Creating atom '{name}'.")
-        self.weight: float = weight
+        self.name = name
+        self._weight: Parameter = Parameter(weight, 0.0, None, 'float', "Relative scaling of atom peaks.")
         self.activity_pattern: AbstractActivityPattern = activity_type()  # creates activity
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type, transforms)
-        self.name = name
-        self.active = False
-        self.self_influenced: bool = self_influenced
+        self._self_influenced: Parameter = Parameter(self_influenced, 0, 1, 'bool',
+                                                     "Whether new events creates by player should influence this atom or not.")
+        self._parse_parameters()
         if corpus:
             self.read(corpus, label_type)
+
+    def max_dict(self) -> Dict:
+        parameters = {}
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.max_dict()
+        return {"memory_space": self.memory_space.max_dict(),
+                "activity_pattern": self.activity_pattern.max_dict(),
+                "parameters": parameters}
 
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):
         self.logger.debug(f"[read]: Reading corpus {corpus}.")
@@ -52,6 +64,22 @@ class Atom(object):
         for peak in self.activity_pattern.peaks:
             peak_copies.append(copy.copy(peak))
         return peak_copies
+
+    @property
+    def weight(self) -> float:
+        return self._weight.value
+
+    @weight.setter
+    def weight(self, value: float):
+        self._weight.value = value
+
+    @property
+    def self_influenced(self) -> float:
+        return self._self_influenced.value
+
+    @self_influenced.setter
+    def self_influenced(self, self_influenced: bool):
+        self._self_influenced.value = self_influenced
 
     # TODO: Reimplement
     # external method to fetch properties of the atom

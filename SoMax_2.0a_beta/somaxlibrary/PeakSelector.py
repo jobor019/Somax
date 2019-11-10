@@ -1,14 +1,17 @@
 import logging
 import random
 from abc import ABC, abstractmethod
+from typing import Dict
 
+from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform, NoTransform
 
 
-class AbstractPeakSelector(ABC):
+class AbstractPeakSelector(ABC, Parametric, HasMaxDict):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
@@ -16,6 +19,9 @@ class AbstractPeakSelector(ABC):
     def decide(self, peaks: [Peak], influence_history: [(CorpusEvent, (AbstractTransform, ...))],
                corpus: Corpus, **kwargs) -> [CorpusEvent, AbstractTransform]:
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
+
+    def max_dict(self) -> Dict:
+        return {"parameters": self.parameters}
 
 
 class MaxPeakSelector(AbstractPeakSelector):

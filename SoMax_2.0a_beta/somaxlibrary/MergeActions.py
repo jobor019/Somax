@@ -3,14 +3,17 @@ import logging
 import math
 import sys
 from abc import abstractmethod, ABC
-from typing import ClassVar
+from typing import ClassVar, Dict
 
+from Parameter import Parameter
+from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.HasMaxDict import HasMaxDict
 from somaxlibrary.Peak import Peak
 
 
-class AbstractMergeAction(ABC):
+class AbstractMergeAction(ABC, Parametric, HasMaxDict):
 
     @abstractmethod
     def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
@@ -23,16 +26,20 @@ class AbstractMergeAction(ABC):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
+    def max_dict(self) -> Dict:
+        return {"parameters": self.parameters}
+
 
 class DistanceMergeAction(AbstractMergeAction):
 
     # TODO: Clean up constructor
-    def __init__(self, t_width=0.1, transform_merge_mode='OR'):
+    def __init__(self, t_width: float = 0.1, transform_merge_mode='OR'):
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating DistanceMergeAction with width {} and merge mode {}."
                           .format(t_width, transform_merge_mode))
-        self.t_width = t_width
-        self.transform_merge_mode = transform_merge_mode  # can 'AND' or 'OR'   # TODO Merge modes
+        self._t_width: Parameter = Parameter(t_width, 0.0, None, 'float', "Very unclear parameter")  # TODO
+        self.transform_merge_mode = transform_merge_mode  # can 'AND' or 'OR'   # TODO Merge modes. Make parametric
+        self._parse_parameters()
 
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
@@ -59,6 +66,14 @@ class DistanceMergeAction(AbstractMergeAction):
                 i += 1
         return peaks
 
+    @property
+    def t_width(self):
+        return self._t_width.value
+
+    @t_width.setter
+    def t_width(self, value):
+        self._t_width.value = value
+
 
 class PhaseModulationMergeAction(AbstractMergeAction):
     DEFAULT_SELECTIVITY = 1.0
@@ -66,7 +81,8 @@ class PhaseModulationMergeAction(AbstractMergeAction):
     def __init__(self, selectivity=DEFAULT_SELECTIVITY):
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
-        self.selectivity = selectivity
+        self._selectivity: Parameter = Parameter(selectivity,None, None, 'float', "Very unclear parameter.")    # TODO
+        self._parse_parameters()
 
     def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
         Peak]:
@@ -75,13 +91,14 @@ class PhaseModulationMergeAction(AbstractMergeAction):
             peak.score *= factor
         return peaks
 
-    # TODO: Parameter setting in general
-    # def set_selectivity(self, selectivity):
-    #     try:
-    #         self.selectivity = float(selectivity)
-    #     except:
-    #         self.logger.error("Phase modulation selectivity must be a number.")
-    #         pass
+    @property
+    def selectivity(self):
+        return self._selectivity.value
+
+    @selectivity.setter
+    def selectivity(self, value):
+        self._selectivity.value = value
+
 
 # TODO: Reimplement!!!
 # class StateMergeAction(AbstractMergeAction):
