@@ -10,7 +10,7 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError
+from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError, InvalidJsonFormat
 from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
@@ -296,6 +296,8 @@ class SoMaxServer(Caller):
             self.players[player].read_corpus(filepath)
         except KeyError:
             self.logger.error(f"Could not load corpus. No player named '{player}' exists.")
+        except InvalidJsonFormat as e:
+            self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
 
     def set_self_influence(self, player, si):
         # TODO: IO Error handling
@@ -313,8 +315,9 @@ class SoMaxServer(Caller):
 
     def build_corpus(self, path, output='corpus/'):
         # TODO: IO Error handling
+        self.logger.info(f"Building corpus from file '{path}' to location'{output}.")
         self.builder.build_corpus(path, output)
-        self.logger.info("File {0} has been output at location : {1}".format(path, output))
+        self.logger.info("File {0} has been output at location '{1}'".format(path, output))
         # TODO: Info dict
         # self.send_info_dict()
 

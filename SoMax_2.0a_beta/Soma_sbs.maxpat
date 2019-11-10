@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 1262.0, 1017.0 ],
+		"rect" : [ 34.0, 79.0, 1372.0, 718.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -360,7 +360,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 61.0, 571.0, 116.0, 22.0 ],
-					"text" : "midi 65 37 1"
+					"text" : "midi 72 24 1"
 				}
 
 			}
@@ -862,8 +862,8 @@
 					"id" : "obj-8",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
-					"numoutlets" : 4,
-					"outlettype" : [ "", "", "", "" ],
+					"numoutlets" : 5,
+					"outlettype" : [ "", "", "", "", "" ],
 					"patching_rect" : [ 71.0, 692.0, 292.0, 30.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 71.0, 771.0, 308.0, 30.0 ],
@@ -955,13 +955,13 @@
 					"patching_rect" : [ 544.0, 935.0, 168.0, 47.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
-							"parameter_mmin" : -70.0,
-							"parameter_longname" : "live.gain~[1]",
-							"parameter_mmax" : 6.0,
 							"parameter_initial" : [ 0.0 ],
 							"parameter_shortname" : "live.gain~",
 							"parameter_type" : 0,
-							"parameter_unitstyle" : 4
+							"parameter_unitstyle" : 4,
+							"parameter_mmin" : -70.0,
+							"parameter_longname" : "live.gain~[1]",
+							"parameter_mmax" : 6.0
 						}
 
 					}
@@ -983,13 +983,13 @@
 					"patching_rect" : [ 219.0, 935.0, 168.0, 47.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
-							"parameter_mmin" : -70.0,
-							"parameter_longname" : "live.gain~",
-							"parameter_mmax" : 6.0,
 							"parameter_initial" : [ 0.0 ],
 							"parameter_shortname" : "live.gain~",
 							"parameter_type" : 0,
-							"parameter_unitstyle" : 4
+							"parameter_unitstyle" : 4,
+							"parameter_mmin" : -70.0,
+							"parameter_longname" : "live.gain~",
+							"parameter_mmax" : 6.0
 						}
 
 					}
@@ -1081,7 +1081,7 @@
 					"lockeddragscroll" : 0,
 					"maxclass" : "bpatcher",
 					"name" : "MidiListener.maxpat",
-					"numinlets" : 1,
+					"numinlets" : 4,
 					"numoutlets" : 4,
 					"offset" : [ 0.0, 0.0 ],
 					"outlettype" : [ "", "", "", "int" ],
@@ -1513,7 +1513,7 @@
 					"lockeddragscroll" : 0,
 					"maxclass" : "bpatcher",
 					"name" : "SM.Server.maxpat",
-					"numinlets" : 1,
+					"numinlets" : 2,
 					"numoutlets" : 2,
 					"offset" : [ 0.0, 0.0 ],
 					"outlettype" : [ "dictionary", "" ],
@@ -2060,11 +2060,11 @@
 			}
  ],
 		"parameters" : 		{
-			"obj-42::obj-1::obj-5" : [ "vst~[1]", "vst~[1]", 0 ],
-			"obj-54" : [ "live.gain~", "live.gain~", 0 ],
 			"obj-63::obj-34" : [ "live.gain~[2]", "live.gain~", 0 ],
-			"obj-7::obj-1::obj-5" : [ "vst~", "vst~", 0 ],
+			"obj-54" : [ "live.gain~", "live.gain~", 0 ],
 			"obj-56" : [ "live.gain~[1]", "live.gain~", 0 ],
+			"obj-7::obj-1::obj-5" : [ "vst~", "vst~", 0 ],
+			"obj-42::obj-1::obj-5" : [ "vst~[1]", "vst~[1]", 0 ],
 			"parameterbanks" : 			{
 
 			}
@@ -2183,15 +2183,15 @@
 			}
 , 			{
 				"name" : "sr.maxpat",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/externals",
-				"patcherrelativepath" : "./externals",
+				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Externals",
+				"patcherrelativepath" : "./Externals",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "bc.autoname.js",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/externals",
-				"patcherrelativepath" : "./externals",
+				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Externals",
+				"patcherrelativepath" : "./Externals",
 				"type" : "TEXT",
 				"implicit" : 1
 			}

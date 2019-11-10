@@ -120,7 +120,7 @@ class Player(ScheduledMidiObject):
                 try:
                     atom.influence(label, time, **kwargs)
                 except InvalidLabelInput as e:
-                    self.logger.debug(f"[influence] {str(e)} Likely expected behaviour, only in rare cases an issue.")
+                    self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
         else:
             self._get_atom(path).influence(label, time, **kwargs)
 

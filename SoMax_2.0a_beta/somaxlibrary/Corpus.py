@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Dict, ClassVar
 
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.Exceptions import InvalidJsonFormat
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Tools import SequencedList
 
@@ -40,14 +41,17 @@ class Corpus:
         try:
             self.content_type = ContentType(corpus_data["typeID"])
         except ValueError as e:
-            self.logger.debug(e)
-            self.logger.error(f"Could not read json file. typeID should be either 'MIDI' or 'Audio'.")
-            return
+            self.logger.debug(repr(e))
+            raise InvalidJsonFormat(f"Could not read json file. typeID should be either 'MIDI' or 'Audio'.")
 
-        events = corpus_data["data"]
-        self.ordered_events = self._parse_events(events, timing_type)
-        self._classify_events()
-        self.logger.debug(f"[read_file] Corpus {self} successfully read.")
+        try:
+            events = corpus_data["data"]
+            self.ordered_events = self._parse_events(events, timing_type)
+            self._classify_events()
+            self.logger.debug(f"[read_file] Corpus {self} successfully read.")
+        except KeyError as e:
+            self.logger.debug(repr(e))
+            raise InvalidJsonFormat(f"The corpus does not have the correct format.")
 
     @staticmethod
     def _parse_events(events: [Dict], timing_type: str) -> [CorpusEvent]:
