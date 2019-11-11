@@ -1,22 +1,22 @@
 from typing import TypeVar, Union, Dict
 
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 
 # TODO: Poor type description
 MaxCompatible = TypeVar('MaxCompatible', int, float, bool)
 Ranged = Union[MaxCompatible, None]
 
 
-class Parameter(HasMaxDict):
+class Parameter(HasInfoDict):
 
     def __init__(self, default_value: MaxCompatible, min: Ranged, max: Ranged, type_str: str, description: str):
         self.value: MaxCompatible = default_value
-        self.scope: (Ranged, Ranged) = min, max
+        self.scope: (Ranged, Ranged) = (min, max)
         self.type_str: str = type_str
         self.description: str = description
 
-    def max_dict(self) -> Dict:
+    def info_dict(self) -> Dict:
         return {"value": self.value,
-                "range": self.scope,
+                "range": str(self.scope),
                 "type": self.type_str,
                 "description": self.description}

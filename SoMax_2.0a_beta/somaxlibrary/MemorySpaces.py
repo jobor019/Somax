@@ -11,7 +11,7 @@ from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Peak import Peak
@@ -19,12 +19,13 @@ from somaxlibrary.Transforms import AbstractTransform
 
 
 # TODO: Abstract Influence type. Dependent on (determined by?) ActivityPattern. CUrrently hardcoded in NGram.
-class AbstractMemorySpace(ABC, Parametric, HasMaxDict):
+class AbstractMemorySpace(Parametric, HasInfoDict):
     """ MemorySpaces determine how events are matched to labels """
 
     def __init__(self, corpus: Corpus, label_type: ClassVar[AbstractLabel],
                  transforms: [(ClassVar[AbstractTransform], ...)], **_kwargs):
         """ Note: kwargs can be used if additional information is need to construct the data structure."""
+        super(AbstractMemorySpace, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.corpus: Corpus = corpus
         self.label_type: ClassVar[AbstractLabel] = label_type
@@ -47,10 +48,13 @@ class AbstractMemorySpace(ABC, Parametric, HasMaxDict):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
-    def max_dict(self) -> Dict:
+    def info_dict(self) -> Dict:
+        parameters: Dict = {}
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.info_dict()
         return {"label": self.label_type.__name__,
                 "transforms": "TODO",  # TODO
-                "parameters": self.parameters}
+                "parameters": parameters}
 
     def add_transforms(self, transforms: [(ClassVar[AbstractTransform], ...)]) -> None:
         """ raises: TransformError """

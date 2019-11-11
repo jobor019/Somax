@@ -1,9 +1,8 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 from maxosc.MaxFormatter import MaxFormatter
-from pythonosc.osc_message import OscMessage
 from pythonosc.osc_message_builder import OscMessageBuilder
 from pythonosc.udp_client import SimpleUDPClient
 
@@ -59,6 +58,11 @@ class SimpleOscTarget(Target):
 
     def send_gui(self, content: Any, **kwargs):
         self._client.send_message(self.address, ["gui", self._max_formatter.format_llll(content)])
+
+    def send_dict(self, content: Dict, **_kwargs):
+        max_dict: [(str, str)] = self._max_formatter.format_maxdict_large(content)
+        for kv_pair in max_dict:
+            self._send_simple("info_dict", kv_pair)
 
 
 class CallableTarget(Target):

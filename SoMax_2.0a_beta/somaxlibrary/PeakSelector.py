@@ -6,13 +6,14 @@ from typing import Dict
 from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform, NoTransform
 
 
-class AbstractPeakSelector(ABC, Parametric, HasMaxDict):
+class AbstractPeakSelector(Parametric, HasInfoDict):
     def __init__(self):
+        super(AbstractPeakSelector, self).__init__()
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
@@ -20,8 +21,11 @@ class AbstractPeakSelector(ABC, Parametric, HasMaxDict):
                corpus: Corpus, **kwargs) -> [CorpusEvent, AbstractTransform]:
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
 
-    def max_dict(self) -> Dict:
-        return {"parameters": self.parameters}
+    def info_dict(self) -> Dict:
+        parameters: Dict = {}
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.info_dict()
+        return {"parameters": parameters}
 
 
 class MaxPeakSelector(AbstractPeakSelector):

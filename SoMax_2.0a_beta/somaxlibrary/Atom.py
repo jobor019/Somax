@@ -6,7 +6,7 @@ from Parameter import Parameter
 from Parametric import Parametric
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
@@ -14,11 +14,11 @@ from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class Atom(Parametric, HasMaxDict):
+class Atom(Parametric, HasInfoDict):
     def __init__(self, name: str, weight: float, label_type: ClassVar[AbstractLabel],
                  activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
                  corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
-        super(Atom, self).__init__()
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug(f"[__init__ Creating atom '{name}'.")
         self.name = name
@@ -31,12 +31,12 @@ class Atom(Parametric, HasMaxDict):
         if corpus:
             self.read(corpus, label_type)
 
-    def max_dict(self) -> Dict:
+    def info_dict(self) -> Dict:
         parameters = {}
         for name, parameter in self.parameters.items():
-            parameters[name] = parameter.max_dict()
-        return {"memory_space": self.memory_space.max_dict(),
-                "activity_pattern": self.activity_pattern.max_dict(),
+            parameters[name] = parameter.info_dict()
+        return {"memory_space": self.memory_space.info_dict(),
+                "activity_pattern": self.activity_pattern.info_dict(),
                 "parameters": parameters}
 
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):

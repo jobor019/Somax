@@ -9,11 +9,11 @@ from Parameter import Parameter
 from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Peak import Peak
 
 
-class AbstractMergeAction(ABC, Parametric, HasMaxDict):
+class AbstractMergeAction(Parametric, HasInfoDict):
 
     @abstractmethod
     def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
@@ -26,8 +26,11 @@ class AbstractMergeAction(ABC, Parametric, HasMaxDict):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
-    def max_dict(self) -> Dict:
-        return {"parameters": self.parameters}
+    def info_dict(self) -> Dict:
+        parameters: Dict = {}
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.info_dict()
+        return {"parameters": parameters}
 
 
 class DistanceMergeAction(AbstractMergeAction):

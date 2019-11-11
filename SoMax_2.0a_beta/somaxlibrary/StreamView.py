@@ -9,14 +9,14 @@ from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class StreamView(Parametric, HasMaxDict):
+class StreamView(Parametric, HasInfoDict):
     def __init__(self, name: str, weight: float = 1.0, merge_actions: Tuple[Callable, ...] = None):
         super(StreamView, self).__init__()
         self.logger = logging.getLogger(__name__)
@@ -33,24 +33,24 @@ class StreamView(Parametric, HasMaxDict):
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self.atoms)
 
-    def max_dict(self):
+    def info_dict(self):
         streamviews = {}
         atoms = {}
         merge_actions = {}
         parameters = {}
         for name, streamview in self.streamviews.items():
-            streamviews[name] = streamview.max_dict()
+            streamviews[name] = streamview.info_dict()
         for name, atom in self.atoms.items():
-            atoms[name] = atom.max_dict()
+            atoms[name] = atom.info_dict()
         for merge_action in self._merge_actions:
             key: str = type(merge_action).__name__
-            merge_actions[key] = merge_action.max_dict()
-        for name, parameter in self.parameters().items():
-            parameters[name] = parameter.max_dict()
-        return {self.name: {"streamviews": streamviews,
-                            "atoms": atoms,
-                            "merge_actions": merge_actions,
-                            "parameters": parameters}}
+            merge_actions[key] = merge_action.info_dict()
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.info_dict()
+        return {"streamviews": streamviews,
+                "atoms": atoms,
+                "merge_actions": merge_actions,
+                "parameters": parameters}
 
     def get_streamview(self, path: [str]) -> 'StreamView':
         """ Raises: KeyError. Technically also IndexError, but should not occur if input is well-formatted (expected)"""
@@ -72,7 +72,7 @@ class StreamView(Parametric, HasMaxDict):
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace],
-                    corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform],...)]):
+                    corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
         """creating an atom at required path
         Raises: KeyError, InvalidPath, DuplicateKeyError"""
         self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(path))
@@ -136,7 +136,6 @@ class StreamView(Parametric, HasMaxDict):
     @weight.setter
     def weight(self, value: float):
         self._weight.value = value
-
 
     # TODO: Reimplement
     # def delete_atom(self, name):

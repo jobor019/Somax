@@ -2,7 +2,7 @@ import logging
 from collections import deque
 from copy import deepcopy
 from functools import reduce
-from typing import ClassVar, Any, Dict
+from typing import ClassVar, Dict
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
@@ -10,7 +10,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
-from somaxlibrary.HasMaxDict import HasMaxDict
+from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
@@ -22,7 +22,7 @@ from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerMode
 
 
-class Player(ScheduledMidiObject, HasMaxDict):
+class Player(ScheduledMidiObject, HasInfoDict):
     MAX_HISTORY_LEN = 100
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
@@ -40,27 +40,32 @@ class Player(ScheduledMidiObject, HasMaxDict):
         self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
         self._previous_peaks: [Peak] = []
 
+        self._parse_parameters()
+
         # self.nextstate_mod: float = 1.5   # TODO
         # self.waiting_to_jump: bool = False    # TODO
 
         # self.info_dictionary = dict()  # TODO
 
-    def max_dict(self) -> Dict:
+    def info_dict(self) -> Dict:
         streamviews = {}
         merge_actions = {}
         peak_selectors = {}
+        parameters: Dict = {}
         for name, streamview in self.streamviews.items():
-            streamviews[name] = streamview.max_dict()
+            streamviews[name] = streamview.info_dict()
         for merge_action in self.merge_actions:
             key: str = type(merge_action).__name__
-            merge_actions[key] = merge_action.max_dict()
+            merge_actions[key] = merge_action.info_dict()
         for peak_selector in self.peak_selectors:
             key: str = type(peak_selector).__name__
-            peak_selectors[key] = peak_selector.max_dict()
+            peak_selectors[key] = peak_selector.info_dict()
+        for name, parameter in self.parameters.items():
+            parameters[name] = parameter.info_dict()
         return {self.name: {"streamviews": streamviews,
                             "merge_actions": merge_actions,
-                            "peak_selectors": peak_selectors}}
-
+                            "peak_selectors": peak_selectors,
+                            "parameters": parameters}}
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
@@ -199,7 +204,6 @@ class Player(ScheduledMidiObject, HasMaxDict):
                     self.logger.error(f"{str(e)}")
         else:
             self._get_atom(path).memory_space.add_transforms(transform)
-
 
     @property
     def previous_peaks_raw(self) -> [(float, float, int)]:

@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import logging
 import logging.config
-from typing import ClassVar, Any
+from typing import ClassVar, Any, Dict
 
 from maxosc.MaxOsc import Caller
 from pythonosc.dispatcher import Dispatcher
@@ -24,7 +24,7 @@ from somaxlibrary.scheduler.Scheduler import Scheduler
 
 class SoMaxServer(Caller):
 
-    def __init__(self, in_port: int, ip: str = IOParser.DEFAULT_IP):
+    def __init__(self, in_port: int, out_port: int, ip: str = IOParser.DEFAULT_IP):
         super(SoMaxServer, self).__init__(parse_parenthesis_as_list=False)
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Initializing SoMaxServer with input port {in_port} and ip '{ip}'.")
@@ -33,9 +33,10 @@ class SoMaxServer(Caller):
         self.builder = CorpusBuilder()
         self.ip: str = ip
         self.in_port: int = in_port
+        self.out_port: int = out_port
+        self.target: Target = SimpleOscTarget("/server", out_port, ip)  # TODO: Change to multiosctarget for distributed
         self.server: AsyncIOOSCUDPServer = None
         self.io_parser: IOParser = IOParser()
-        # self.send_info_dict()     # TODO: Handle info dict laters
 
     async def _run(self) -> None:
         self.logger.info("Starting SoMaxServer...")
@@ -56,8 +57,6 @@ class SoMaxServer(Caller):
             for player in self.players.values():
                 player.send_gui()
             await asyncio.sleep(interval)
-
-
 
     def _process_osc(self, _address, *args):
         # TODO: Move string formatting elsewhere
@@ -311,7 +310,12 @@ class SoMaxServer(Caller):
             self.logger.error(f"Invalid path")  # TODO Proper message
         # except    # TODO: Handle more errors once Parametric is implemented
 
-
+    def info_dict(self):
+        self.logger.debug(f"[info_dict] creating info_dict.")
+        info_dict: Dict = {}
+        for name, player in self.players.items():
+            info_dict[name] = player.info_dict()
+        self.target.send_dict(info_dict)
 
     # TODO: Legacy, remove
     # def set_self_influence(self, player, si):
@@ -342,16 +346,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Launch and manage a SoMaxServer')
     parser.add_argument('in_port', metavar='IN_PORT', type=int, nargs=1,
                         help='in port used by the server')
+    parser.add_argument('out_port', metavar='OUT_PORT', type=int, nargs=1,
+                        help='out port used by the server')
     # TODO: Ip as input argument
 
     logging.config.fileConfig('logging.ini', disable_existing_loggers=False)
 
     args = parser.parse_args()
     in_port = args.in_port[0]
-    somax_server = SoMaxServer(in_port)
+    out_port = args.out_port[0]
+    somax_server = SoMaxServer(in_port, out_port)
+
 
     async def gather():
         # await asyncio.gather(somax_server._run(), somax_server._gui_callback())
         await asyncio.gather(somax_server._run())
-    asyncio.run(gather())
 
+
+    asyncio.run(gather())
