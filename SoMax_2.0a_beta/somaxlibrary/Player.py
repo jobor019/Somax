@@ -13,6 +13,7 @@ from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfigura
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
+from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
 from somaxlibrary.StreamView import StreamView
@@ -21,7 +22,7 @@ from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerMode
 
 
-class Player(ScheduledMidiObject):
+class Player(ScheduledMidiObject, Parametric):
     MAX_HISTORY_LEN = 100  # TODO Remove or use
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):

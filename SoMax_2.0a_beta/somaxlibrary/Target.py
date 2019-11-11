@@ -35,8 +35,7 @@ class SimpleOscTarget(Target):
         self._client = SimpleUDPClient(ip, port)
         self._max_formatter: MaxFormatter = MaxFormatter()
 
-    def _send_simple(self, keyword: str, content: Any, **_kwargs):
-        self.logger.debug(f"[send] Sending message '{content}'")
+    def send_simple(self, keyword: str, content: Any, **_kwargs):
         msg_builder: OscMessageBuilder = OscMessageBuilder(self.address)
         msg_builder.add_arg(keyword)
         try:
@@ -46,15 +45,16 @@ class SimpleOscTarget(Target):
             msg_builder.add_arg(content)
         message = msg_builder.build()
         self._client.send(message)
+        self.logger.debug(f"[send] Sent message '{content}' with keyword '{keyword}' on address '{self.address}'")
 
     def send_midi(self, content: Any, **kwargs):
-        self._send_simple("midi", content)
+        self.send_simple("midi", content)
 
     def send_audio(self, content: Any, **kwargs):
-        self._send_simple("audio", content)
+        self.send_simple("audio", content)
 
     def send_state(self, content: Any, **kwargs):
-        self._send_simple("state", content)
+        self.send_simple("state", content)
 
     def send_gui(self, content: Any, **kwargs):
         self._client.send_message(self.address, ["gui", self._max_formatter.format_llll(content)])
@@ -62,7 +62,8 @@ class SimpleOscTarget(Target):
     def send_dict(self, content: Dict, **_kwargs):
         max_dict: [(str, str)] = self._max_formatter.format_maxdict_large(content)
         for address, value in max_dict:
-            self._send_simple("parameter_dict", (address, str(value)))
+            self.send_simple("parameter_dict", (address, str(value)))
+        self.send_simple("parameter_dict", ["bang"])
 
 
 class CallableTarget(Target):

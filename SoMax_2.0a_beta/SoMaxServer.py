@@ -154,7 +154,7 @@ class SoMaxServer(Caller):
         # TODO: parameter dict
 
     ######################################################
-    # PROCESS METHODS
+    # SCHEDULER
     ######################################################
 
     def start(self):
@@ -164,6 +164,18 @@ class SoMaxServer(Caller):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
+
+    def get_time(self):
+        self.target.send_simple("time", self.scheduler.time)
+
+    def get_tempo(self):
+        self.target.send_simple("tempo", self.scheduler.tempo)
+
+    def set_tempo(self, tempo: float):
+        # TODO: Error checking
+        self.scheduler.add_tempo_event(self.scheduler.time, tempo)
+
+
 
     ######################################################
     # TIMING METHODS

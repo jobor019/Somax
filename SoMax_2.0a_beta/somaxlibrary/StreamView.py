@@ -131,7 +131,7 @@ class StreamView(Parametric):
                 peaks.append(peak)
 
         # Apply merge actions on this level and return
-        for merge_action in self._merge_actions:
+        for merge_action in self._merge_actions.values():
             peaks = merge_action.merge(peaks, time, influence_history, corpus, **kwargs)
         return peaks
 

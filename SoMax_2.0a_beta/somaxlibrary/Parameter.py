@@ -69,6 +69,7 @@ class Parametric(HasParameterDict):
         """
         param: Parameter = self.get_param(path)
         param.set_value(value)
+        self.logger.debug(f"Parameter {param} set to {value}.")
 
     def get_param(self, param_path: [str]) -> Parameter:
         """ raises KeyError """
@@ -85,7 +86,7 @@ class Parametric(HasParameterDict):
             if isinstance(variable, Parameter) or isinstance(variable, Parametric):
                 variable._parse_parameters()
                 param_dict[name] = variable
-            # Parse all Parameter and Parametric hidden inside other dicts (for example MergeAction)
+            # Parse all Parameter and Parametric inside other dicts (for example MergeAction)
             if isinstance(variable, collections.abc.Mapping):
                 for name, item in variable.items():
                     if isinstance(item, Parameter) or isinstance(item, Parametric):
