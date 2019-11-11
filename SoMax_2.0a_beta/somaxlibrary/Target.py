@@ -61,8 +61,8 @@ class SimpleOscTarget(Target):
 
     def send_dict(self, content: Dict, **_kwargs):
         max_dict: [(str, str)] = self._max_formatter.format_maxdict_large(content)
-        for kv_pair in max_dict:
-            self._send_simple("info_dict", kv_pair)
+        for address, value in max_dict:
+            self._send_simple("parameter_dict", (address, str(value)))
 
 
 class CallableTarget(Target):

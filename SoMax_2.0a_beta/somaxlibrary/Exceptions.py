@@ -31,3 +31,9 @@ class InvalidConfiguration(Exception):
 class DuplicateKeyError(Exception):
     def __init__(self, error):
         super(DuplicateKeyError, self).__init__(error)
+
+
+class ParameterError(Exception):
+    def __init__(self, error: object) -> object:
+        super(ParameterError, self).__init__(error)
+        

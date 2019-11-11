@@ -2,7 +2,7 @@ import logging
 from collections import deque
 from copy import deepcopy
 from functools import reduce
-from typing import ClassVar, Dict
+from typing import ClassVar
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
@@ -10,7 +10,6 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
-from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
@@ -22,8 +21,8 @@ from somaxlibrary.Transforms import AbstractTransform
 from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerMode
 
 
-class Player(ScheduledMidiObject, HasInfoDict):
-    MAX_HISTORY_LEN = 100
+class Player(ScheduledMidiObject):
+    MAX_HISTORY_LEN = 100  # TODO Remove or use
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
         super(Player, self).__init__(triggering_mode)
@@ -33,39 +32,60 @@ class Player(ScheduledMidiObject, HasInfoDict):
         self.target: Target = target
 
         self.streamviews: {str: StreamView} = dict()
-        self.merge_actions: [AbstractMergeAction] = [DistanceMergeAction(), PhaseModulationMergeAction()]
+        self.merge_actions: {str: AbstractMergeAction} = {}
         self.corpus: Corpus = None
-        self.peak_selectors: [AbstractPeakSelector] = [MaxPeakSelector(), DefaultPeakSelector()]  # TODO impl. setters
+        self.peak_selectors: {str: AbstractPeakSelector} = {}
 
         self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
         self._previous_peaks: [Peak] = []
+
+        # TODO: Temp
+        for merge_action in [DistanceMergeAction, PhaseModulationMergeAction]:
+            self.add_merge_action(merge_action())
+        for peak_selector in [MaxPeakSelector(), DefaultPeakSelector()]:
+            self.add_peak_selector(peak_selector)
 
         self._parse_parameters()
 
         # self.nextstate_mod: float = 1.5   # TODO
         # self.waiting_to_jump: bool = False    # TODO
 
-        # self.info_dictionary = dict()  # TODO
+    def add_merge_action(self, merge_action: AbstractMergeAction, override: bool = False):
+        name: str = type(merge_action).__name__
+        if name in self.merge_actions and not override:
+            raise DuplicateKeyError("A merge action of this type already exists.")
+        else:
+            self.merge_actions[name] = merge_action
+            self._parse_parameters()
 
-    def info_dict(self) -> Dict:
-        streamviews = {}
-        merge_actions = {}
-        peak_selectors = {}
-        parameters: Dict = {}
-        for name, streamview in self.streamviews.items():
-            streamviews[name] = streamview.info_dict()
-        for merge_action in self.merge_actions:
-            key: str = type(merge_action).__name__
-            merge_actions[key] = merge_action.info_dict()
-        for peak_selector in self.peak_selectors:
-            key: str = type(peak_selector).__name__
-            peak_selectors[key] = peak_selector.info_dict()
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {self.name: {"streamviews": streamviews,
-                            "merge_actions": merge_actions,
-                            "peak_selectors": peak_selectors,
-                            "parameters": parameters}}
+    def add_peak_selector(self, peak_selector: AbstractPeakSelector, override: bool = False):
+        name: str = type(peak_selector).__name__
+        if name in self.merge_actions and not override:
+            raise DuplicateKeyError("A merge action of this type already exists.")
+        else:
+            self.peak_selectors[name] = peak_selector
+            self._parse_parameters()
+
+    # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
+    #     streamviews = {}
+    #     merge_actions = {}
+    #     peak_selectors = {}
+    #     parameters: Dict = {}
+    #     for name, streamview in self.streamviews.items():
+    #         streamviews[name] = streamview.update_parameter_dict()
+    #     for merge_action in self.merge_actions:
+    #         key: str = type(merge_action).__name__
+    #         merge_actions[key] = merge_action.update_parameter_dict()
+    #     for peak_selector in self.peak_selectors:
+    #         key: str = type(peak_selector).__name__
+    #         peak_selectors[key] = peak_selector.update_parameter_dict()
+    #     for name, parameter in self._parse_parameters().items():
+    #         parameters[name] = parameter.update_parameter_dict()
+    #     self.parameter_dict = {"streamviews": streamviews,
+    #                            "merge_actions": merge_actions,
+    #                            "peak_selectors": peak_selectors,
+    #                            "parameters": parameters}
+    #     return self.parameter_dict
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
@@ -106,7 +126,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
         peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
 
         event_and_transforms: (CorpusEvent, AbstractTransform) = None
-        for peak_selector in self.peak_selectors:
+        for peak_selector in self.peak_selectors.values():
             event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)
             if event_and_transforms:
                 break
@@ -158,6 +178,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
                 self.streamviews[streamview] = StreamView(name=streamview, weight=weight, merge_actions=merge_actions)
         else:
             self.streamviews[streamview].create_streamview(path, weight, merge_actions)
+        self._parse_parameters()
 
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
@@ -172,6 +193,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
         else:
             self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
                                                      self.corpus, self_influenced, transforms)
+        self._parse_parameters()
 
     def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
@@ -179,7 +201,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
             streamview.read(self.corpus)
         # TODO: info dict
         # self.update_memory_length()
-        # self.send_info_dict()
+        # self.send_parameter_dict()
 
     def merged_peaks(self, time: float, history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
         weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.streamviews.values(), 0.0))
@@ -190,7 +212,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
                 peak.score *= normalized_weight
                 peaks.append(peak)
 
-        for merge_action in self.merge_actions:
+        for merge_action in self.merge_actions.values():
             peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
         return peaks
 
@@ -238,7 +260,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #         head, tail = Tools.parse_path(name)
     #         self.streamviews[head].delete_atom(tail)
     #     self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
-    #     # self.send_info_dict()
+    #     # self.send_parameter_dict()
 
     # TODO: Reimplement
     # def reset(self, time=None):
@@ -250,9 +272,9 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #         self.streamviews[s]._reset(time)
 
     # TODO: Reimplement
-    # '''def update_info_dictionary(self):
+    # '''def update_parameter_dictionary(self):
     #     if self.streamviews!=dict():
-    #         self.info_dictionary["streamviews"] = OrderedDict()
+    #         self.parameter_dictionary["streamviews"] = OrderedDict()
     #         tmp_dic = dict()
     #         for k,v in self.streamviews.iteritems():
     #             tmp_dic[k] = dict()
@@ -262,13 +284,13 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #             tmp_dic[k]["size"] = v[0].get_length()
     #             tmp_dic[k]["length_beat"] = v[0].metadata["duration_b"]
     #             if k==self.current_streamview:
-    #                 self.info_dictionary["streamviews"][k] = dict(tmp_dic[k])
+    #                 self.parameter_dictionary["streamviews"][k] = dict(tmp_dic[k])
     #         for k,v in tmp_dic.iteritems():
     #             if k!=self.current_streamview:
-    #                 self.info_dictionary["streamviews"][k] = dict(tmp_dic[k])
+    #                 self.parameter_dictionary["streamviews"][k] = dict(tmp_dic[k])
     #     else:
-    #         self.info_dictionary["streamviews"] = "empty"
-    #     self.info_dictionary["current_streamview"] = str(self.current_streamview)'''
+    #         self.parameter_dictionary["streamviews"] = "empty"
+    #     self.parameter_dictionary["current_streamview"] = str(self.current_streamview)'''
 
     # TODO: Reimplement
     # def send_buffer(self, atom):
@@ -294,7 +316,7 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #     self.nextstate_mod = ns
 
     # TODO: Reimplement
-    # def get_info_dict(self):
+    # def get_parameter_dict(self):
     #     '''returns the dictionary containing all information of the player'''
     #     infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
     #     try:
@@ -303,9 +325,9 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #         pass
     #     infodict["streamviews"] = dict()
     #     for s, v in self.streamviews.items():
-    #         infodict["streamviews"][s] = v.get_info_dict()
+    #         infodict["streamviews"][s] = v.get_parameter_dict()
     #         infodict["current_atom"] = self.current_atom
-    #     infodict["current_streamview"] = self.current_streamview.get_info_dict()
+    #     infodict["current_streamview"] = self.current_streamview.get_parameter_dict()
     #     if self.current_streamview.atoms != dict():
     #         if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
     #             self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
@@ -320,16 +342,16 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #     return infodict
 
     # TODO: Reimplement
-    # def send_info_dict(self):
+    # def send_parameter_dict(self):
     #     '''sending the info dictionary of the player'''
-    #     infodict = self.get_info_dict()
+    #     infodict = self.get_parameter_dict()
     #     str_dic = Tools.dic_to_strout(infodict)
     #     self.send("clear", "/infodict")
     #     self.send(self.streamviews.keys(), "/streamviews")
     #     for s in str_dic:
     #         self.send(s, "/infodict")
     #     self.send(self.name, "/infodict-update")
-    #     self.logger.debug("[send_info_dict] Updating infodict for player {}.".format(self.name))
+    #     self.logger.debug("[send_parameter_dict] Updating infodict for player {}.".format(self.name))
 
     # TODO: Reimplement
     # def set_weight(self, streamview: str, weight: float):
@@ -342,5 +364,5 @@ class Player(ScheduledMidiObject, HasInfoDict):
     #     else:
     #         head, tail = Tools.parse_path(streamview)
     #         self.streamviews[head].set_weight(tail, weight)
-    #     self.send_info_dict()
+    #     self.send_parameter_dict()
     #     return True

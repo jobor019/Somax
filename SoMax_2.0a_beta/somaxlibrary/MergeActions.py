@@ -2,18 +2,16 @@ import inspect
 import logging
 import math
 import sys
-from abc import abstractmethod, ABC
-from typing import ClassVar, Dict
+from abc import abstractmethod
+from typing import ClassVar, Dict, Union
 
-from Parameter import Parameter
-from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.HasInfoDict import HasInfoDict
+from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Peak import Peak
 
 
-class AbstractMergeAction(Parametric, HasInfoDict):
+class AbstractMergeAction(Parametric):
 
     @abstractmethod
     def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
@@ -26,17 +24,19 @@ class AbstractMergeAction(Parametric, HasInfoDict):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
-    def info_dict(self) -> Dict:
+    def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters: Dict = {}
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {"parameters": parameters}
+        for name, parameter in self._parse_parameters().items():
+            parameters[name] = parameter.update_parameter_dict()
+        self.parameter_dict = {"parameters": parameters}
+        return self.parameter_dict
 
 
 class DistanceMergeAction(AbstractMergeAction):
 
     # TODO: Clean up constructor
     def __init__(self, t_width: float = 0.1, transform_merge_mode='OR'):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating DistanceMergeAction with width {} and merge mode {}."
                           .format(t_width, transform_merge_mode))
@@ -84,7 +84,7 @@ class PhaseModulationMergeAction(AbstractMergeAction):
     def __init__(self, selectivity=DEFAULT_SELECTIVITY):
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
-        self._selectivity: Parameter = Parameter(selectivity,None, None, 'float', "Very unclear parameter.")    # TODO
+        self._selectivity: Parameter = Parameter(selectivity, None, None, 'float', "Very unclear parameter.")  # TODO
         self._parse_parameters()
 
     def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
@@ -101,7 +101,6 @@ class PhaseModulationMergeAction(AbstractMergeAction):
     @selectivity.setter
     def selectivity(self, value):
         self._selectivity.value = value
-
 
 # TODO: Reimplement!!!
 # class StateMergeAction(AbstractMergeAction):

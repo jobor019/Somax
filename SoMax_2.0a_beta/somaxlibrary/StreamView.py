@@ -2,55 +2,66 @@ import logging
 from functools import reduce
 from typing import Callable, Tuple, ClassVar
 
-from Parameter import Parameter
-from Parametric import Parametric
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError
-from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import NGramMemorySpace
+from somaxlibrary.MergeActions import AbstractMergeAction
+from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class StreamView(Parametric, HasInfoDict):
-    def __init__(self, name: str, weight: float = 1.0, merge_actions: Tuple[Callable, ...] = None):
+class StreamView(Parametric):
+    def __init__(self, name: str, weight: float = 1.0, merge_actions: Tuple[Callable, ...] = ()):
         super(StreamView, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating streamview {} with weight {} and merge actions {}"
                           .format(name, weight, merge_actions))
 
         self.name = name
-        self._merge_actions = [cls() for cls in merge_actions] if merge_actions else []
+        self._merge_actions: {str: AbstractMergeAction} = {}
         self.atoms: {str: Atom} = dict()
         self.streamviews: {str: StreamView} = {}
         self._weight: Parameter = Parameter(weight, 0.0, None, 'float', "Relative scaling of streamview peaks.")
         self._parse_parameters()
 
+        for merge_action in merge_actions:
+            self.add_merge_action(merge_action())
+
     def __repr__(self):
         return "Streamview with name {0} and atoms {1}.".format(self.name, self.atoms)
 
-    def info_dict(self):
-        streamviews = {}
-        atoms = {}
-        merge_actions = {}
-        parameters = {}
-        for name, streamview in self.streamviews.items():
-            streamviews[name] = streamview.info_dict()
-        for name, atom in self.atoms.items():
-            atoms[name] = atom.info_dict()
-        for merge_action in self._merge_actions:
-            key: str = type(merge_action).__name__
-            merge_actions[key] = merge_action.info_dict()
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {"streamviews": streamviews,
-                "atoms": atoms,
-                "merge_actions": merge_actions,
-                "parameters": parameters}
+    def add_merge_action(self, merge_action: AbstractMergeAction, override: bool = False):
+        name: str = type(merge_action).__name__
+        if name in self._merge_actions and not override:
+            raise DuplicateKeyError("A merge action of this type already exists.")
+        else:
+            self._merge_actions[name] = merge_action
+
+    # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
+    #     streamviews = {}
+    #     atoms = {}
+    #     merge_actions = {}
+    #     parameters = {}
+    #     for name, streamview in self.streamviews.items():
+    #         streamviews[name] = streamview.update_parameter_dict()
+    #     for name, atom in self.atoms.items():
+    #         atoms[name] = atom.update_parameter_dict()
+    #     for merge_action in self._merge_actions:
+    #         key: str = type(merge_action).__name__
+    #         merge_actions[key] = merge_action.update_parameter_dict()
+    #     for name, parameter in self._parse_parameters().items():
+    #         parameters[name] = parameter.update_parameter_dict()
+    #     self.parameter_dict = {"streamviews": streamviews,
+    #                            "atoms": atoms,
+    #                            "merge_actions": merge_actions,
+    #                            "parameters": parameters}
+    #     return self.parameter_dict
 
     def get_streamview(self, path: [str]) -> 'StreamView':
         """ Raises: KeyError. Technically also IndexError, but should not occur if input is well-formatted (expected)"""
@@ -172,12 +183,12 @@ class StreamView(Parametric, HasInfoDict):
     #         self.atoms[head].set_weight(tail, weight)
 
     # TODO: Reimplement
-    # def get_info_dict(self):
+    # def get_parameter_dict(self):
     #     '''returns info dictionary'''
     #     infodict = {"activity type": str(type(self)), "weight": self.weight, "type": "Streamview"}
     #     infodict["atoms"] = dict()
     #     for a, v in self.atoms.items():
-    #         infodict["atoms"][a] = v.get_info_dict()
+    #         infodict["atoms"][a] = v.get_parameter_dict()
     #     return infodict
 
     # TODO: reimplement

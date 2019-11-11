@@ -1,25 +1,24 @@
 import inspect
 import logging
 import sys
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections import deque
 from copy import copy
-from typing import Tuple, ClassVar, Dict
+from typing import Tuple, ClassVar, Dict, Union
 
-from Parameter import Parameter
-from Parametric import Parametric
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
-from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
 # TODO: Abstract Influence type. Dependent on (determined by?) ActivityPattern. CUrrently hardcoded in NGram.
-class AbstractMemorySpace(Parametric, HasInfoDict):
+class AbstractMemorySpace(Parametric):
     """ MemorySpaces determine how events are matched to labels """
 
     def __init__(self, corpus: Corpus, label_type: ClassVar[AbstractLabel],
@@ -48,13 +47,14 @@ class AbstractMemorySpace(Parametric, HasInfoDict):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
-    def info_dict(self) -> Dict:
+    def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters: Dict = {}
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {"label": self.label_type.__name__,
-                "transforms": "TODO",  # TODO
-                "parameters": parameters}
+        for name, parameter in self._parse_parameters().items():
+            parameters[name] = parameter.update_parameter_dict()
+        self.parameter_dict = {"label": self.label_type.__name__,
+                               "transforms": "TODO",  # TODO
+                               "parameters": parameters}
+        return self.parameter_dict
 
     def add_transforms(self, transforms: [(ClassVar[AbstractTransform], ...)]) -> None:
         """ raises: TransformError """
@@ -86,13 +86,14 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
-        self._ngram_size: Parameter = Parameter(history_len, 1, None, 'int', "Number of events to hard-match. (TODO)")  # TODO
+        self._ngram_size: Parameter = Parameter(history_len, 1, None, 'int',
+                                                "Number of events to hard-match. (TODO)")  # TODO
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
-        self._parse_parameters()
 
         self.corpus: Corpus = None
         if corpus:
             self.read(corpus)
+        self._parse_parameters()
 
     def __repr__(self):
         return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
@@ -148,4 +149,3 @@ class NGramMemorySpace(AbstractMemorySpace):
     def ngram_size(self, new_size: int):
         self._ngram_size.value = new_size
         self.read(self.corpus)
-

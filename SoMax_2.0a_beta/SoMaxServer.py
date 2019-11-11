@@ -10,7 +10,7 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
-from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError, InvalidJsonFormat
+from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError, InvalidJsonFormat, ParameterError
 from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
@@ -81,6 +81,7 @@ class SoMaxServer(Caller):
     ######################################################
 
     def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = "", override: bool = False):
+        # TODO: Parse merge actions, peakselector
         if name in self.players and not override:
             self.logger.error(f"A player with the name '{name}' already exists.")
             return
@@ -91,9 +92,6 @@ class SoMaxServer(Caller):
 
         if trig_mode == TriggerMode.AUTOMATIC:
             self.scheduler.add_trigger_event(self.players[name])
-        # TODO info_dict
-        # self.send_info_dict()
-        # player.send_info_dict()
 
     @staticmethod
     def _osc_callback(self):
@@ -133,6 +131,7 @@ class SoMaxServer(Caller):
         try:
             self.players[player].create_atom(path_and_name, weight, label, activity_type, memory_type,
                                              self_influenced, transforms)
+            self.players[player]._parse_parameters()    # TODO: Not ideal
         except InvalidPath as e:
             self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
         except KeyError:
@@ -152,6 +151,7 @@ class SoMaxServer(Caller):
             self.players[player].add_transforms(path_and_name, transforms)
         except KeyError:
             self.logger.error(f"Could not add transform at path {path}. The parent streamview/player does not exist.")
+        # TODO: parameter dict
 
     ######################################################
     # PROCESS METHODS
@@ -211,12 +211,12 @@ class SoMaxServer(Caller):
     #                     break
     #             p['player'].send(final_activity_str, "/activity")
 
-    # TODO: info_dict
-    # def send_info_dict(self, *_args):
+    # TODO: parameter_dict
+    # def send_parameter_dict(self, *_args):
     #     info = dict()
     #     info["players"] = dict()
     #     for name, player in self.players.items():
-    #         info["players"][name] = player['player'].get_info_dict()
+    #         info["players"][name] = player['player'].get_parameter_dict()
     #
     #     def get_class_name(obj):
     #         return obj.__name__
@@ -247,11 +247,14 @@ class SoMaxServer(Caller):
     # EVENTS METHODS
     ######################################################
 
+    # TODO: Remove and change into generic set param
     def trigger_mode(self, player: str, mode: str):
         trigger_mode: TriggerMode = self.io_parser.parse_trigger_mode(mode)
         try:
             previous_trigger_mode: TriggerMode = self.players[player].trigger_mode
             self.players[player].trigger_mode = trigger_mode
+            self.players[player]._parse_parameters()    # TODO: Definitely not ideal
+            # self.players[player].update_parameter_dict()
         except KeyError:
             self.logger.error(f"Could not set mode. No player named '{player}' exists.")
             return
@@ -305,17 +308,18 @@ class SoMaxServer(Caller):
         path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
         try:
             player: str = path_parsed.pop(0)
-            self.players[player].set_param(path)
+            self.players[player].set_param(path_parsed, value)
         except (IndexError, KeyError):
             self.logger.error(f"Invalid path")  # TODO Proper message
-        # except    # TODO: Handle more errors once Parametric is implemented
+        except ParameterError as e:
+            self.logger.error(str(e))
 
-    def info_dict(self):
-        self.logger.debug(f"[info_dict] creating info_dict.")
-        info_dict: Dict = {}
+    def parameter_dict(self):
+        self.logger.debug(f"[parameter_dict] creating parameter_dict.")
+        parameter_dict: Dict[str, Dict[str, ...]] = {}
         for name, player in self.players.items():
-            info_dict[name] = player.info_dict()
-        self.target.send_dict(info_dict)
+            parameter_dict[name] = player.max_representation()
+        self.target.send_dict(parameter_dict)
 
     # TODO: Legacy, remove
     # def set_self_influence(self, player, si):
@@ -339,7 +343,7 @@ class SoMaxServer(Caller):
         self.builder.build_corpus(path, output)
         self.logger.info("File {0} has been output at location '{1}'".format(path, output))
         # TODO: Info dict
-        # self.send_info_dict()
+        # self.send_parameter_dict()
 
 
 if __name__ == "__main__":

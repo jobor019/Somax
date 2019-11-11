@@ -1,21 +1,21 @@
 import inspect
 import logging
 import sys
-from abc import ABC, abstractmethod
-from typing import ClassVar, Dict
+from abc import abstractmethod
+from typing import ClassVar, Dict, Union
 
 import numpy as np
 
-from Parameter import Parameter
-from Parametric import Parametric
-from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Influence import AbstractInfluence
+from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class AbstractActivityPattern(Parametric, HasInfoDict):
+class AbstractActivityPattern(Parametric):
     def __init__(self):
+        super(AbstractActivityPattern, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.peaks: [Peak] = []
 
@@ -38,11 +38,12 @@ class AbstractActivityPattern(Parametric, HasInfoDict):
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
 
-    def info_dict(self) -> Dict:
+    def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters: Dict = {}
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {"parameters": parameters}
+        for name, parameter in self._parse_parameters().items():
+            parameters[name] = parameter.update_parameter_dict()
+        self.parameter_dict = {"parameters": parameters}
+        return self.parameter_dict
 
 
 class ClassicActivityPattern(AbstractActivityPattern):

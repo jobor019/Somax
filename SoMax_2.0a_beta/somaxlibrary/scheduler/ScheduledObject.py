@@ -1,9 +1,8 @@
-from abc import ABC
 from enum import Enum
 
-from Parameter import Parameter
-from Parametric import Parametric
 from somaxlibrary.CorpusEvent import Note
+from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Parameter import Parametric
 
 
 class TriggerMode(str, Enum):
@@ -11,10 +10,10 @@ class TriggerMode(str, Enum):
     AUTOMATIC = "automatic"
 
 
-class ScheduledObject(ABC, Parametric):
+class ScheduledObject(Parametric):
     def __init__(self, trigger_mode: TriggerMode):
         super(ScheduledObject, self).__init__()
-        self._trigger_mode: Parameter = Parameter(trigger_mode, None, None, 'manual|automatic', "TODO")     # TODO
+        self._trigger_mode: Parameter = Parameter(trigger_mode, None, None, 'manual|automatic', "TODO")  # TODO
 
     @property
     def trigger_mode(self):

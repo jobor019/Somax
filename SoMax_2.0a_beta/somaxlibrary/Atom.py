@@ -1,20 +1,18 @@
 import copy
 import logging
-from typing import ClassVar, Dict
+from typing import ClassVar, Dict, Union
 
-from Parameter import Parameter
-from Parametric import Parametric
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.HasInfoDict import HasInfoDict
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
+from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
 
-class Atom(Parametric, HasInfoDict):
+class Atom(Parametric):
     def __init__(self, name: str, weight: float, label_type: ClassVar[AbstractLabel],
                  activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
                  corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
@@ -27,17 +25,19 @@ class Atom(Parametric, HasInfoDict):
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type, transforms)
         self._self_influenced: Parameter = Parameter(self_influenced, 0, 1, 'bool',
                                                      "Whether new events creates by player should influence this atom or not.")
-        self._parse_parameters()
         if corpus:
             self.read(corpus, label_type)
 
-    def info_dict(self) -> Dict:
+        self._parse_parameters()
+
+    def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters = {}
-        for name, parameter in self.parameters.items():
-            parameters[name] = parameter.info_dict()
-        return {"memory_space": self.memory_space.info_dict(),
-                "activity_pattern": self.activity_pattern.info_dict(),
-                "parameters": parameters}
+        for name, parameter in self._parse_parameters().items():
+            parameters[name] = parameter.update_parameter_dict()
+        self.parameter_dict = {"memory_space": self.memory_space.update_parameter_dict(),
+                               "activity_pattern": self.activity_pattern.update_parameter_dict(),
+                               "parameters": parameters}
+        return self.parameter_dict
 
     def read(self, corpus, label_type=ClassVar[MelodicLabel]):
         self.logger.debug(f"[read]: Reading corpus {corpus}.")
@@ -83,7 +83,7 @@ class Atom(Parametric, HasInfoDict):
 
     # TODO: Reimplement
     # external method to fetch properties of the atom
-    # def get_info_dict(self):
+    # def get_parameter_dict(self):
     #     infodict = {"activity": self.activityPattern.__desc__(), "memory": self.memory_space.__desc__(),
     #                 "event_type": self.memory_space.event_type.__desc__(),
     #                 "label_type": self.memory_space.label_type.__desc__(),
