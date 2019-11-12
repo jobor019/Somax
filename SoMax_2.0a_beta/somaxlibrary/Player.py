@@ -200,6 +200,7 @@ class Player(ScheduledMidiObject, Parametric):
         self.corpus = Corpus(filepath)
         for streamview in self.streamviews.values():
             streamview.read(self.corpus)
+        self.target.send_simple("corpus", [self.corpus.name, str(self.corpus.content_type), self.corpus.length()])
         # TODO: info dict
         # self.update_memory_length()
         # self.send_parameter_dict()

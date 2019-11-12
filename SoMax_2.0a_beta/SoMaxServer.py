@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import logging.config
+import os
 from typing import ClassVar, Any, Dict
 
 from maxosc.MaxOsc import Caller
@@ -336,6 +337,11 @@ class SoMaxServer(Caller):
         except ParameterError as e:
             self.logger.error(str(e))
 
+    ######################################################
+    # MAX INTERFACE INFORMATION
+    ######################################################
+
+
     def parameter_dict(self):
         self.logger.debug(f"[parameter_dict] creating parameter_dict.")
         parameter_dict: Dict[str, Dict[str, ...]] = {}
@@ -343,17 +349,15 @@ class SoMaxServer(Caller):
             parameter_dict[name] = player.max_representation()
         self.target.send_dict(parameter_dict)
 
-    # TODO: Legacy, remove
-    # def set_self_influence(self, player, si):
-    #     # TODO: IO Error handling
-    #     self.logger.debug(f"[set_self_influence] Attempting to set influence of player {player} to {si}.")
-    #     self.players[player].set_self_influence(si)
+    def get_corpus_files(self):
+        filepath: str = os.path.join(os.path.dirname(__file__), "Corpus")
+        for file in os.listdir(filepath):
+            if file.endswith(".json"):
+                corpus_name, _ = os.path.splitext(file)
+                self.target.send_simple("corpus", (corpus_name, os.path.join(filepath, file)))
+        self.target.send_simple("corpus", ["bang"])
 
-    # TODO: Legacy, remove
-    # def set_weight(self, player: str, streamview: str, weight: float):
-    #     # TODO: IO Error handling
-    #     self.logger.debug(f"[set_weight] for player {player}, streamview {streamview} set to {weight}.")
-    #     self.players[player].set_weight(streamview, weight)
+
 
     ######################################################
     # CORPUS METHODS

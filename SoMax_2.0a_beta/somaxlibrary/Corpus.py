@@ -25,6 +25,7 @@ class Corpus:
         """
         self.logger = logging.getLogger(__name__)
         self.ordered_events: SequencedList[float, CorpusEvent] = SequencedList()
+        self.name: str = ""
         self.content_type: ContentType = None
 
         if filepath:
@@ -40,6 +41,7 @@ class Corpus:
             corpus_data = json.load(jfile)
         try:
             self.content_type = ContentType(corpus_data["typeID"])
+            self.name = corpus_data["name"]
         except ValueError as e:
             self.logger.debug(repr(e))
             raise InvalidJsonFormat(f"Could not read json file. typeID should be either 'MIDI' or 'Audio'.")
