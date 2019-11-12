@@ -72,7 +72,8 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 286.5, 388.0, 109.0, 24.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 88.0, 159.0, 109.0, 24.0 ]
+					"presentation_rect" : [ 88.0, 159.0, 109.0, 24.0 ],
+					"text" : "66"
 				}
 
 			}
@@ -92,7 +93,7 @@
 				"box" : 				{
 					"comment" : "dumpout",
 					"id" : "obj-35",
-					"index" : 0,
+					"index" : 5,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -104,7 +105,7 @@
 				"box" : 				{
 					"comment" : "gui",
 					"id" : "obj-34",
-					"index" : 0,
+					"index" : 4,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -116,7 +117,7 @@
 				"box" : 				{
 					"comment" : "audio (time, duration)",
 					"id" : "obj-33",
-					"index" : 0,
+					"index" : 3,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -128,7 +129,7 @@
 				"box" : 				{
 					"comment" : "midi",
 					"id" : "obj-32",
-					"index" : 0,
+					"index" : 2,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -140,23 +141,11 @@
 				"box" : 				{
 					"comment" : "state",
 					"id" : "obj-29",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 76.0, 420.0, 30.0, 30.0 ]
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"id" : "obj-28",
-					"maxclass" : "dict.view",
-					"numinlets" : 1,
-					"numoutlets" : 0,
-					"patching_rect" : [ 503.0, 303.0, 100.0, 100.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 219.0, 37.0, 157.0, 157.0 ]
 				}
 
 			}
@@ -208,6 +197,7 @@
 					"fontname" : "Arial",
 					"fontsize" : 12.0,
 					"id" : "obj-23",
+					"ignoreclick" : 1,
 					"maxclass" : "bach.tree",
 					"numinlets" : 1,
 					"numoutlets" : 5,
@@ -215,7 +205,9 @@
 					"outlettype" : [ "", "", "", "", "bang" ],
 					"patching_rect" : [ 300.0, 303.0, 200.0, 14.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 68.0, 37.0, 149.0, 111.0 ]
+					"presentation_rect" : [ 68.0, 37.0, 149.0, 111.0 ],
+					"whole_tree_data_0000000000" : [ "(", "somax", "(", "player", "(", "harmonic", "(", "DistanceMergeAction", "(", "_t_width", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter", ")", ")", ")", "(", "PhaseModulationMergeAction", "(", "_selectivity", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter.", ")", ")", ")", "(", "atom", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of atom peaks.", ")", ")", "(", "activity_pattern", "(", "tau_mem_decay", "(", "value", "`2.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear param", ")", ")", "(", "extinction_threshold", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Score below which peaks are removed", ")", ")", "(", "default_score", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Value of a new peaks upon creation.", ")", ")", ")", "(", "memory_space", "(", "_ngram_size", "(", "value", "`3", ")", "(", "scope", "(1, None)", ")", "(", "type_str", "int", ")", "(", "description", "Number of events to hard-match. (TODO)", ")", ")", ")", "(", "_self_influenced", "(", "value", "False", ")", "(", "scope", "(0, 1)", ")", "(", "type_str", "bool", ")", "(", "description", "Whether new events creates by player should influence this atom or not.", ")", ")", ")", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of streamview peaks.", ")", ")", ")", "(", "melodic", "(", "DistanceMergeAction", "(", "_t_width", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter", ")", ")", ")", "(", "PhaseModulationMergeAction", "(", "_selectivity", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter.", ")", ")", ")", "(", "atom", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of atom peaks.", ")", ")", "(", "activity_pattern", "(", "tau_mem_decay", "(", "value", "`2.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear param", ")", ")", "(", "extinction_threshold", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Score below which peaks are removed", ")", ")", "(", "default_score", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Value of a new peaks upon creation.", ")", ")", ")", "(", "memory_space", "(", "_ngram_size", "(", "value", "`3", ")", "(", "scope", "(1, None)", ")", "(", "type_str", "int", ")", "(", "description", "Number of events to hard-match. (TODO)", ")", ")", ")", "(", "_self_influenced", "(", "value", "False", ")", "(", "scope", "(0, 1)", ")", "(", "type_str", "bool", ")", "(", "description", "Whether new events creates by player should influence this atom or not.", ")", ")", ")", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of streamview peaks.", ")", ")", ")", "(", "self", "(", "DistanceMergeAction", "(", "_t_width", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter", ")", ")", ")", "(", "PhaseModulationMergeAction", "(", "_selectivity", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter.", ")", ")", ")", "(", "atom", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of atom peaks.", ")", ")", "(", "activity_pattern", "(", "tau_mem_decay", "(", "value", "`2.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear param", ")", ")", "(", "extinction_threshold", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Score below which peaks are removed", ")", ")", "(", "default_score", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Value of a new peaks upon creation.", ")", ")", ")", "(", "memory_space", "(", "_ngram_size", "(", "value", "`3", ")", "(", "scope", "(1, None)", ")", "(", "type_str", "int", ")", "(", "description", "Number of events to hard-match. (TODO)", ")", ")", ")", "(", "_self_influenced", "(", "value", "True", ")", "(", "scope", "(0, 1)", ")", "(", "type_str", "bool", ")", "(", "description", "Whether new events creates by player should influence this atom or not.", ")", ")", ")", "(", "_weight", "(", "value", "`1.0", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Relative scaling of streamview peaks.", ")", ")", ")", "(", "DistanceMergeAction", "(", "_t_width", "(", "value", "`0.1", ")", "(", "scope", "(0.0, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter", ")", ")", ")", "(", "PhaseModulationMergeAction", "(", "_selectivity", "(", "value", "`1.0", ")", "(", "scope", "(None, None)", ")", "(", "type_str", "float", ")", "(", "description", "Very unclear parameter.", ")", ")", ")", ")", ")" ],
+					"whole_tree_data_count" : [ 1 ]
 				}
 
 			}
@@ -272,7 +264,7 @@
 				"box" : 				{
 					"comment" : "port (int)",
 					"id" : "obj-14",
-					"index" : 0,
+					"index" : 2,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
@@ -363,7 +355,8 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 239.0, 197.0, 167.0, 22.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 9.0, 7.0, 167.0, 22.0 ]
+					"presentation_rect" : [ 9.0, 7.0, 167.0, 22.0 ],
+					"text" : "player1"
 				}
 
 			}
@@ -395,11 +388,11 @@
 				"box" : 				{
 					"comment" : "param dict",
 					"id" : "obj-2",
-					"index" : 0,
+					"index" : 3,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "" ],
+					"outlettype" : [ "dictionary" ],
 					"patching_rect" : [ 151.0, 59.0, 30.0, 30.0 ]
 				}
 
@@ -408,7 +401,7 @@
 				"box" : 				{
 					"comment" : "???",
 					"id" : "obj-1",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
@@ -552,13 +545,6 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-28", 0 ],
-					"source" : [ "obj-23", 2 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
 					"destination" : [ "obj-101", 0 ],
 					"source" : [ "obj-24", 0 ]
 				}
@@ -568,13 +554,6 @@
 				"patchline" : 				{
 					"destination" : [ "obj-23", 0 ],
 					"source" : [ "obj-25", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-28", 0 ],
-					"source" : [ "obj-26", 0 ]
 				}
 
 			}
@@ -613,25 +592,7 @@
 				}
 
 			}
- ],
-		"dependency_cache" : [ 			{
-				"name" : "OpenSoundControl.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "OSC-route.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "bach.tree.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "bach.dict2llll.mxo",
-				"type" : "iLaX"
-			}
- ],
-		"autosave" : 0
+ ]
 	}
 
 }

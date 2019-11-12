@@ -39,6 +39,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-39",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 473.0, 537.0, 90.0, 22.0 ],
+					"text" : "prepend param"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-57",
 					"maxclass" : "message",
 					"numinlets" : 2,
@@ -253,7 +265,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 110.0, 486.0, 150.0, 20.0 ],
+					"patching_rect" : [ 521.0, 358.0, 150.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 147.0, 35.0, 50.0, 20.0 ],
 					"text" : "Tempo"
@@ -266,7 +278,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 39.0, 479.0, 150.0, 20.0 ],
+					"patching_rect" : [ 521.0, 334.0, 150.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 93.0, 35.0, 38.0, 20.0 ],
 					"text" : "Time"
@@ -434,7 +446,7 @@
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 218.0, 532.0, 30.0, 30.0 ]
+					"patching_rect" : [ 266.5, 532.0, 30.0, 30.0 ]
 				}
 
 			}
@@ -446,13 +458,13 @@
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 183.0, 532.0, 30.0, 30.0 ]
+					"patching_rect" : [ 231.5, 532.0, 30.0, 30.0 ]
 				}
 
 			}
 , 			{
 				"box" : 				{
-					"comment" : "parameter dict",
+					"comment" : "parameters (dictionary or single)",
 					"id" : "obj-24",
 					"index" : 3,
 					"maxclass" : "outlet",
@@ -490,11 +502,11 @@
 				"box" : 				{
 					"id" : "obj-20",
 					"maxclass" : "newobj",
-					"numinlets" : 6,
-					"numoutlets" : 6,
-					"outlettype" : [ "", "", "", "", "", "" ],
-					"patching_rect" : [ 60.0, 481.0, 233.0, 22.0 ],
-					"text" : "route time tempo parameter_dict info error"
+					"numinlets" : 7,
+					"numoutlets" : 7,
+					"outlettype" : [ "", "", "", "", "", "", "" ],
+					"patching_rect" : [ 60.0, 481.0, 271.0, 22.0 ],
+					"text" : "route time tempo parameter_dict param info error"
 				}
 
 			}
@@ -829,14 +841,14 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-25", 0 ],
-					"source" : [ "obj-20", 3 ]
+					"source" : [ "obj-20", 4 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-26", 0 ],
-					"source" : [ "obj-20", 4 ]
+					"source" : [ "obj-20", 5 ]
 				}
 
 			}
@@ -851,6 +863,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-37", 0 ],
 					"source" : [ "obj-20", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-39", 0 ],
+					"source" : [ "obj-20", 3 ]
 				}
 
 			}
@@ -951,6 +970,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-23", 0 ],
 					"source" : [ "obj-38", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-24", 0 ],
+					"source" : [ "obj-39", 0 ]
 				}
 
 			}

@@ -326,6 +326,16 @@ class SoMaxServer(Caller):
         except ParameterError as e:
             self.logger.error(str(e))
 
+    def get_param(self, path: str):
+        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            player: str = path_parsed.pop(0)
+            self.target.send_simple("param", [path, self.players[player].get_param(path_parsed).value])
+        except (IndexError, KeyError):
+            self.logger.error(f"Invalid path")  # TODO Proper message
+        except ParameterError as e:
+            self.logger.error(str(e))
+
     def parameter_dict(self):
         self.logger.debug(f"[parameter_dict] creating parameter_dict.")
         parameter_dict: Dict[str, Dict[str, ...]] = {}

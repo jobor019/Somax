@@ -115,7 +115,7 @@ class IOParser:
         if not path:
             return []
         elif ":" in path:
-            return path.split(":")
+            return [s for s in path.split("::") if s]
         else:
             return [path]
 

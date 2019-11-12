@@ -29,6 +29,7 @@ class Parameter(HasParameterDict):
         self.description: str = description
 
     def max_representation(self) -> Dict:
+        # TODO: Remove value from this
         return vars(self)
 
     # def update_parameter_dict(self) -> Dict[str, str]:
