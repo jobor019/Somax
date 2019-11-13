@@ -39,9 +39,10 @@ class Atom(Parametric):
                                "parameters": parameters}
         return self.parameter_dict
 
-    def read(self, corpus, label_type=ClassVar[MelodicLabel]):
+    def read(self, corpus):
         self.logger.debug(f"[read]: Reading corpus {corpus}.")
         self.memory_space.read(corpus)
+        self.activity_pattern.corpus = corpus
 
     # set current weight of atom
     def set_weight(self, weight: float):

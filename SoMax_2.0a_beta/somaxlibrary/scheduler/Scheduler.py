@@ -74,7 +74,9 @@ class Scheduler:
     def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
         player: Player = trigger_event.player
         try:
-            event: CorpusEvent = player.new_event(trigger_event.target_time)
+            # TODO: Critical bug here when event.duration is 0 (for example first event)
+            # event: CorpusEvent = player.new_event(trigger_event.target_time)
+            event: CorpusEvent = player.new_event(self.time)
         except InvalidCorpus as e:
             self.logger.error(str(e))
             return

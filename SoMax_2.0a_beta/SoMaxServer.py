@@ -51,13 +51,6 @@ class SoMaxServer(Caller):
         transport.close()
         self.logger.info("SoMaxServer was successfully terminated.")
 
-    async def _gui_callback(self, interval: float = 0.2) -> None:
-        # TODO: Temporary solution
-        self.logger.info("Initializing GUI callback.")
-        while True:
-            for player in self.players.values():
-                player.send_gui()
-            await asyncio.sleep(interval)
 
     def _process_osc(self, _address, *args):
         # TODO: Move string formatting elsewhere
@@ -301,10 +294,11 @@ class SoMaxServer(Caller):
         if self.players[player].trigger_mode == TriggerMode.MANUAL:
             self.scheduler.add_trigger_event(self.players[player])
 
-    def jump(self, player):
-        # TODO: IO Error handling
-        self.logger.debug("[jump] called for player {0}.".format(player))
-        self.players[player].jump()
+    # TODO: Implement jump
+    # def jump(self, player):
+    #     # TODO: IO Error handling
+    #     self.logger.debug("[jump] called for player {0}.".format(player))
+    #     self.players[player].jump()
 
     def read_corpus(self, player: str, filepath: str):
         # TODO: IO Error handling
@@ -356,6 +350,10 @@ class SoMaxServer(Caller):
                 corpus_name, _ = os.path.splitext(file)
                 self.target.send_simple("corpus", (corpus_name, os.path.join(filepath, file)))
         self.target.send_simple("corpus", ["bang"])
+
+    def get_peaks(self, player: str):
+        # TODO: IO Error handling
+        self.players[player].send_peaks(self.scheduler.time)
 
 
 

@@ -6,6 +6,7 @@ from typing import ClassVar, Dict, Union
 
 import numpy as np
 
+from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Parameter import Parameter
 from somaxlibrary.Parameter import Parametric
@@ -14,10 +15,11 @@ from somaxlibrary.Transforms import AbstractTransform
 
 
 class AbstractActivityPattern(Parametric):
-    def __init__(self):
+    def __init__(self, corpus: Corpus = None):
         super(AbstractActivityPattern, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.peaks: [Peak] = []
+        self.corpus: Corpus = corpus
 
     @abstractmethod
     def insert(self, influences: [AbstractInfluence]) -> None:
@@ -71,7 +73,8 @@ class ClassicActivityPattern(AbstractActivityPattern):
             peak.score *= np.exp(-np.divide(new_time - peak.last_update_time, self.tau_mem_decay.value))
             peak.time += new_time - peak.last_update_time
             peak.last_update_time = new_time
-        self.peaks = [peak for peak in self.peaks if peak.score > self.extinction_threshold.value]
+        self.peaks = [peak for peak in self.peaks if peak.score > self.extinction_threshold.value
+                      and peak.time < self.corpus.duration()]
 
     def reset(self) -> None:
         self.peaks = []

@@ -24,6 +24,7 @@ class Corpus:
         :param timing_type: "relative" or "absolute"
         """
         self.logger = logging.getLogger(__name__)
+        # TODO: Remove this disgusting SequencedList
         self.ordered_events: SequencedList[float, CorpusEvent] = SequencedList()
         self.name: str = ""
         self.content_type: ContentType = None
@@ -76,12 +77,19 @@ class Corpus:
     def length(self) -> int:
         return len(self.ordered_events)
 
+    def duration(self) -> float:
+        last_event: CorpusEvent = self.ordered_events.orderedEventList[-1]
+        return last_event.onset + last_event.duration
+
     def event_at(self, index: int):
         return self.ordered_events.orderedEventList[index]
 
-    def event_closest(self, time: float):
+    def event_closest(self, time: float) -> CorpusEvent:
         # TODO: Very unoptimized
-        return self.ordered_events.get_events(time)[0][0]
+        event = self.ordered_events.get_events(time)[0][0]
+        if not event:
+            return self.ordered_events.orderedEventList[1]
+        return event
 
     @property
     def events(self):

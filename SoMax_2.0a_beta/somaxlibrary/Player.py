@@ -38,7 +38,6 @@ class Player(ScheduledMidiObject, Parametric):
         self.peak_selectors: {str: AbstractPeakSelector} = {}
 
         self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
-        self._previous_peaks: [Peak] = []
 
         # TODO: Temp
         for merge_action in [DistanceMergeAction, PhaseModulationMergeAction]:
@@ -136,7 +135,6 @@ class Player(ScheduledMidiObject, Parametric):
             raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
 
         self.improvisation_memory.append(event_and_transforms)
-        self._previous_peaks: [Peak] = peaks
 
         event: CorpusEvent = deepcopy(event_and_transforms[0])
         transforms: (AbstractTransform, ...) = event_and_transforms[1]
@@ -244,8 +242,21 @@ class Player(ScheduledMidiObject, Parametric):
             peaks.append((state, score, transform_index))
         return peaks
 
-    def send_gui(self):
-        self.target.send_gui(self.previous_peaks_raw)
+    def send_peaks(self, scheduler_time: float):
+        self._update_peaks(scheduler_time)
+        peak_group: int = 0
+        merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
+        for peak in merged_peaks:
+            state_index: int = self.corpus.event_closest(peak.time).state_index
+            self.target.send_simple("peak", [peak_group, state_index, peak.score])
+        for streamview in self.streamviews.values():
+            for atom in streamview.atoms.values():
+                peak_group += 1
+                peaks: [Peak] = atom.activity_pattern.peaks
+                for peak in peaks:
+                    state_index: int = self.corpus.event_closest(peak.time).state_index
+                    self.target.send_simple("peak", [peak_group, state_index, peak.score])
+
 
     # TODO: Reimplement as activity
     # def jump(self):
