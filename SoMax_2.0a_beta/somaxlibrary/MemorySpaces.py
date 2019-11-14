@@ -117,7 +117,7 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [AbstractInfluence]:
         """ Raises: InvalidLabelInput"""
-        if not type(label) == self.label_type:
+        if not isinstance(label, self.label_type):
             raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
         else:
             self.logger.debug(f"[influence] Influencing memory space with label {self.label_type} with label {label}.")

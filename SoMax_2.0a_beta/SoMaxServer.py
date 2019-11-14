@@ -76,9 +76,12 @@ class SoMaxServer(Caller):
 
     def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = "", override: bool = False):
         # TODO: Parse merge actions, peakselector
-        if name in self.players and not override:
-            self.logger.error(f"A player with the name '{name}' already exists.")
-            return
+        if name in self.players:
+            if not override:
+                self.logger.error(f"A player with the name '{name}' already exists.")
+                return
+            else:
+                self.delete_player(name)
         address: str = self.io_parser.parse_osc_address(name)
         trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
         target: Target = SimpleOscTarget(address, port, ip)
@@ -86,6 +89,14 @@ class SoMaxServer(Caller):
 
         if trig_mode == TriggerMode.AUTOMATIC:
             self.scheduler.add_trigger_event(self.players[name])
+
+    def delete_player(self, name: str):
+        try:
+            self.scheduler.delete_trigger(self.players[name])
+            del self.players[name]
+        except KeyError:
+            self.logger.error(f"No player deleted as a player named {name} does not exist.")
+
 
     @staticmethod
     def _osc_callback(self):
@@ -278,7 +289,7 @@ class SoMaxServer(Caller):
     #     self.process_intern_event(('ask_for_event', player_name, time, event))
     #     self.logger.debug("[new_event] New event created.")
 
-    def influence(self, player: str, label_keyword: str, value: Any, path: str = "", **kwargs):
+    def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
         self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
                           f"label keyword '{label_keyword}', value '{value}' and kwargs {kwargs}")
         try:

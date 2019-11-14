@@ -163,7 +163,11 @@ class Player(ScheduledMidiObject, Parametric):
                 except InvalidLabelInput as e:
                     self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
         else:
-            self._get_atom(path).influence(label, time, **kwargs)
+            try:
+                self._get_atom(path).influence(label, time, **kwargs)
+            except InvalidLabelInput as e:
+                self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
+
 
     def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
         """creates streamview at target path"""
@@ -243,12 +247,15 @@ class Player(ScheduledMidiObject, Parametric):
         return peaks
 
     def send_peaks(self, scheduler_time: float):
+
         self._update_peaks(scheduler_time)
         peak_group: int = 0
         merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
+        self.logger.debug(f"[send_peaks] sending {len(merged_peaks)} merged peaks...")
         for peak in merged_peaks:
             state_index: int = self.corpus.event_closest(peak.time).state_index
             self.target.send_simple("peak", [peak_group, state_index, peak.score])
+        self.logger.debug(f"[send_peaks] sending raw peaks...")
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
                 peak_group += 1

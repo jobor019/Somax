@@ -37,6 +37,7 @@ class Scheduler:
 
     def start(self) -> None:
         self.logger.info(f"Scheduler Started. Current beat is {self.beat}.")
+        self._last_callback_time = time.time()
         self.running = True
 
     def _callback(self):
@@ -128,6 +129,9 @@ class Scheduler:
             self._add_manual_trigger_event(player, self.beat)
         else:
             self.logger.debug("Could not add trigger.")
+
+    def delete_trigger(self, player: Player):
+        self.queue = [e for e in self.queue if not (isinstance(e, AutomaticTriggerEvent) and e.player == player)]
 
     def _has_trigger(self, player: Player) -> bool:  # TODO: Unoptimized approach
         for event in self.queue:
