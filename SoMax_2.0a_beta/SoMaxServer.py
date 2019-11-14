@@ -348,8 +348,8 @@ class SoMaxServer(Caller):
         for file in os.listdir(filepath):
             if file.endswith(".json"):
                 corpus_name, _ = os.path.splitext(file)
-                self.target.send_simple("corpus", (corpus_name, os.path.join(filepath, file)))
-        self.target.send_simple("corpus", ["bang"])
+                self.target.send_simple("corpus_info", (corpus_name, os.path.join(filepath, file)))
+        self.target.send_simple("corpus_info", ["bang"])
 
     def get_peaks(self, player: str):
         # TODO: IO Error handling
