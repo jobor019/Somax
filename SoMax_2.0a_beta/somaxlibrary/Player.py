@@ -263,7 +263,7 @@ class Player(ScheduledMidiObject, Parametric):
                 for peak in peaks:
                     state_index: int = self.corpus.event_closest(peak.time).state_index
                     self.target.send_simple("peak", [peak_group, state_index, peak.score])
-                self.target.send_simple("num_peaks", [peak_group, len(merged_peaks)])
+                self.target.send_simple("num_peaks", [atom.name, len(peaks)])
 
 
     # TODO: Reimplement as activity

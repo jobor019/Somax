@@ -126,8 +126,8 @@
 					"numinlets" : 5,
 					"numoutlets" : 5,
 					"outlettype" : [ "", "", "", "", "" ],
-					"patching_rect" : [ 322.5, 724.5, 76.0, 22.0 ],
-					"text" : "route 0 1 2 3"
+					"patching_rect" : [ 322.5, 724.5, 165.0, 22.0 ],
+					"text" : "route 0 self melodic harmonic"
 				}
 
 			}
@@ -1476,7 +1476,7 @@
 					"patching_rect" : [ 695.0, 640.0, 36.0, 42.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 232.5, 310.0, 57.0, 24.0 ],
-					"text" : "1564"
+					"text" : "6401"
 				}
 
 			}
@@ -1824,7 +1824,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 5.41666666666697, 110.0, 18.0, 34.0 ],
 					"size" : 2,
-					"value" : 0
+					"value" : 1
 				}
 
 			}
@@ -1856,13 +1856,13 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-38",
-					"linecount" : 8,
+					"linecount" : 5,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 662.0, 114.5, 261.0, 116.0 ],
-					"text" : "new_player $1 $2 override=True, create_streamview $1 self, create_atom $1 self::atom label=MelodicLabel self_influenced=True, create_streamview $1 melodic, create_atom $1 melodic::atom label=PitchClassLabel, create_streamview $1 harmonic, create_atom $1 harmonic::atom label=HarmonicLabel, bang"
+					"patching_rect" : [ 662.0, 114.5, 404.0, 76.0 ],
+					"text" : "new_player $1 $2 override=True, create_streamview $1 self, create_atom $1 self::self label=MelodicLabel self_influenced=True, create_streamview $1 melodic, create_atom $1 melodic::melodic label=PitchClassLabel, create_streamview $1 harmonic, create_atom $1 harmonic::harmonic label=HarmonicLabel, bang"
 				}
 
 			}
