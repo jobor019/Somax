@@ -11,6 +11,7 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
+from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidPath, InvalidLabelInput, DuplicateKeyError, InvalidJsonFormat, ParameterError
 from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
@@ -89,6 +90,7 @@ class SoMaxServer(Caller):
 
         if trig_mode == TriggerMode.AUTOMATIC:
             self.scheduler.add_trigger_event(self.players[name])
+        self.logger.info(f"Created player '{name}' with port {port} and ip {ip}.")
 
     def delete_player(self, name: str):
         try:
@@ -113,6 +115,7 @@ class SoMaxServer(Caller):
 
         try:
             self.players[player].create_streamview(path_and_name, weight, merge_actions)
+            self.logger.info(f"Created streamview with path '{player + '::' + path}'")
         except KeyError:
             self.logger.error(f"Could not create streamview for player '{player}' at path '{path}'.")
         except DuplicateKeyError as e:
@@ -136,6 +139,7 @@ class SoMaxServer(Caller):
         try:
             self.players[player].create_atom(path_and_name, weight, label, activity_type, memory_type,
                                              self_influenced, transforms)
+            self.logger.info(f"Created atom with path '{player + '::' + path}'")
             self.players[player]._parse_parameters()    # TODO: Not ideal
         except InvalidPath as e:
             self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
@@ -169,6 +173,7 @@ class SoMaxServer(Caller):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
+        self.logger.info("Scheduler was stopped.")
 
     def get_time(self):
         self.target.send_simple("time", self.scheduler.time)
@@ -300,8 +305,13 @@ class SoMaxServer(Caller):
         # TODO: Error handling (KeyError players + path_and_name)
         path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
         time: float = self.scheduler.time
-        for label in labels:
-            self.players[player].influence(path_and_name, label, time, **kwargs)
+        try:
+            for label in labels:
+                self.players[player].influence(path_and_name, label, time, **kwargs)
+        except KeyError:
+            self.logger.error(f"No player named '{player}' exists.")
+
+    def influence_onset(self, player):
         if self.players[player].trigger_mode == TriggerMode.MANUAL:
             self.scheduler.add_trigger_event(self.players[player])
 
@@ -314,8 +324,10 @@ class SoMaxServer(Caller):
     def read_corpus(self, player: str, filepath: str):
         # TODO: IO Error handling
         self.logger.debug(f"[read_corpus] called for player '{player}' and file '{filepath}'.")
+        self.logger.info(f"Reading corpus at '{filepath}' for player '{player}'...")
         try:
             self.players[player].read_corpus(filepath)
+            self.logger.info(f"Corpus successfully loaded in player '{player}'.")
         except KeyError:
             self.logger.error(f"Could not load corpus. No player named '{player}' exists.")
         except InvalidJsonFormat as e:
@@ -364,7 +376,13 @@ class SoMaxServer(Caller):
 
     def get_peaks(self, player: str):
         # TODO: IO Error handling
-        self.players[player].send_peaks(self.scheduler.time)
+        try:
+            self.players[player].send_peaks(self.scheduler.time)
+        except KeyError:
+            return
+
+    def poll_server(self):
+        self.target.send_simple("poll_server", ["bang"])
 
 
 
@@ -380,6 +398,13 @@ class SoMaxServer(Caller):
         # TODO: Info dict
         # self.send_parameter_dict()
 
+    ######################################################
+    # DEBUGGING
+    ######################################################
+
+    def _debug_state(self, player: str, state_index: int):
+        event: CorpusEvent = self.players[player].corpus.event_at(state_index)
+        self.scheduler.add_corpus_event(self.players[player], self.scheduler.time, event)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Launch and manage a SoMaxServer')

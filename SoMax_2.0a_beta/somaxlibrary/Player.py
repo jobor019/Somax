@@ -247,7 +247,6 @@ class Player(ScheduledMidiObject, Parametric):
         return peaks
 
     def send_peaks(self, scheduler_time: float):
-
         self._update_peaks(scheduler_time)
         peak_group: int = 0
         merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
@@ -255,6 +254,7 @@ class Player(ScheduledMidiObject, Parametric):
         for peak in merged_peaks:
             state_index: int = self.corpus.event_closest(peak.time).state_index
             self.target.send_simple("peak", [peak_group, state_index, peak.score])
+        self.target.send_simple("num_peaks", [peak_group, len(merged_peaks)])
         self.logger.debug(f"[send_peaks] sending raw peaks...")
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
@@ -263,6 +263,7 @@ class Player(ScheduledMidiObject, Parametric):
                 for peak in peaks:
                     state_index: int = self.corpus.event_closest(peak.time).state_index
                     self.target.send_simple("peak", [peak_group, state_index, peak.score])
+                self.target.send_simple("num_peaks", [peak_group, len(merged_peaks)])
 
 
     # TODO: Reimplement as activity
