@@ -98,7 +98,7 @@ def split_matrix_by_channel(matrix, fgChannels, bgChannels):
     return fgmatrix, bgmatrix
 
 
-def getPitchContent(data, state_nb, legato):
+def get_pitch_content(data, state_nb, legato):
     nbNotesInSlice = len(data[state_nb]["notes"])
     tmpListOfPitches = []
     for k in range(0, nbNotesInSlice):
@@ -140,8 +140,8 @@ def get_beat(onset, beats):
     return current_beat
 
 
-def computePitchClassVector(noteMatrix, tStep=20.0, thresh=0.05, m_onset=0.5, p_max=1.0, tau_up=400, tau_down=1000,
-                            decayParam=0.5):
+def computer_chroma_vector(noteMatrix, tStep=20.0, thresh=0.05, m_onset=0.5, p_max=1.0, tau_up=400, tau_down=1000,
+                           decayParam=0.5):
     nbNotes = len(noteMatrix)
     matrix = array(noteMatrix)
     tRef = min(matrix[:, 5])
