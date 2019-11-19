@@ -1,15 +1,13 @@
-import bisect
-import itertools
 import json
-import operator
 import os
+from typing import List
 
 import numpy as np
-from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, round, maximum, ones_like, average, argmax, \
-    power, dot, insert
+from numpy import array, floor, ceil, zeros, arange, round, average, argmax, \
+    insert
 
 from somaxlibrary import virfun, MidiTools
-from somaxlibrary.MidiTools import SomaxMidiParser
+from somaxlibrary.MidiTools import SomaxMidiParser, MidiIdx
 from somaxlibrary.midi.MidiInFile import MidiInFile
 
 
@@ -53,152 +51,155 @@ class CorpusBuilder(object):
             print("[ERROR] File format not recognized in corpus construction")
         return corpus_dict
 
-    def read_midi(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1], bg_channels=range(1, 17), tStep=20,
-                  tDelay=40.0, legato=100.0, tolerance=30.0):
+    # TODO: Annotate and explain parameters, handle default arguments
+    def read_midi(self, path, name, time_offset=(0.0, 0.0), fg_channels=(1,), bg_channels=range(1, 17), t_step=20,
+                  t_delay=40.0, legato=100.0, tolerance=30.0):
         # absolute: *[1], relative: *[0]
-        parser = SomaxMidiParser()
-        midi_in = MidiInFile(parser, path)
+        parser: SomaxMidiParser = SomaxMidiParser()
+        midi_in: MidiInFile = MidiInFile(parser, path)
         midi_in.read()
-        midi_data = array(parser.get_matrix())
-        fgmatrix, bgmatrix = MidiTools.splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
-        # creating harmonic ctxt
-        if time_offset != [0.0, 0.0]:
-            for i in range(0, len(fgmatrix)):
-                fgmatrix[i][0] += time_offset[0]
-                fgmatrix[i][5] += time_offset[1]
-        if bgmatrix != []:
-            if time_offset != [0.0, 0.0]:
-                for i in range(0, len(fgmatrix)):
-                    bgmatrix[i][0] += time_offset[0]
-                    bgmatrix[i][5] += time_offset[1]
-            harm_ctxt, tRef = MidiTools.computePitchClassVector(bgmatrix)
+        midi_data: np.ndarray = array(parser.get_matrix())
+        matrices: (List[List[float]], List[List[float]]) = MidiTools.split_matrix_by_channel(midi_data, fg_channels,
+                                                                                             bg_channels)
+        fgmatrix: np.ndarray = array(matrices[0])
+        bgmatrix: np.ndarray = array(matrices[1])
+        # creating harmonic context
+        fgmatrix[:, MidiIdx.POSITION_TICK] += time_offset[0]
+        fgmatrix[:, MidiIdx.POSITION_MS] += time_offset[1]
+        if bgmatrix.size != 0:
+            bgmatrix[:, MidiIdx.POSITION_TICK] += time_offset[0]
+            bgmatrix[:, MidiIdx.POSITION_MS] += time_offset[1]
+            harmonic_context, t_ref = MidiTools.computePitchClassVector(bgmatrix)
         else:
-            harm_ctxt, tRef = MidiTools.computePitchClassVector(fgmatrix)
+            harmonic_context, t_ref = MidiTools.computePitchClassVector(fgmatrix)
 
         # Initializing parameters
-        lastNoteOnset = [0, -1 - tolerance]
-        lastSliceOnset = list(lastNoteOnset)
-        state_nb = 0
-        global_time = time_offset
+        last_note_onset = [0, -1 - tolerance]
+        last_slice_onset = list(last_note_onset)
+        state_idx = 0
+        global_time_ms = time_offset
         corpus = dict({'name': name, 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
             {"state": 0, "tempo": 120, "time": {"absolute": [-1, 0], "relative": [-1, 0]}, "seg": [1, 0],
-             "beat": [0.0, 0.0, 0, 0], \
+             "beat": [0.0, 0.0, 0, 0],
              "chroma": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "pitch": 140, "notes": []})
-        tmp = dict()
+        event = dict()
 
         # Running over matrix' notes
-        for i in range(0, len(fgmatrix)):
+        for i in range(len(fgmatrix)):
             # note is not in current slice
-            if (fgmatrix[i][5] > (lastSliceOnset[1] + tolerance)):
+            if fgmatrix[i][MidiIdx.POSITION_MS] > (last_slice_onset[1] + tolerance):
                 # finalizing current slice
-                if state_nb > 0:
-                    previousSliceDuration = [fgmatrix[i][0] - lastSliceOnset[0], fgmatrix[i][5] - lastSliceOnset[1]]
-                    corpus["data"][state_nb]["time"]["absolute"][1] = float(previousSliceDuration[1])
-                    corpus["data"][state_nb]["time"]["relative"][1] = float(previousSliceDuration[0])
-                    tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], state_nb, legato)
-                    if len(tmpListOfPitches) == 0:
-                        if useRests:
-                            corpus["data"][state_nb]["pitch"] = 140  # silence
+                if state_idx > 0:
+                    previousSliceDuration = [fgmatrix[i][MidiIdx.POSITION_TICK] - last_slice_onset[0],
+                                             fgmatrix[i][MidiIdx.POSITION_MS] - last_slice_onset[1]]
+                    corpus["data"][state_idx]["time"]["absolute"][1] = float(previousSliceDuration[1])
+                    corpus["data"][state_idx]["time"]["relative"][1] = float(previousSliceDuration[0])
+                    pitches: list = MidiTools.getPitchContent(corpus["data"], state_idx, legato)
+                    if len(pitches) == 0:
+                        if useRests:  # TODO: Remove or handle. Never occurs but undefined
+                            corpus["data"][state_idx]["pitch"] = 140  # silence
                         else:
-                            state_nb -= 1  # delete slice
-                    elif len(tmpListOfPitches) == 1:
-                        corpus["data"][state_nb]["pitch"] = int(tmpListOfPitches[0])  # simply take the pitch
+                            state_idx -= 1  # delete slice
+                    elif len(pitches) == 1:
+                        corpus["data"][state_idx]["pitch"] = int(pitches[0])  # simply take the pitch
                     else:
-                        virtualfunTmp = virfun.virfun(tmpListOfPitches, 0.293)  # take the virtual root
-                        corpus["data"][state_nb]["pitch"] = int(128 + (virtualfunTmp - 8) % 12)
+                        virtual_fundamental = virfun.virfun(pitches, 0.293)  # take the virtual root
+                        corpus["data"][state_idx]["pitch"] = int(128 + (virtual_fundamental - 8) % 12)
 
                 # create a new state
-                state_nb += 1
-                global_time = float(fgmatrix[i][5])
+                state_idx += 1
+                global_time_ms = float(fgmatrix[i][MidiIdx.POSITION_MS])
 
-                tmp = dict()
-                tmp["state"] = int(state_nb);
-                tmp["time"] = dict();
-                tmp["time"]["absolute"] = list([global_time, fgmatrix[i][6]])
-                tmp["time"]["relative"] = list([fgmatrix[i][0], fgmatrix[i][1]]);
-                tmp["tempo"] = fgmatrix[i][7]
-                frameNbTmp = int(ceil((fgmatrix[i][5] + tDelay - tRef) / tStep))
+                event = dict()
+                event["state"] = int(state_idx)
+                event["time"] = dict()
+                event["time"]["absolute"] = list([global_time_ms, fgmatrix[i][MidiIdx.DUR_MS]])
+                event["time"]["relative"] = list([fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.DUR_TICK]])
+                event["tempo"] = fgmatrix[i][MidiIdx.TEMPO]
+                frameNbTmp = int(ceil((fgmatrix[i][MidiIdx.POSITION_MS] + t_delay - t_ref) / t_step))
                 if frameNbTmp <= 0:
-                    tmp["chroma"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
+                    event["chroma"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
                 else:
-                    tmp["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1]))].tolist()
-                tmp["pitch"] = 0;
-                tmp["notes"] = []
+                    event["chroma"] = harmonic_context[:, min(frameNbTmp, int(harmonic_context.shape[1]))].tolist()
+                event["pitch"] = 0
+                event["notes"] = []
 
                 # if some notes ended in previous slice...
-                for k in range(0, len(corpus["data"][state_nb - 1]["notes"])):
-                    if ((corpus["data"][state_nb - 1]["notes"][k]["time"]["relative"][0] +
-                         corpus["data"][state_nb - 1]["notes"][k]["time"]["relative"][1]) > previousSliceDuration[0]):
+                for k in range(0, len(corpus["data"][state_idx - 1]["notes"])):
+                    if ((corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][0] +
+                         corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][1]) > previousSliceDuration[0]):
                         # adding lasting notes of previous slice to the new slice
                         note_to_add = dict()
-                        note_to_add["pitch"] = int(corpus["data"][state_nb - 1]["notes"][k]["pitch"])
-                        note_to_add["velocity"] = int(corpus["data"][state_nb - 1]["notes"][k]["velocity"])
-                        note_to_add["channel"] = int(corpus["data"][state_nb - 1]["notes"][k]["channel"])
+                        note_to_add["pitch"] = int(corpus["data"][state_idx - 1]["notes"][k]["pitch"])
+                        note_to_add["velocity"] = int(corpus["data"][state_idx - 1]["notes"][k]["velocity"])
+                        note_to_add["channel"] = int(corpus["data"][state_idx - 1]["notes"][k]["channel"])
                         note_to_add["time"] = dict()
                         note_to_add["time"]["relative"] = list(
-                            corpus["data"][state_nb - 1]["notes"][k]["time"]["relative"])
+                            corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"])
                         note_to_add["time"]["absolute"] = list(
-                            corpus["data"][state_nb - 1]["notes"][k]["time"]["absolute"])
+                            corpus["data"][state_idx - 1]["notes"][k]["time"]["absolute"])
                         note_to_add["time"]["relative"][0] = note_to_add["time"]["relative"][0] - float(
                             previousSliceDuration[0])
                         note_to_add["time"]["absolute"][0] = note_to_add["time"]["absolute"][0] - float(
                             previousSliceDuration[1])
                         if note_to_add["time"]["absolute"][0] > 0:
-                            note_to_add["velocity"] = int(corpus["data"][state_nb - 1]["notes"][k]["velocity"])
+                            note_to_add["velocity"] = int(corpus["data"][state_idx - 1]["notes"][k]["velocity"])
                         else:
                             note_to_add["velocity"] = 0
-                        tmp["notes"].append(note_to_add)
+                        event["notes"].append(note_to_add)
                 # adding the new note
-                tmp["notes"].append(dict())
-                n = len(tmp["notes"]) - 1
-                tmp["notes"][n] = {"pitch": fgmatrix[i][3], "velocity": fgmatrix[i][4], "channel": fgmatrix[i][2],
-                                   "time": dict()}
-                tmp["notes"][n]["time"]["absolute"] = [0, fgmatrix[i][6]]
-                tmp["notes"][n]["time"]["relative"] = [0, fgmatrix[i][1]]
+                event["notes"].append(dict())
+                n = len(event["notes"]) - 1
+                event["notes"][n] = {"pitch": fgmatrix[i][MidiIdx.NOTE], "velocity": fgmatrix[i][MidiIdx.VEL],
+                                     "channel": fgmatrix[i][MidiIdx.CHANNEL], "time": dict()}
+                event["notes"][n]["time"]["absolute"] = [0, fgmatrix[i][MidiIdx.DUR_MS]]
+                event["notes"][n]["time"]["relative"] = [0, fgmatrix[i][MidiIdx.DUR_TICK]]
 
                 # update variables used during the slicing process
-                lastNoteOnset = [fgmatrix[i][0], fgmatrix[i][5]]
-                lastSliceOnset = [fgmatrix[i][0], fgmatrix[i][5]]
-                corpus["data"].append(tmp)
+                last_note_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
+                last_slice_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
+                corpus["data"].append(event)
             else:
                 # note in current slice
-                nbNotesInSlice = len(corpus["data"][state_nb]["notes"])
-                offset = fgmatrix[i][5] - corpus["data"][state_nb]["time"]["absolute"][0]
-                offset_r = fgmatrix[i][0] - corpus["data"][state_nb]["time"]["relative"][0]
-                tmp["notes"].append(
-                    {"pitch": fgmatrix[i][3], "velocity": fgmatrix[i][4], "channel": fgmatrix[i][2], "time": dict()})
-                tmp["notes"][nbNotesInSlice]["time"]["absolute"] = [offset, fgmatrix[i][6]]
-                tmp["notes"][nbNotesInSlice]["time"]["relative"] = [offset_r, fgmatrix[i][1]]
+                nbNotesInSlice = len(corpus["data"][state_idx]["notes"])
+                offset = fgmatrix[i][MidiIdx.POSITION_MS] - corpus["data"][state_idx]["time"]["absolute"][0]
+                offset_r = fgmatrix[i][MidiIdx.POSITION_TICK] - corpus["data"][state_idx]["time"]["relative"][0]
+                event["notes"].append(
+                    {"pitch": fgmatrix[i][MidiIdx.NOTE], "velocity": fgmatrix[i][MidiIdx.VEL],
+                     "channel": fgmatrix[i][MidiIdx.CHANNEL], "time": dict()})
+                event["notes"][nbNotesInSlice]["time"]["absolute"] = [offset, fgmatrix[i][MidiIdx.DUR_MS]]
+                event["notes"][nbNotesInSlice]["time"]["relative"] = [offset_r, fgmatrix[i][MidiIdx.DUR_TICK]]
 
                 # extending slice duration
-                if ((fgmatrix[i][6] + offset) > corpus["data"][state_nb]["time"]["absolute"][1]):
-                    corpus["data"][state_nb]["time"]["absolute"][1] = fgmatrix[i][6] + int(offset)
-                    corpus["data"][state_nb]["time"]["relative"][1] = fgmatrix[i][1] + int(offset_r)
-                lastNoteOnset = [fgmatrix[i][0], fgmatrix[i][5]]
+                if ((fgmatrix[i][6] + offset) > corpus["data"][state_idx]["time"]["absolute"][1]):
+                    corpus["data"][state_idx]["time"]["absolute"][1] = fgmatrix[i][MidiIdx.DUR_MS] + int(offset)
+                    corpus["data"][state_idx]["time"]["relative"][1] = fgmatrix[i][MidiIdx.DUR_TICK] + int(offset_r)
+                last_note_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
 
         # on finalise la slice courante
-        global_time = fgmatrix[i][5]
-        lastSliceDuration = corpus["data"][state_nb]["time"]["absolute"][1]
-        nbNotesInLastSlice = len(corpus["data"][state_nb]["notes"])
-        tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], state_nb, legato)
-        if len(tmpListOfPitches) == 0:
+        global_time_mst = fgmatrix[i][MidiIdx.POSITION_MS]
+        lastSliceDuration = corpus["data"][state_idx]["time"]["absolute"][1]
+        nbNotesInLastSlice = len(corpus["data"][state_idx]["notes"])
+        pitches = MidiTools.getPitchContent(corpus["data"], state_idx, legato)
+        if len(pitches) == 0:
             if useRests:
-                corpus["data"][state_nb]["pitch"] = 140  # silence
+                corpus["data"][state_idx]["pitch"] = 140  # silence
             else:
-                state_nb -= 1  # delete slice
-        elif len(tmpListOfPitches) == 1:
-            corpus["data"][state_nb]["pitch"] = int(tmpListOfPitches[0])
+                state_idx -= 1  # delete slice
+        elif len(pitches) == 1:
+            corpus["data"][state_idx]["pitch"] = int(pitches[0])
         else:
-            virtualFunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-            corpus["data"][state_nb]["pitch"] = int(128 + (virtualFunTmp - 8) % 12)
+            virtualFunTmp = virfun.virfun(pitches, 0.293)
+            corpus["data"][state_idx]["pitch"] = int(128 + (virtualFunTmp - 8) % 12)
 
-        frameNbTmp = int(ceil((fgmatrix[i][5] + tDelay - tRef) / tStep))
+        frameNbTmp = int(ceil((fgmatrix[i][5] + t_delay - t_ref) / t_step))
         if (frameNbTmp <= 0):
-            corpus["data"][state_nb]["chroma"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            corpus["data"][state_idx]["chroma"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][state_nb]["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1]))].tolist()
-        corpus["size"] = state_nb + 1
+            corpus["data"][state_idx]["chroma"] = harmonic_context[:,
+                                                  min(frameNbTmp, int(harmonic_context.shape[1]))].tolist()
+        corpus["size"] = state_idx + 1
         return corpus
 
     def read_harmonic_data(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1, 2, 3, 4], bg_channels=range(1, 17),
@@ -225,7 +226,8 @@ class CorpusBuilder(object):
         midi_in = MidiInFile(parser, path)
         midi_in.read()
         midi_data = array(parser.get_matrix())
-        fgmatrix, bgmatrix = MidiTools.splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
+        fgmatrix, bgmatrix = MidiTools.split_matrix_by_channel(midi_data, fg_channels,
+                                                               bg_channels)  # de-interlacing information
 
         corpus = dict({'name': name, 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
@@ -279,7 +281,7 @@ class CorpusBuilder(object):
 
                 if stateIdx > 0:
                     tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], stateIdx,
-                                                       legato)  # on obtient l'etiquette de la slice precedente
+                                                                 legato)  # on obtient l'etiquette de la slice precedente
                     l = len(tmpListOfPitches)
                     if l == 0:
                         corpus["data"][stateIdx]["pitch"] = 140  # repos
@@ -495,9 +497,6 @@ class CorpusBuilder(object):
 #############################################TOOLS##############################################################################################################################################
 
 # Class to transform midi file in MIDI matrix
-
-
-
 
 
 if __name__ == '__main__':

@@ -8,7 +8,19 @@ from numpy import floor, zeros, ceil, array, exp, log, arange, maximum, log2, wh
 from somaxlibrary.midi.MidiOutStream import MidiOutStream
 
 
+class MidiIdx:
+    POSITION_TICK = 0
+    DUR_TICK = 1
+    CHANNEL = 2
+    NOTE = 3
+    VEL = 4
+    POSITION_MS = 5
+    DUR_MS = 6
+    TEMPO = 7
+
+
 class SomaxMidiParser(MidiOutStream):
+
     def __init__(self):
         MidiOutStream.__init__(self)
         self.matrix = []
@@ -75,7 +87,7 @@ class SomaxMidiParser(MidiOutStream):
         return self.sigs
 
 
-def splitMatrixByChannel(matrix, fgChannels, bgChannels):
+def split_matrix_by_channel(matrix, fgChannels, bgChannels):
     fgmatrix = []
     bgmatrix = []
     for i in range(0, len(matrix)):
