@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 34.0, 79.0, 1589.0, 1010.0 ],
+		"rect" : [ 34.0, 79.0, 1059.0, 718.0 ],
 		"bglocked" : 1,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -1128,8 +1128,9 @@
 					"bgcolor" : [ 0.666667, 0.666667, 0.666667, 1.0 ],
 					"bgoncolor" : [ 0.666667, 0.666667, 0.666667, 1.0 ],
 					"fontface" : 1,
-					"fontsize" : 13.0,
+					"fontsize" : 11.0,
 					"id" : "obj-481",
+					"ignoreclick" : 1,
 					"legacytextcolor" : 1,
 					"maxclass" : "textbutton",
 					"mode" : 1,
@@ -1142,8 +1143,8 @@
 					"presentation_rect" : [ 269.0, 19.0, 62.0, 20.0 ],
 					"rounded" : 11.0,
 					"style" : "",
-					"text" : "start",
-					"textcolor" : [ 0.15, 0.15, 0.15, 1.0 ],
+					"text" : "not ready",
+					"textcolor" : [ 0.45, 0.45, 0.45, 1.0 ],
 					"texton" : "stop",
 					"textoncolor" : [ 0.698039, 0.145098, 0.145098, 1.0 ],
 					"textovercolor" : [ 0.1, 0.1, 0.1, 1.0 ],
@@ -11299,7 +11300,7 @@
 									"patching_rect" : [ 187.0, 510.0, 173.0, 20.0 ],
 									"saved_object_attributes" : 									{
 										"embed" : 0,
-										"name" : "1124_taboo_mod_values",
+										"name" : "1048_taboo_mod_values",
 										"parameter_enable" : 0,
 										"range" : 129,
 										"showeditor" : 0,
@@ -11549,7 +11550,7 @@
 													"patching_rect" : [ 33.0, 156.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1233_taboo_mod_values",
+														"name" : "1048_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -11621,7 +11622,7 @@
 													"patching_rect" : [ 59.0, 280.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1233_taboo_mod_values",
+														"name" : "1048_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -20041,6 +20042,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"patching_rect" : [ 1177.176147, 1373.988525, 84.0, 42.0 ],
+					"presentation" : 1,
 					"presentation_rect" : [ 238.5, 96.0, 66.0, 33.0 ],
 					"style" : ""
 				}
@@ -22341,7 +22343,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 410.0, 18.0, 39.0, 18.0 ],
 					"style" : "",
-					"text" : "4397"
+					"text" : " "
 				}
 
 			}
@@ -22373,7 +22375,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 377.0, 18.0, 45.0, 18.0 ],
 					"style" : "",
-					"text" : "27"
+					"text" : " "
 				}
 
 			}
@@ -28393,7 +28395,7 @@
 					"bgfillcolor_type" : "color",
 					"depth" : 2,
 					"id" : "obj-35",
-					"items" : [ "-- click to refresh --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "Sax_gentle cat_Slow", ",", "schoenberg" ],
+					"items" : [ "-- click to load a corpus --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "Beethoven_SonF-1_Knorre_11025", ",", "best_composition", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "debussy_part", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "noteMatrix", ",", "Sax_gentle cat_Slow_OLD", ",", "schoenberg" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -30182,7 +30184,7 @@
 					"destination" : [ "obj-789", 2 ],
 					"source" : [ "obj-481", 0 ],
 					"watchpoint_flags" : 2,
-					"watchpoint_id" : 1
+					"watchpoint_id" : 2
 				}
 
 			}

@@ -4,49 +4,50 @@ import json
 import operator
 import os
 
+import numpy as np
 from numpy import array, exp, where, log2, floor, ceil, zeros, log, arange, round, maximum, ones_like, average, argmax, \
     power, dot, insert
-import numpy as np
 
-from somaxlibrary import virfun
+from somaxlibrary import virfun, MidiTools
+from somaxlibrary.MidiTools import SomaxMidiParser
 from somaxlibrary.midi.MidiInFile import MidiInFile
-from somaxlibrary.midi.MidiOutStream import MidiOutStream
 
 
 class CorpusBuilder(object):
-    midi_exts = ['.mid', '.midi']
-    audio_exts = ['.wav', '.aiff', '.aif']
+    MIDI_EXTS = ['.mid', '.midi']
+    AUDIO_EXTS = ['.wav', '.aiff', '.aif']
 
     def __init__(self):
-        self.attribute = "such an handsome attribute"
+        pass
 
-    def build_corpus(self, path, output='corpus/', options={}):
+    def build_corpus(self, path: str, output: str = 'corpus/', **kwargs) -> None:
         assert type(path) == str
-        name, _ = os.path.splitext(path.split("/")[-1])
+        filename, _ = os.path.splitext(path.split("/")[-1])
         if not os.path.exists(path):
-            raise IOError("[Error 2] : " + path + "does not exist")
+            raise IOError(f"Could not build corpus, path '{path}' does not exist")
         if os.path.isdir(path):
-            name = path.split("/")[-1]
+            filename = path.split("/")[-1]
 
         elif os.path.isfile(path):
-            corpus = self.read_file(path, name, options)
-        f = open(output + name + '.json', 'w')
-        json.dump(corpus, f)
-        return corpus
+            # TODO: Change typesig once read_file has been updated
+            corpus: dict = self.read_file(path, filename, **kwargs)
+        output_filepath: str = os.path.join(os.path.dirname(__file__), '..', output, filename + '.json')
+        with open(output_filepath, 'w') as f:
+            json.dump(corpus, f)
 
-    def read_file(self, path, name, options={}):
+    def read_file(self, path, name, **kwargs):
         _, ext = os.path.splitext(path)
-        if ext in self.midi_exts:
+        if ext in self.MIDI_EXTS:
             # TODO: Note! This line has been altered and will currently run harmonic, not melodic parsing.
-            note_segmented_corpus_dict = self.read_midi(path, name, **options)
-            beat_segmented_corpus_dict = self.read_harmonic_data(path, name, **options)
+            note_segmented_corpus_dict = self.read_midi(path, name, **kwargs)
+            beat_segmented_corpus_dict = self.read_harmonic_data(path, name, **kwargs)
             corpus_dict = {"name": note_segmented_corpus_dict["name"],
                            "typeID": note_segmented_corpus_dict["typeID"],
                            "note_segmented": note_segmented_corpus_dict,
                            "beat_segmented": beat_segmented_corpus_dict}
-        elif ext in self.audio_exts:
+        elif ext in self.AUDIO_EXTS:
             # TODO: Not properly supported yet
-            corpus_dict = self.read_audio(path, name, **options)
+            corpus_dict = self.read_audio(path, name, **kwargs)
         else:
             # TODO: Raise error, not print error.
             print("[ERROR] File format not recognized in corpus construction")
@@ -59,7 +60,7 @@ class CorpusBuilder(object):
         midi_in = MidiInFile(parser, path)
         midi_in.read()
         midi_data = array(parser.get_matrix())
-        fgmatrix, bgmatrix = splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
+        fgmatrix, bgmatrix = MidiTools.splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
         # creating harmonic ctxt
         if time_offset != [0.0, 0.0]:
             for i in range(0, len(fgmatrix)):
@@ -70,9 +71,9 @@ class CorpusBuilder(object):
                 for i in range(0, len(fgmatrix)):
                     bgmatrix[i][0] += time_offset[0]
                     bgmatrix[i][5] += time_offset[1]
-            harm_ctxt, tRef = computePitchClassVector(bgmatrix)
+            harm_ctxt, tRef = MidiTools.computePitchClassVector(bgmatrix)
         else:
-            harm_ctxt, tRef = computePitchClassVector(fgmatrix)
+            harm_ctxt, tRef = MidiTools.computePitchClassVector(fgmatrix)
 
         # Initializing parameters
         lastNoteOnset = [0, -1 - tolerance]
@@ -95,7 +96,7 @@ class CorpusBuilder(object):
                     previousSliceDuration = [fgmatrix[i][0] - lastSliceOnset[0], fgmatrix[i][5] - lastSliceOnset[1]]
                     corpus["data"][state_nb]["time"]["absolute"][1] = float(previousSliceDuration[1])
                     corpus["data"][state_nb]["time"]["relative"][1] = float(previousSliceDuration[0])
-                    tmpListOfPitches = getPitchContent(corpus["data"], state_nb, legato)
+                    tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], state_nb, legato)
                     if len(tmpListOfPitches) == 0:
                         if useRests:
                             corpus["data"][state_nb]["pitch"] = 140  # silence
@@ -180,7 +181,7 @@ class CorpusBuilder(object):
         global_time = fgmatrix[i][5]
         lastSliceDuration = corpus["data"][state_nb]["time"]["absolute"][1]
         nbNotesInLastSlice = len(corpus["data"][state_nb]["notes"])
-        tmpListOfPitches = getPitchContent(corpus["data"], state_nb, legato)
+        tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], state_nb, legato)
         if len(tmpListOfPitches) == 0:
             if useRests:
                 corpus["data"][state_nb]["pitch"] = 140  # silence
@@ -200,7 +201,8 @@ class CorpusBuilder(object):
         corpus["size"] = state_nb + 1
         return corpus
 
-    def read_harmonic_data(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1,2,3,4], bg_channels=range(1,17), tStep=20,
+    def read_harmonic_data(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1, 2, 3, 4], bg_channels=range(1, 17),
+                           tStep=20,
                            tDelay=40.0, legato=100.0, tolerance=30.0):
         # TODO: Once up and running, rewrite this!! It's a monster of dictionaries, matrices with duplicated data
         #   (fgmatrix, matrix), magic number matrices that aren't used (variable `matrix`: index 1,2,3,4 could just
@@ -223,7 +225,7 @@ class CorpusBuilder(object):
         midi_in = MidiInFile(parser, path)
         midi_in.read()
         midi_data = array(parser.get_matrix())
-        fgmatrix, bgmatrix = splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
+        fgmatrix, bgmatrix = MidiTools.splitMatrixByChannel(midi_data, fg_channels, bg_channels)  # de-interlacing information
 
         corpus = dict({'name': name, 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
@@ -237,7 +239,7 @@ class CorpusBuilder(object):
 
         matrix = zeros((cd.size, 10))
         matrix[:, 0] = cd
-        matrix[:, 1] = 1.0      # the length of each slice when beat-segmented is always exactly one beat.
+        matrix[:, 1] = 1.0  # the length of each slice when beat-segmented is always exactly one beat.
         matrix[:, 2] = 1
         matrix[:, 3] = 60
         matrix[:, 4] = 100
@@ -260,23 +262,24 @@ class CorpusBuilder(object):
         # print matrix
 
         if (len(bgmatrix) != 0):
-            hCtxt, tRef = computePitchClassVector(bgmatrix, tStep)
+            hCtxt, tRef = MidiTools.computePitchClassVector(bgmatrix, tStep)
         else:
             print("Warning: no notes in background channels. Computing harmonic context with foreground channels")
-            hCtxt, tRef = computePitchClassVector(fgmatrix, tStep)
+            hCtxt, tRef = MidiTools.computePitchClassVector(fgmatrix, tStep)
 
         lastNoteOnset = [0, -1 - tolerance]
         lastSliceOnset = lastNoteOnset
         stateIdx = 0
         nbNotes = cd.size
-        global_time = time_offset       # TODO: List here but changed to int below????
+        global_time = time_offset  # TODO: List here but changed to int below????
         nextState = dict()
         matrix = np.asarray(matrix)
         for i in range(0, matrix.shape[0]):  # on parcourt les notes de la matrice
             if (matrix[i][5] > lastSliceOnset[1] + tolerance):  # la note n'est pas consideree dans la slice courante
 
                 if stateIdx > 0:
-                    tmpListOfPitches = getPitchContent(corpus["data"], stateIdx, legato)  # on obtient l'etiquette de la slice precedente
+                    tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], stateIdx,
+                                                       legato)  # on obtient l'etiquette de la slice precedente
                     l = len(tmpListOfPitches)
                     if l == 0:
                         corpus["data"][stateIdx]["pitch"] = 140  # repos
@@ -337,7 +340,7 @@ class CorpusBuilder(object):
                         nextState["notes"].append(note_to_add)
 
                         # modify it
-                        corpus["data"][stateIdx - 1]["notes"][k]["time"]["absolute"][1] = 0     # TODO: Not sure why
+                        corpus["data"][stateIdx - 1]["notes"][k]["time"]["absolute"][1] = 0  # TODO: Not sure why
 
                 # add the new note
                 numNotesInSlice = len(nextState["notes"])
@@ -391,11 +394,11 @@ class CorpusBuilder(object):
                     # self.logger.debug("Setting velocity of note", k, "of state", stateIdx, "to 0"
                     corpus["data"][stateIdx]["notes"][k]["time"]["absolute"][0] = int(
                         corpus["data"][stateIdx]["notes"][k]["time"]["absolute"][1]) + int(
-                        corpus["data"][stateIdx]["notes"][k]["time"]["absolute"][0])        # TODO: What??
-                    corpus["data"][stateIdx]["notes"][k]["time"]["relative"][0] = int(      # TODO: added for coherence
+                        corpus["data"][stateIdx]["notes"][k]["time"]["absolute"][0])  # TODO: What??
+                    corpus["data"][stateIdx]["notes"][k]["time"]["relative"][0] = int(  # TODO: added for coherence
                         corpus["data"][stateIdx]["notes"][k]["time"]["relative"][1]) + int(
                         corpus["data"][stateIdx]["notes"][k]["time"]["relative"][0])
-        tmpListOfPitches = getPitchContent(corpus["data"], stateIdx, legato)
+        tmpListOfPitches = MidiTools.getPitchContent(corpus["data"], stateIdx, legato)
         if len(tmpListOfPitches) == 0:
             corpus["data"][stateIdx]["pitch"] = 140
         elif len(tmpListOfPitches) == 1:
@@ -462,7 +465,7 @@ class CorpusBuilder(object):
             tmp["time"] = dict()
             tmp["time"]["absolute"] = [current_time * 1000.0, (next_time - current_time) * 1000.0]
             # cur
-            current_beat = int(get_beat(seg[o], beats))  # closer beat
+            current_beat = int(MidiTools.get_beat(seg[o], beats))  # closer beat
             previous_beat = int(floor(current_beat))
             current_beat_t = librosa.core.frames_to_time(beats[previous_beat])
             if previous_beat < len(beats) - 1:
@@ -479,7 +482,7 @@ class CorpusBuilder(object):
 
             pitch_maxs = argmax(harm_ctxt[:, seg_samp[o]:e], axis=0)
             tmp["chroma"] = average(harm_ctxt_li[:, seg_samp[o]:e], 1).tolist()
-            tmp["pitch"] = most_common(pitch_maxs)
+            tmp["pitch"] = MidiTools.most_common(pitch_maxs)
             tmp["notes"] = dict()
             corpus["data"].append(tmp)
 
@@ -492,179 +495,28 @@ class CorpusBuilder(object):
 #############################################TOOLS##############################################################################################################################################
 
 # Class to transform midi file in MIDI matrix
-class SomaxMidiParser(MidiOutStream):
-    def __init__(self):
-        MidiOutStream.__init__(self)
-        self.matrix = []
-        self.orderedTimeList = []
-        self.orderedEventList = []
-        self.midiTempo = 500000
-        self.realTempo = 120
-        self.res = 96
-        self.held_notes = dict()
-        self.sigs = [[0, (4, 2)]]
-
-    def tempo(self, value):
-        self.midiTempo = value
-        self.realTempo = 60.0 / value * 1e6
-
-    def header(self, format=0, nTracks=1, division=96):
-        self.res = division
-
-    def note_on(self, channel=0, note=0x40, velocity=0x40):
-        t = self.abs_time()
-        if (velocity == 0x0):
-            self.note_off(channel, note, velocity)
-        else:
-            i = bisect.bisect_right(self.orderedTimeList, t)
-            self.orderedTimeList.insert(i, t)
-
-            # self.orderedEventList.insert(i, [self.tickToMS(t), note, velocity, 0.0, channel, self.realTempo])
-            self.orderedEventList.insert(i,
-                                         [self.tickToQuarterNote(t), 0.0, channel + 1, note, velocity, self.tickToMS(t),
-                                          0.0, self.realTempo])
-            self.held_notes[(note, channel)] = i
-
-    def note_off(self, channel=0, note=0x40, velocity=0x40):
-        try:
-            i = self.held_notes[(note, channel)]
-            self.orderedEventList[i][6] = self.tickToMS(self.abs_time()) - self.orderedEventList[i][5]
-            self.orderedEventList[i][1] = self.tickToQuarterNote(self.abs_time()) - self.orderedEventList[i][0]
-            del self.held_notes[(note, channel)]
-        except:
-            pass
-
-    # print "Warning : note-off at", self.abs_time()
-
-    def eof(self):
-        pass
-
-    def tickToMS(self, tick):
-        return tick * self.midiTempo / self.res / 1000.0
-
-    def tickToQuarterNote(self, tick):
-        return round(tick * 1.0 / self.res, 3)
-
-    def time_signature(self, nn, dd, cc, bb):
-        self.sig = (nn, dd)
-        if self.abs_time() == 0:
-            self.sigs[0] = [0, (nn, dd)]
-        else:
-            self.sigs.append([self.abs_time(), (nn, dd)])
-
-    def get_matrix(self):
-        return self.orderedEventList
-
-    def get_sigs(self):
-        return self.sigs
 
 
-def splitMatrixByChannel(matrix, fgChannels, bgChannels):
-    fgmatrix = []
-    bgmatrix = []
-    for i in range(0, len(matrix)):
-        if matrix[i][2] in fgChannels:
-            fgmatrix.append(matrix[i])
-        if matrix[i][2] in bgChannels:
-            bgmatrix.append(matrix[i])
-    return fgmatrix, bgmatrix
 
 
-def getPitchContent(data, state_nb, legato):
-    nbNotesInSlice = len(data[state_nb]["notes"])
-    tmpListOfPitches = []
-    for k in range(0, nbNotesInSlice):
-        if (data[state_nb]["notes"][k]["velocity"] > 0) \
-                or (data[state_nb]["notes"][k]["time"]["absolute"][0] > legato):
-            tmpListOfPitches.append(data[state_nb]["notes"][k]["pitch"])
 
-    return list(set(tmpListOfPitches))
+if __name__ == '__main__':
+    corpus_builder: CorpusBuilder = CorpusBuilder()
+    corpus_builder.build_corpus("/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Corpus/debussy_part.mid",
+                                "corpusbuilder_tests")
+    corpus_builder.build_corpus("/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Corpus/best_composition.mid",
+                                "corpusbuilder_tests")
 
+    # TODO Temporary test scenario
+    with open("/Users/joakimborg/somax2/corpusbuilder_tests/best_composition_pre_rewrite.json", "r") as read_file:
+        b1 = json.load(read_file)
+    with open("/Users/joakimborg/somax2/corpusbuilder_tests/best_composition.json", "r") as read_file:
+        b2 = json.load(read_file)
+    with open("/Users/joakimborg/somax2/corpusbuilder_tests/debussy_part_pre_rewrite.json", "r") as read_file:
+        d1 = json.load(read_file)
+    with open("/Users/joakimborg/somax2/corpusbuilder_tests/debussy_part.json", "r") as read_file:
+        d2 = json.load(read_file)
 
-def most_common(L):
-    # get an iterable of (item, iterable) pairs
-    SL = sorted((x, i) for i, x in enumerate(L))
-    # print 'SL:', SL
-    groups = itertools.groupby(SL, key=operator.itemgetter(0))
-
-    # auxiliary function to get "quality" for an item
-    def _auxfun(g):
-        item, iterable = g
-        count = 0
-        min_index = len(L)
-        for _, where in iterable:
-            count += 1
-            min_index = min(min_index, where)
-        # print 'item %r, count %r, minind %r' % (item, count, min_index)
-        return count, -min_index
-
-    # pick the highest-count/earliest item
-    return max(groups, key=_auxfun)[0]
-
-
-def get_beat(onset, beats):
-    indice = bisect.bisect_left(beats, onset)  # insertion index of the onset in the beats
-    current_beat = indice  # get the current beat
-    try:
-        current_beat += round((onset * 1.0 - beats[indice]) / (beats[indice + 1] - beats[indice]), 1)
-    except:
-        pass
-    return current_beat
-
-
-def computePitchClassVector(noteMatrix, tStep=20.0, thresh=0.05, m_onset=0.5, p_max=1.0, tau_up=400, tau_down=1000,
-                            decayParam=0.5):
-    nbNotes = len(noteMatrix)
-    matrix = array(noteMatrix)
-    tRef = min(matrix[:, 5])
-    matrix[:, 5] -= tRef
-    tEndOfNM = max(matrix[:, 5] + matrix[:, 6]) + 1000
-    nbSteps = int(ceil(tEndOfNM / tStep))
-    pVector = zeros((128, nbSteps))
-    mVector = zeros((12, nbSteps))
-    nbMaxHarmonics = 10;
-
-    for i in range(0, nbNotes):
-        if (matrix[i, 5] == 0):
-            t_on = 0.0
-        else:
-            t_on = matrix[i, 5]
-
-        t_off = t_on + matrix[i, 6]
-
-        ind_t_on = int(floor(t_on / tStep))
-        ind_t_off = int(floor(t_off / tStep))
-
-        p_t_off = (m_onset - p_max) * exp(-(t_off - t_on) / tau_up) + p_max
-        t_end = min(tEndOfNM, t_off - tau_down * log(thresh / p_t_off))
-        ind_t_end = int(floor(t_end / tStep))
-
-        p_up = (m_onset - p_max) * exp(-(arange(ind_t_on, ind_t_off) * tStep - t_on) / tau_up) + p_max
-        p_down = p_t_off * exp(-(arange(ind_t_off, ind_t_end) * tStep - t_off) / tau_down)
-
-        ind_p = int(matrix[i, 3])  # + 1?
-
-        pVector[ind_p, ind_t_on:ind_t_off] = maximum(pVector[ind_p, ind_t_on:ind_t_off], p_up)
-        pVector[ind_p, ind_t_off:ind_t_end] = maximum(pVector[ind_p, ind_t_off:ind_t_end], p_down)
-
-        listOfMidiHarmonics = matrix[i, 3] + round(12 * log2(1 + arange(1, nbMaxHarmonics)))
-        listOfMidiHarmonics = listOfMidiHarmonics[where(listOfMidiHarmonics < 128)].astype(int)
-
-        if listOfMidiHarmonics.size != 0:
-            pVector[listOfMidiHarmonics, ind_t_on:ind_t_off] = maximum(pVector[listOfMidiHarmonics, ind_t_on:ind_t_off], \
-                                                                       dot(power(
-                                                                           ones_like(listOfMidiHarmonics) * decayParam,
-                                                                           arange(1,
-                                                                                  listOfMidiHarmonics.size + 1)).reshape(
-                                                                           listOfMidiHarmonics.size, 1),
-                                                                           p_up.reshape(1, p_up.size)))
-
-            pVector[listOfMidiHarmonics, ind_t_off:ind_t_end] = maximum(
-                pVector[listOfMidiHarmonics, ind_t_off:ind_t_end], \
-                dot(power(ones_like(listOfMidiHarmonics) * decayParam, arange(1, listOfMidiHarmonics.size + 1)).reshape(
-                    listOfMidiHarmonics.size, 1), p_down.reshape(1, p_down.size)))
-
-    for k in range(0, 128):
-        ind_pc = k % 12
-        mVector[ind_pc, :] = mVector[ind_pc, :] + pVector[k, :]
-    return mVector, tRef
+    assert b1 == b2
+    assert d1 == d2
+    print("Temporary tests successfully terminated")
