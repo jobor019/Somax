@@ -17,6 +17,7 @@ class MidiIdx:
     POSITION_MS = 5
     DUR_MS = 6
     TEMPO = 7
+    NUM_INDICES = 8
 
 
 class SomaxMidiParser(MidiOutStream):
