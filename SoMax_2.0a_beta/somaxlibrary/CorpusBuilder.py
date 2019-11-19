@@ -96,15 +96,18 @@ class CorpusBuilder(object):
                     corpus["data"][state_idx]["time"]["absolute"][1] = float(previous_slice_duration[1])
                     corpus["data"][state_idx]["time"]["relative"][1] = float(previous_slice_duration[0])
                     pitches: list = MidiTools.get_pitch_content(corpus["data"], state_idx, legato)
+                    # No notes in slice: delete it
                     if len(pitches) == 0:
                         if useRests:  # TODO: Remove or handle. Never occurs but undefined
                             corpus["data"][state_idx]["pitch"] = 140  # silence
                         else:
-                            state_idx -= 1  # delete slice
+                            state_idx -= 1
+                    # Single note in slice: simply take the pitch
                     elif len(pitches) == 1:
-                        corpus["data"][state_idx]["pitch"] = int(pitches[0])  # simply take the pitch
+                        corpus["data"][state_idx]["pitch"] = int(pitches[0])
+                    # Multiple notes in slice: Calculate virtual fundamental
                     else:
-                        virtual_fundamental = virfun.virfun(pitches, 0.293)  # take the virtual root
+                        virtual_fundamental = virfun.virfun(pitches, 0.293)
                         corpus["data"][state_idx]["pitch"] = int(128 + (virtual_fundamental - 8) % 12)
 
                 # create a new state
@@ -125,12 +128,10 @@ class CorpusBuilder(object):
                 event["pitch"] = 0
                 event["notes"] = []
 
-                # if some notes ended in previous slice...
-                for k in range(0, len(corpus["data"][state_idx - 1]["notes"])):
-                    if ((corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][0] +
-                         corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][1]) > previous_slice_duration[
-                        0]):
-                        # adding lasting notes of previous slice to the new slice
+                # if some notes of previous slice did not end in that slice, add to current slice too
+                for k in range(len(corpus["data"][state_idx - 1]["notes"])):
+                    if (corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][0] +
+                        corpus["data"][state_idx - 1]["notes"][k]["time"]["relative"][1]) > previous_slice_duration[0]:
                         note_to_add = dict()
                         note_to_add["pitch"] = int(corpus["data"][state_idx - 1]["notes"][k]["pitch"])
                         note_to_add["velocity"] = int(corpus["data"][state_idx - 1]["notes"][k]["velocity"])
@@ -149,36 +150,37 @@ class CorpusBuilder(object):
                         else:
                             note_to_add["velocity"] = 0
                         event["notes"].append(note_to_add)
-                # adding the new note
-                event["notes"].append(dict())
-                n = len(event["notes"]) - 1
-                event["notes"][n] = {"pitch": fgmatrix[i][MidiIdx.NOTE], "velocity": fgmatrix[i][MidiIdx.VEL],
-                                     "channel": fgmatrix[i][MidiIdx.CHANNEL], "time": dict()}
-                event["notes"][n]["time"]["absolute"] = [0, fgmatrix[i][MidiIdx.DUR_MS]]
-                event["notes"][n]["time"]["relative"] = [0, fgmatrix[i][MidiIdx.DUR_TICK]]
+
+                # adding the current note from fgmatrix
+                note = {"pitch": fgmatrix[i][MidiIdx.NOTE], "velocity": fgmatrix[i][MidiIdx.VEL],
+                        "channel": fgmatrix[i][MidiIdx.CHANNEL], "time": dict()}
+                note["time"]["absolute"] = [0, fgmatrix[i][MidiIdx.DUR_MS]]
+                note["time"]["relative"] = [0, fgmatrix[i][MidiIdx.DUR_TICK]]
+                event["notes"].append(note)
 
                 # update variables used during the slicing process
                 last_note_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
                 last_slice_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
                 corpus["data"].append(event)
+            # note in current slice
             else:
-                # note in current slice
+                # Add note to slice
                 num_notes_in_slice = len(corpus["data"][state_idx]["notes"])
-                offset = fgmatrix[i][MidiIdx.POSITION_MS] - corpus["data"][state_idx]["time"]["absolute"][0]
-                offset_r = fgmatrix[i][MidiIdx.POSITION_TICK] - corpus["data"][state_idx]["time"]["relative"][0]
+                offset_abs = fgmatrix[i][MidiIdx.POSITION_MS] - corpus["data"][state_idx]["time"]["absolute"][0]
+                offset_rel = fgmatrix[i][MidiIdx.POSITION_TICK] - corpus["data"][state_idx]["time"]["relative"][0]
                 event["notes"].append(
                     {"pitch": fgmatrix[i][MidiIdx.NOTE], "velocity": fgmatrix[i][MidiIdx.VEL],
                      "channel": fgmatrix[i][MidiIdx.CHANNEL], "time": dict()})
-                event["notes"][num_notes_in_slice]["time"]["absolute"] = [offset, fgmatrix[i][MidiIdx.DUR_MS]]
-                event["notes"][num_notes_in_slice]["time"]["relative"] = [offset_r, fgmatrix[i][MidiIdx.DUR_TICK]]
+                event["notes"][num_notes_in_slice]["time"]["absolute"] = [offset_abs, fgmatrix[i][MidiIdx.DUR_MS]]
+                event["notes"][num_notes_in_slice]["time"]["relative"] = [offset_rel, fgmatrix[i][MidiIdx.DUR_TICK]]
 
-                # extending slice duration
-                if (fgmatrix[i][MidiIdx.DUR_MS] + offset) > corpus["data"][state_idx]["time"]["absolute"][1]:
-                    corpus["data"][state_idx]["time"]["absolute"][1] = fgmatrix[i][MidiIdx.DUR_MS] + int(offset)
-                    corpus["data"][state_idx]["time"]["relative"][1] = fgmatrix[i][MidiIdx.DUR_TICK] + int(offset_r)
+                # extend slice duration
+                if (fgmatrix[i][MidiIdx.DUR_MS] + offset_abs) > corpus["data"][state_idx]["time"]["absolute"][1]:
+                    corpus["data"][state_idx]["time"]["absolute"][1] = fgmatrix[i][MidiIdx.DUR_MS] + int(offset_abs)
+                    corpus["data"][state_idx]["time"]["relative"][1] = fgmatrix[i][MidiIdx.DUR_TICK] + int(offset_rel)
                 last_note_onset = [fgmatrix[i][MidiIdx.POSITION_TICK], fgmatrix[i][MidiIdx.POSITION_MS]]
 
-        # on finalise la slice courante
+        # Finalizing the last slice (code duplication from above)
         pitches = MidiTools.get_pitch_content(corpus["data"], state_idx, legato)
         if len(pitches) == 0:
             if useRests:
@@ -235,7 +237,7 @@ class CorpusBuilder(object):
         current_phrase = 1
 
         fgmatrix = array(fgmatrix)
-        cd = arange(floor(min(fgmatrix[:, 0])), ceil(max(fgmatrix[:, 0])))
+        cd = arange(floor(min(fgmatrix[:, MidiIdx.POSITION_TICK])), ceil(max(fgmatrix[:, MidiIdx.POSITION_TICK])))
 
         matrix = zeros((cd.size, 10))
         matrix[:, 0] = cd
