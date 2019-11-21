@@ -82,6 +82,7 @@ class PhaseModulationMergeAction(AbstractMergeAction):
     DEFAULT_SELECTIVITY = 1.0
 
     def __init__(self, selectivity=DEFAULT_SELECTIVITY):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating PhaseMergeAction with selectivity {}".format(selectivity))
         self._selectivity: Parameter = Parameter(selectivity, None, None, 'float', "Very unclear parameter.")  # TODO

@@ -39,6 +39,20 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-124",
+					"linecount" : 2,
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 500.0, 169.0, 150.0, 33.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 263.0, 168.0, 166.0, 20.0 ],
+					"text" : "(computationally expensive!!)"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-138",
 					"maxclass" : "comment",
 					"numinlets" : 1,
@@ -73,24 +87,6 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 256.5, 125.0, 19.916666666666515, 20.0 ],
 					"text" : "S"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"angle" : 270.0,
-					"bgcolor" : [ 0.2, 0.2, 0.2, 0.0 ],
-					"border" : 2,
-					"bordercolor" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"id" : "obj-128",
-					"maxclass" : "panel",
-					"mode" : 0,
-					"numinlets" : 1,
-					"numoutlets" : 0,
-					"patching_rect" : [ 34.0, 30.0, 43.0, 37.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 1.41666666666697, 2.0, 463.0, 338.0 ],
-					"proportion" : 0.5
 				}
 
 			}
@@ -408,8 +404,9 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 261.5, 539.5, 103.0, 20.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 279.0, 164.0, 103.0, 20.0 ],
-					"text" : "Visualize Peaks"
+					"presentation_rect" : [ 256.5, 156.5, 179.0, 20.0 ],
+					"text" : "Visualize Peaks",
+					"textjustification" : 1
 				}
 
 			}
@@ -1834,7 +1831,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-26",
-					"items" : [ "Obama_original", ",", "debussy_part_harm", ",", "corpus", ",", "0046_Beethoven_Quartet_127_3-4", ",", "Sax_gentle_cat_Slow", ",", "debussy", ",", "tests_audio", ",", "CarineIntuition", ",", "debussy_part", ",", "keith_rh", ",", "keith_lh", ",", "best_composition", ",", ".json" ],
+					"items" : "<empty>",
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -2224,6 +2221,14 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-125", 0 ],
+					"midpoints" : [ 175.5, 148.0, 171.0, 148.0, 171.0, 26.0, 204.5, 26.0 ],
+					"source" : [ "obj-23", 2 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-14", 0 ],
 					"source" : [ "obj-23", 0 ]
 				}
@@ -2240,14 +2245,6 @@
 				"patchline" : 				{
 					"destination" : [ "obj-67", 0 ],
 					"source" : [ "obj-23", 4 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-7", 0 ],
-					"midpoints" : [ 175.5, 148.0, 338.0, 148.0, 338.0, 26.0, 425.5, 26.0 ],
-					"source" : [ "obj-23", 2 ]
 				}
 
 			}

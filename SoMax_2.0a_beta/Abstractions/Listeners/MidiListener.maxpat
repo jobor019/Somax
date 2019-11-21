@@ -53,13 +53,15 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-40",
+					"linecount" : 4,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 358.0, 184.0, 77.0, 20.0 ],
+					"patching_rect" : [ 358.0, 184.0, 77.0, 60.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 68.0, 129.0, 77.0, 20.0 ],
-					"text" : "thresh (ms)"
+					"presentation_linecount" : 2,
+					"presentation_rect" : [ 67.0, 124.0, 105.0, 33.0 ],
+					"text" : "chord grouping threshold (ms)"
 				}
 
 			}
@@ -75,24 +77,6 @@
 					"patching_rect" : [ 303.0, 184.0, 50.0, 22.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 13.0, 129.0, 50.0, 22.0 ]
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"angle" : 270.0,
-					"bgcolor" : [ 0.2, 0.2, 0.2, 0.0 ],
-					"border" : 2,
-					"bordercolor" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"id" : "obj-30",
-					"maxclass" : "panel",
-					"mode" : 0,
-					"numinlets" : 1,
-					"numoutlets" : 0,
-					"patching_rect" : [ 34.0, 30.0, 43.0, 37.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ -0.5, 0.0, 547.0, 181.0 ],
-					"proportion" : 0.5
 				}
 
 			}
@@ -220,13 +204,14 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-46",
+					"linecount" : 2,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 643.0, 717.0, 150.0, 20.0 ],
+					"patching_rect" : [ 643.0, 717.0, 150.0, 33.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 297.0, 122.0, 150.0, 20.0 ],
-					"text" : "trigger (manual mode)"
+					"presentation_rect" : [ 297.0, 122.0, 232.0, 20.0 ],
+					"text" : "generate trigger from...:     (manual mode)"
 				}
 
 			}
@@ -1102,9 +1087,9 @@
 					"outlettype" : [ "", "", "", "" ],
 					"patching_rect" : [ 1110.0, 51.0, 115.0, 22.0 ],
 					"restore" : 					{
-						"1165_channels" : [ 0, 0, 1 ],
-						"1165_chords" : [ 0 ],
-						"1165_chroma" : [ 2 ]
+						"1011_channels" : [ 0, 0, 1 ],
+						"1011_chords" : [ 0 ],
+						"1011_chroma" : [ 2 ]
 					}
 ,
 					"text" : "autopattr #0_midi",
@@ -1494,7 +1479,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-138",
-					"items" : [ "IAC Driver IAC 1", ",", "IAC Driver IAC 2", ",", "IAC Driver IAC 3", ",", "IAC Driver ToLogic1", ",", "IAC Driver ToLogic2", ",", "Keyboard Maestro", ",", "to Max 1", ",", "to Max 2", ",", "from Max 1", ",", "from Max 2" ],
+					"items" : [ "IAC Driver IAC 1", ",", "IAC Driver IAC 2", ",", "IAC Driver IAC 3", ",", "IAC Driver ToLogic1", ",", "IAC Driver ToLogic2", ",", "Keyboard Maestro", ",", "to Max 1", ",", "to Max 2" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,

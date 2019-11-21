@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 1586.0, 818.0 ],
+		"rect" : [ 34.0, 79.0, 1320.0, 818.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -1080,7 +1080,7 @@
  ]
 					}
 ,
-					"patching_rect" : [ 533.0, 823.0, 85.0, 22.0 ],
+					"patching_rect" : [ 533.0, 792.0, 85.0, 22.0 ],
 					"saved_object_attributes" : 					{
 						"description" : "",
 						"digest" : "",
@@ -1115,7 +1115,7 @@
 , 			{
 				"box" : 				{
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1129,7 +1129,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 804.5, 316.0, 75.5, 69.5 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 866.0, 121.455719557195607, 438.0, 318.0 ],
+					"presentation_rect" : [ 908.0, 120.455719557195607, 438.0, 318.0 ],
 					"viewvisibility" : 1
 				}
 
@@ -1178,7 +1178,7 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 1056.5, 371.5, 96.0, 20.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 437.5, 374.0, 105.0, 20.0 ],
+					"presentation_rect" : [ 437.5, 391.0, 105.0, 20.0 ],
 					"text" : "DEBUG STATE"
 				}
 
@@ -1191,20 +1191,8 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 373.000000000000114, 1053.0, 96.0, 20.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 439.0, 427.0, 102.0, 20.0 ],
+					"presentation_rect" : [ 439.0, 437.0, 102.0, 20.0 ],
 					"text" : "Delay (Manual)"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"id" : "obj-95",
-					"maxclass" : "button",
-					"numinlets" : 1,
-					"numoutlets" : 1,
-					"outlettype" : [ "bang" ],
-					"parameter_enable" : 0,
-					"patching_rect" : [ 1017.0, 312.0, 24.0, 24.0 ]
 				}
 
 			}
@@ -1218,7 +1206,7 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 1017.0, 343.5, 50.0, 22.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 439.0, 396.5, 50.0, 22.0 ]
+					"presentation_rect" : [ 439.0, 413.5, 50.0, 22.0 ]
 				}
 
 			}
@@ -1258,7 +1246,7 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 462.333333333333371, 1053.0, 102.0, 22.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 439.0, 453.0, 102.0, 22.0 ],
+					"presentation_rect" : [ 439.0, 455.0, 102.0, 22.0 ],
 					"triangle" : 0
 				}
 
@@ -1304,7 +1292,7 @@
 					"outlettype" : [ "", "" ],
 					"patching_rect" : [ 625.0, 326.0, 54.0, 49.5 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 866.0, 459.0, 244.0, 154.0 ],
+					"presentation_rect" : [ 908.0, 440.455719557195607, 244.0, 154.0 ],
 					"viewvisibility" : 1
 				}
 
@@ -1389,7 +1377,7 @@
 , 			{
 				"box" : 				{
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1413,7 +1401,7 @@
 				"box" : 				{
 					"args" : [ "player1" ],
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1440,7 +1428,7 @@
 					"numinlets" : 0,
 					"numoutlets" : 4,
 					"outlettype" : [ "int", "int", "int", "int" ],
-					"patching_rect" : [ 533.0, 794.0, 50.5, 22.0 ],
+					"patching_rect" : [ 533.0, 763.0, 50.5, 22.0 ],
 					"text" : "key"
 				}
 
@@ -1465,7 +1453,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 873.333333333333371, 758.0, 69.0, 22.0 ],
+					"patching_rect" : [ 776.666666666666629, 702.0, 69.0, 22.0 ],
 					"text" : "print debug"
 				}
 
@@ -1489,7 +1477,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 921.0, 733.0, 82.0, 22.0 ],
+					"patching_rect" : [ 808.5, 674.0, 82.0, 22.0 ],
 					"text" : "print dumpout"
 				}
 
@@ -1497,7 +1485,7 @@
 , 			{
 				"box" : 				{
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1511,7 +1499,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 306.333333333333258, 326.0, 152.0, 74.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 10.0, 349.0, 405.0, 97.0 ],
+					"presentation_rect" : [ 10.0, 349.0, 399.0, 98.0 ],
 					"viewvisibility" : 1
 				}
 
@@ -1524,7 +1512,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "bang" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 904.000000000000114, 527.0, 24.0, 24.0 ]
+					"patching_rect" : [ 906.0, 529.0, 24.0, 24.0 ]
 				}
 
 			}
@@ -1543,7 +1531,7 @@
 , 			{
 				"box" : 				{
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1555,9 +1543,9 @@
 					"numoutlets" : 7,
 					"offset" : [ 0.0, 0.0 ],
 					"outlettype" : [ "", "", "dictionary", "", "", "", "" ],
-					"patching_rect" : [ 710.0, 560.0, 215.0, 134.0 ],
+					"patching_rect" : [ 710.0, 560.0, 99.0, 96.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 558.333333333333258, 349.0, 215.0, 134.0 ],
+					"presentation_rect" : [ 556.333333333333258, 402.0, 348.0, 210.0 ],
 					"viewvisibility" : 1
 				}
 
@@ -1584,7 +1572,7 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 675.0, 29.5, 98.0, 34.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 560.333333333333258, 563.5, 168.0, 53.0 ],
+					"presentation_rect" : [ 560.5, 615.5, 168.0, 53.0 ],
 					"range" : 24
 				}
 
@@ -1639,21 +1627,21 @@
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
-									"play" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"quality" : [ "basic" ],
-									"speed" : [ 1.0 ],
-									"formant" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"basictuning" : [ 440 ],
-									"pitchcorrection" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"mode" : [ "basic" ],
 									"timestretch" : [ 0 ],
 									"formantcorrection" : [ 0 ],
-									"originallengthms" : [ 0.0 ]
+									"originallengthms" : [ 0.0 ],
+									"originallength" : [ 0.0, "ticks" ],
+									"speed" : [ 1.0 ],
+									"quality" : [ "basic" ],
+									"slurtime" : [ 0.0 ],
+									"originaltempo" : [ 120.0 ],
+									"basictuning" : [ 440 ],
+									"formant" : [ 1.0 ],
+									"pitchcorrection" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"play" : [ 0 ],
+									"mode" : [ "basic" ],
+									"pitchshift" : [ 1.0 ]
 								}
 
 							}
@@ -1663,21 +1651,21 @@
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
-									"play" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"quality" : [ "basic" ],
-									"speed" : [ 1.0 ],
-									"formant" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"basictuning" : [ 440 ],
-									"pitchcorrection" : [ 0 ],
-									"pitchshift" : [ 1.0 ],
-									"followglobaltempo" : [ 0 ],
-									"mode" : [ "basic" ],
 									"timestretch" : [ 0 ],
 									"formantcorrection" : [ 0 ],
-									"originallengthms" : [ 0.0 ]
+									"originallengthms" : [ 0.0 ],
+									"originallength" : [ 0.0, "ticks" ],
+									"speed" : [ 1.0 ],
+									"quality" : [ "basic" ],
+									"slurtime" : [ 0.0 ],
+									"originaltempo" : [ 120.0 ],
+									"basictuning" : [ 440 ],
+									"formant" : [ 1.0 ],
+									"pitchcorrection" : [ 0 ],
+									"followglobaltempo" : [ 0 ],
+									"play" : [ 0 ],
+									"mode" : [ "basic" ],
+									"pitchshift" : [ 1.0 ]
 								}
 
 							}
@@ -1698,7 +1686,7 @@
 , 			{
 				"box" : 				{
 					"bgmode" : 0,
-					"border" : 0,
+					"border" : 1,
 					"clickthrough" : 0,
 					"enablehscroll" : 0,
 					"enablevscroll" : 0,
@@ -1712,7 +1700,7 @@
 					"outlettype" : [ "", "", "", "", "signal", "bang" ],
 					"patching_rect" : [ 279.0, 96.0, 62.0, 68.396678966789636 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 489.722290000000044, 84.455719557195607, 358.0, 259.0 ],
+					"presentation_rect" : [ 489.722290000000044, 84.455719557195607, 358.000000000000114, 309.544280442804393 ],
 					"varname" : "AudioListener[1]",
 					"viewvisibility" : 1
 				}
@@ -1946,6 +1934,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-9", 0 ],
+					"disabled" : 1,
 					"source" : [ "obj-56", 0 ]
 				}
 
@@ -2024,7 +2013,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-9", 0 ],
-					"midpoints" : [ 915.5, 850.5, 542.5, 850.5 ],
+					"midpoints" : [ 799.5, 850.5, 542.5, 850.5 ],
 					"order" : 1,
 					"source" : [ "obj-65", 6 ]
 				}
@@ -2130,13 +2119,6 @@
 				"patchline" : 				{
 					"destination" : [ "obj-109", 0 ],
 					"source" : [ "obj-93", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-93", 0 ],
-					"source" : [ "obj-95", 0 ]
 				}
 
 			}
@@ -2337,15 +2319,31 @@
 		"autosave" : 0,
 		"styles" : [ 			{
 				"name" : "dUG Yello 01-1",
+				"default" : 				{
+					"fontface" : [ 1 ],
+					"bgfillcolor" : 					{
+						"type" : "gradient",
+						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
+						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
+						"angle" : 270.0,
+						"proportion" : 0.39,
+						"autogradient" : 0
+					}
+,
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
+				}
+,
 				"newobj" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontface" : [ 1 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"fontsize" : [ 10.0 ]
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 ,
 				"message" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontface" : [ 1 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
@@ -2357,24 +2355,8 @@
 						"autogradient" : 0
 					}
 ,
-					"fontsize" : [ 10.0 ]
-				}
-,
-				"default" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontface" : [ 1 ],
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"bgfillcolor" : 					{
-						"type" : "gradient",
-						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
-						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
-						"angle" : 270.0,
-						"proportion" : 0.39,
-						"autogradient" : 0
-					}
-,
-					"fontsize" : [ 10.0 ]
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 ,
 				"button" : 				{

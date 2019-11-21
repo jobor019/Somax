@@ -3,7 +3,7 @@ import asyncio
 import logging
 import logging.config
 import os
-from typing import ClassVar, Any, Dict
+from typing import ClassVar, Any, Dict, Union
 
 from maxosc.MaxOsc import Caller
 from pythonosc.dispatcher import Dispatcher
@@ -186,6 +186,18 @@ class SoMaxServer(Caller):
     def set_tempo(self, tempo: float):
         # TODO: Error checking
         self.scheduler.add_tempo_event(self.scheduler.time, tempo)
+
+    def set_tempo_master(self, player: Union[str, None]):
+        try:
+            self.scheduler.tempo_master = self.players[player]
+            self.logger.debug(f"[set_tempo_master] Tempo master set to '{player}'.")
+            self.target.send_simple("tempo_master", True)
+        except KeyError:
+            if player is None:
+                self.scheduler.tempo_master = None
+            else:
+                self.logger.error(f"No player named '{player}' exists.")
+                self.target.send_simple("tempo_master", False)
 
 
 
@@ -375,6 +387,10 @@ class SoMaxServer(Caller):
                 corpus_name, _ = os.path.splitext(file)
                 self.target.send_simple("corpus_info", (corpus_name, os.path.join(filepath, file)))
         self.target.send_simple("corpus_info", ["bang"])
+
+    def get_player_names(self):
+        for player_name in self.players.keys():
+            self.target.send_simple("player_name", [player_name])
 
     def get_peaks(self, player: str):
         # TODO: IO Error handling

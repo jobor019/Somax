@@ -43,7 +43,7 @@ class CorpusBuilder(object):
             raise IOError("File format not recognized in corpus construction.")
 
     def read_midi(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1,2,3,4], bg_channels=range(1, 17), tStep=20,
-                  tDelay=40.0, legato=100.0, tolerance=30.0, **kwargs):
+                  tDelay=40.0, legato=100.0, tolerance=30.0, melody_from_top_note: bool = False, **kwargs):
         # absolute: *[1], relative: *[0]
         parser = SomaxMidiParser()
         midi_in = MidiInFile(parser, path)
@@ -93,6 +93,8 @@ class CorpusBuilder(object):
                             state_nb -= 1  # delete slice
                     elif len(tmpListOfPitches) == 1:
                         corpus["data"][state_nb]["pitch"] = int(tmpListOfPitches[0])  # simply take the pitch
+                    elif melody_from_top_note:
+                        corpus["data"][state_nb]["pitch"] = int(max(tmpListOfPitches))
                     else:
                         virtualfunTmp = virfun.virfun(tmpListOfPitches, 0.293)  # take the virtual root
                         corpus["data"][state_nb]["pitch"] = int(128 + (virtualfunTmp - 8) % 12)
@@ -178,9 +180,11 @@ class CorpusBuilder(object):
                 state_nb -= 1  # delete slice
         elif len(tmpListOfPitches) == 1:
             corpus["data"][state_nb]["pitch"] = int(tmpListOfPitches[0])
+        elif melody_from_top_note:
+            corpus["data"][state_nb]["pitch"] = int(max(tmpListOfPitches))
         else:
-            virtualFunTmp = virfun.virfun(tmpListOfPitches, 0.293)
-            corpus["data"][state_nb]["pitch"] = int(128 + (virtualFunTmp - 8) % 12)
+            virtualfunTmp = virfun.virfun(tmpListOfPitches, 0.293)  # take the virtual root
+            corpus["data"][state_nb]["pitch"] = int(128 + (virtualfunTmp - 8) % 12)
 
         frameNbTmp = int(ceil((fgmatrix[i][5] + tDelay - tRef) / tStep))
         if (frameNbTmp <= 0):
