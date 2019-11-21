@@ -390,10 +390,10 @@ class SoMaxServer(Caller):
     # CORPUS METHODS
     ######################################################
 
-    def build_corpus(self, path, output='corpus/'):
+    def build_corpus(self, path, output='corpus/', **kwargs):
         # TODO: IO Error handling
         self.logger.info(f"Building corpus from file '{path}' to location'{output}.")
-        self.builder.build_corpus(path, output)
+        self.builder.build_corpus(path, output, **kwargs)
         self.logger.info("File {0} has been output at location '{1}'".format(path, output))
         # TODO: Info dict
         # self.send_parameter_dict()

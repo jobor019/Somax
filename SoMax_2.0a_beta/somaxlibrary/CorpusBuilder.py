@@ -19,7 +19,7 @@ class CorpusBuilder(object):
     def __init__(self):
         self.attribute = "such an handsome attribute"
 
-    def build_corpus(self, path, output='corpus/', options={}):
+    def build_corpus(self, path, output='corpus/', **kwargs):
         assert type(path) == str
         name, _ = os.path.splitext(path.split("/")[-1])
         if not os.path.exists(path):
@@ -28,23 +28,22 @@ class CorpusBuilder(object):
             name = path.split("/")[-1]
 
         elif os.path.isfile(path):
-            corpus = self.read_file(path, name, options)
+            corpus = self.read_file(path, name, **kwargs)
         f = open(output + name + '.json', 'w')
         json.dump(corpus, f)
         return corpus
 
-    def read_file(self, path, name, options={}):
+    def read_file(self, path, name, **kwargs):
         _, ext = os.path.splitext(path)
         if ext in self.midi_exts:
-            file_json = self.read_midi(path, name, **options)
+            return self.read_midi(path, name, **kwargs)
         elif ext in self.audio_exts:
-            file_json = self.read_audio(path, name, **options)
+            return self.read_audio(path, name, **kwargs)
         else:
-            print("[ERROR] File format not recognized in corpus construction")
-        return file_json
+            raise IOError("File format not recognized in corpus construction.")
 
     def read_midi(self, path, name, time_offset=[0.0, 0.0], fg_channels=[1,2,3,4], bg_channels=range(1, 17), tStep=20,
-                  tDelay=40.0, legato=100.0, tolerance=30.0):
+                  tDelay=40.0, legato=100.0, tolerance=30.0, **kwargs):
         # absolute: *[1], relative: *[0]
         parser = SomaxMidiParser()
         midi_in = MidiInFile(parser, path)

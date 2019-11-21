@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 1320.0, 718.0 ],
+		"rect" : [ 34.0, 79.0, 1320.0, 518.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -38,6 +38,28 @@
 		"style" : "",
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
+				"box" : 				{
+					"bgmode" : 0,
+					"border" : 0,
+					"clickthrough" : 0,
+					"enablehscroll" : 0,
+					"enablevscroll" : 0,
+					"id" : "obj-8",
+					"lockeddragscroll" : 0,
+					"maxclass" : "bpatcher",
+					"name" : "somax.corpusbuilder.maxpat",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"offset" : [ 0.0, 0.0 ],
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 547.5, 667.0, 128.0, 128.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 866.0, 121.455719557195607, 438.0, 318.0 ],
+					"viewvisibility" : 1
+				}
+
+			}
+, 			{
 				"box" : 				{
 					"id" : "obj-36",
 					"maxclass" : "message",
@@ -1075,26 +1097,26 @@
 					"clipheight" : 20.0,
 					"data" : 					{
 						"clips" : [ 							{
-								"absolutepath" : "/Users/joakimborg/Music/Sax_gentle_cat_Slow.wav",
+								"absolutepath" : "Sax_gentle_cat_Slow.wav",
 								"filename" : "Sax_gentle_cat_Slow.wav",
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
-									"formantcorrection" : [ 0 ],
-									"mode" : [ "basic" ],
-									"pitchshift" : [ 1.0 ],
 									"play" : [ 0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"originallengthms" : [ 0.0 ],
 									"slurtime" : [ 0.0 ],
-									"originaltempo" : [ 120.0 ],
+									"originallength" : [ 0.0, "ticks" ],
+									"quality" : [ "basic" ],
 									"speed" : [ 1.0 ],
 									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
 									"basictuning" : [ 440 ],
-									"quality" : [ "basic" ],
 									"pitchcorrection" : [ 0 ],
+									"pitchshift" : [ 1.0 ],
 									"followglobaltempo" : [ 0 ],
-									"timestretch" : [ 0 ]
+									"mode" : [ "basic" ],
+									"timestretch" : [ 0 ],
+									"formantcorrection" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
@@ -1104,21 +1126,21 @@
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
-									"formantcorrection" : [ 0 ],
-									"mode" : [ "basic" ],
-									"pitchshift" : [ 1.0 ],
 									"play" : [ 0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"originallengthms" : [ 0.0 ],
 									"slurtime" : [ 0.0 ],
-									"originaltempo" : [ 120.0 ],
+									"originallength" : [ 0.0, "ticks" ],
+									"quality" : [ "basic" ],
 									"speed" : [ 1.0 ],
 									"formant" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
 									"basictuning" : [ 440 ],
-									"quality" : [ "basic" ],
 									"pitchcorrection" : [ 0 ],
+									"pitchshift" : [ 1.0 ],
 									"followglobaltempo" : [ 0 ],
-									"timestretch" : [ 0 ]
+									"mode" : [ "basic" ],
+									"timestretch" : [ 0 ],
+									"formantcorrection" : [ 0 ],
+									"originallengthms" : [ 0.0 ]
 								}
 
 							}
@@ -1726,6 +1748,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-65", 0 ],
+					"source" : [ "obj-8", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-79", 1 ],
 					"source" : [ "obj-80", 1 ]
 				}
@@ -1944,8 +1973,8 @@
 			}
 , 			{
 				"name" : "Sax_gentle_cat_Slow.wav",
-				"bootpath" : "~/Music",
-				"patcherrelativepath" : "../../../../Music",
+				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Corpus",
+				"patcherrelativepath" : "../Corpus",
 				"type" : "WAVE",
 				"implicit" : 1
 			}
@@ -2026,6 +2055,13 @@
 				"implicit" : 1
 			}
 , 			{
+				"name" : "somax.corpusbuilder.maxpat",
+				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/NewAbstractions",
+				"patcherrelativepath" : "../NewAbstractions",
+				"type" : "JSON",
+				"implicit" : 1
+			}
+, 			{
 				"name" : "yin~.mxo",
 				"type" : "iLaX"
 			}
@@ -2057,34 +2093,16 @@
 		"autosave" : 0,
 		"styles" : [ 			{
 				"name" : "dUG Yello 01-1",
-				"default" : 				{
-					"fontface" : [ 1 ],
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontsize" : [ 10.0 ],
-					"bgfillcolor" : 					{
-						"type" : "gradient",
-						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
-						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
-						"angle" : 270.0,
-						"proportion" : 0.39,
-						"autogradient" : 0
-					}
-
-				}
-,
 				"newobj" : 				{
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontface" : [ 1 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontsize" : [ 10.0 ]
 				}
 ,
 				"message" : 				{
-					"fontface" : [ 1 ],
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontsize" : [ 10.0 ],
+					"fontface" : [ 1 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -2094,7 +2112,25 @@
 						"proportion" : 0.39,
 						"autogradient" : 0
 					}
-
+,
+					"fontsize" : [ 10.0 ]
+				}
+,
+				"default" : 				{
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"fontface" : [ 1 ],
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"bgfillcolor" : 					{
+						"type" : "gradient",
+						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
+						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
+						"angle" : 270.0,
+						"proportion" : 0.39,
+						"autogradient" : 0
+					}
+,
+					"fontsize" : [ 10.0 ]
 				}
 ,
 				"button" : 				{
