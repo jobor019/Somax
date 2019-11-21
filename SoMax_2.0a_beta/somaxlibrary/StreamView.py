@@ -148,6 +148,12 @@ class StreamView(Parametric):
     def weight(self, value: float):
         self._weight.value = value
 
+    def clear(self):
+        for streamview in self.streamviews.values():
+            streamview.clear()
+        for atom in self.atoms.values():
+            atom.clear()
+
     # TODO: Reimplement
     # def delete_atom(self, name):
     #     '''deleting an atom'''

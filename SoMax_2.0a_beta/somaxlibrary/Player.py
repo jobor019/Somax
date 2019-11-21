@@ -265,6 +265,11 @@ class Player(ScheduledMidiObject, Parametric):
                     self.target.send_simple("peak", [peak_group, state_index, peak.score])
                 self.target.send_simple("num_peaks", [atom.name, len(peaks)])
 
+    def clear(self):
+        self.improvisation_memory = []
+        for streamview in self.streamviews.values():
+            streamview.clear()
+
 
     # TODO: Reimplement as activity
     # def jump(self):

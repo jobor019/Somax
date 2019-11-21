@@ -173,6 +173,8 @@ class SoMaxServer(Caller):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
+        for player in self.players.values():
+            player.clear()
         self.logger.info("Scheduler was stopped.")
 
     def get_time(self):

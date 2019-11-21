@@ -39,6 +39,65 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"color" : [ 0.82661509513855, 0.153967931866646, 0.629297733306885, 1.0 ],
+					"id" : "obj-42",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 397.0, 36.0, 77.0, 22.0 ],
+					"text" : "loadmess 50"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-40",
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 358.0, 184.0, 77.0, 20.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 68.0, 129.0, 77.0, 20.0 ],
+					"text" : "thresh (ms)"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"format" : 6,
+					"id" : "obj-33",
+					"maxclass" : "flonum",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "bang" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 303.0, 184.0, 50.0, 22.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 13.0, 129.0, 50.0, 22.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"angle" : 270.0,
+					"bgcolor" : [ 0.2, 0.2, 0.2, 0.0 ],
+					"border" : 2,
+					"bordercolor" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"id" : "obj-30",
+					"maxclass" : "panel",
+					"mode" : 0,
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 34.0, 30.0, 43.0, 37.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ -0.5, 0.0, 547.0, 181.0 ],
+					"proportion" : 0.5
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-28",
 					"maxclass" : "newobj",
 					"numinlets" : 2,
@@ -502,7 +561,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 139.0, 592.0, 50.0, 22.0 ],
-					"text" : "60"
+					"text" : "59"
 				}
 
 			}
@@ -1043,9 +1102,9 @@
 					"outlettype" : [ "", "", "", "" ],
 					"patching_rect" : [ 1110.0, 51.0, 115.0, 22.0 ],
 					"restore" : 					{
-						"1009_channels" : [ 0, 0, 1 ],
-						"1009_chords" : [ 0 ],
-						"1009_chroma" : [ 2 ]
+						"1165_channels" : [ 0, 0, 1 ],
+						"1165_chords" : [ 0 ],
+						"1165_chroma" : [ 2 ]
 					}
 ,
 					"text" : "autopattr #0_midi",
@@ -1255,7 +1314,7 @@
 					"patching_rect" : [ 304.0, 870.0, 150.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 211.0, 100.0, 32.0, 20.0 ],
-					"text" : "C",
+					"text" : "B",
 					"textcolor" : [ 0.52549, 0.062745, 0.003922, 1.0 ]
 				}
 
@@ -1435,7 +1494,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-138",
-					"items" : [ "IAC Driver IAC 1", ",", "IAC Driver IAC 2", ",", "IAC Driver IAC 3", ",", "IAC Driver ToLogic1", ",", "IAC Driver ToLogic2", ",", "Keyboard Maestro", ",", "from Max 1", ",", "from Max 2", ",", "to Max 1", ",", "to Max 2" ],
+					"items" : [ "IAC Driver IAC 1", ",", "IAC Driver IAC 2", ",", "IAC Driver IAC 3", ",", "IAC Driver ToLogic1", ",", "IAC Driver ToLogic2", ",", "Keyboard Maestro", ",", "to Max 1", ",", "to Max 2", ",", "from Max 1", ",", "from Max 2" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -2158,7 +2217,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-81", 1 ],
+					"destination" : [ "obj-33", 0 ],
 					"source" : [ "obj-24", 0 ]
 				}
 
@@ -2197,6 +2256,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-160", 0 ],
 					"source" : [ "obj-32", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-81", 1 ],
+					"source" : [ "obj-33", 0 ]
 				}
 
 			}
@@ -2246,6 +2312,13 @@
 				"patchline" : 				{
 					"destination" : [ "obj-21", 0 ],
 					"source" : [ "obj-41", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-33", 0 ],
+					"source" : [ "obj-42", 0 ]
 				}
 
 			}

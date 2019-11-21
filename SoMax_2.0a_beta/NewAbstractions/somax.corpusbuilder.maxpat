@@ -39,6 +39,42 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-7",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "int" ],
+					"patching_rect" : [ 292.0, 438.0, 55.0, 22.0 ],
+					"text" : "strippath"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-5",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 292.0, 474.0, 72.0, 22.0 ],
+					"text" : "prepend set"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-4",
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 173.0, 244.0, 169.0, 22.0 ],
+					"text" : "set drag and drop a file here..."
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"comment" : "build message (to server)",
 					"id" : "obj-115",
 					"index" : 1,
@@ -460,15 +496,15 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-62",
-					"linecount" : 4,
+					"linecount" : 2,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 278.0, 697.0, 455.0, 60.0 ],
+					"patching_rect" : [ 278.0, 697.0, 455.0, 33.0 ],
 					"presentation" : 1,
-					"presentation_linecount" : 4,
-					"presentation_rect" : [ 9.0, 245.0, 414.0, 60.0 ],
-					"text" : "build_corpus /Users/joakimborg/MIDI/Midifiles_for_Corpus/Beethoven_Late_Quartets/0046_Beethoven_Quartet_127_3-4.mid fg_channels= [ 1 ] bg_channels= [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ]"
+					"presentation_linecount" : 2,
+					"presentation_rect" : [ 9.0, 245.0, 414.0, 33.0 ],
+					"text" : "build_corpus /Users/joakimborg/Music/Sax_gentle_cat_Slow.wav fg_channels= [ 1 ] bg_channels= [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ]"
 				}
 
 			}
@@ -1113,13 +1149,13 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-8",
-					"linecount" : 16,
+					"linecount" : 7,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 415.0, 430.0, 50.0, 223.0 ],
-					"text" : "/Users/joakimborg/MIDI/Midifiles_for_Corpus/Beethoven_Late_Quartets/0046_Beethoven_Quartet_127_3-4.mid"
+					"patching_rect" : [ 415.0, 430.0, 50.0, 102.0 ],
+					"text" : "/Users/joakimborg/Music/Sax_gentle_cat_Slow.wav"
 				}
 
 			}
@@ -1133,7 +1169,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 12.75, 153.0, 281.5, 20.0 ],
 					"style" : "helpfile_label",
-					"text" : "drag and drop a file here..."
+					"text" : "Sax_gentle_cat_Slow.wav"
 				}
 
 			}
@@ -1181,6 +1217,20 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-30", 0 ],
+					"source" : [ "obj-4", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-30", 0 ],
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-18", 0 ],
 					"midpoints" : [ 344.5, 189.0, 327.5, 189.0, 327.5, 113.0, 344.5, 113.0 ],
 					"source" : [ "obj-51", 0 ]
@@ -1191,6 +1241,14 @@
 				"patchline" : 				{
 					"destination" : [ "obj-66", 3 ],
 					"source" : [ "obj-51", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-4", 0 ],
+					"order" : 4,
+					"source" : [ "obj-52", 0 ]
 				}
 
 			}
@@ -1213,7 +1271,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-70", 0 ],
-					"order" : 4,
+					"order" : 5,
 					"source" : [ "obj-52", 0 ]
 				}
 
@@ -1309,6 +1367,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-66", 0 ],
 					"source" : [ "obj-70", 0 ]
 				}
@@ -1331,6 +1396,14 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-66", 1 ],
+					"order" : 2,
+					"source" : [ "obj-9", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-7", 0 ],
 					"order" : 1,
 					"source" : [ "obj-9", 0 ]
 				}

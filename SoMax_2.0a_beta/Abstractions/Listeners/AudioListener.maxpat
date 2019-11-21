@@ -667,7 +667,7 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-28",
-					"items" : 1,
+					"items" : [ 1, ",", 1 ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,

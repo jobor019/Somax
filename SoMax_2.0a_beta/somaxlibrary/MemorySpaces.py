@@ -10,7 +10,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
-from somaxlibrary.Labels import AbstractLabel
+from somaxlibrary.Labels import AbstractLabel, PitchClassLabel
 from somaxlibrary.Parameter import Parameter
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
@@ -46,6 +46,9 @@ class AbstractMemorySpace(Parametric):
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
+    @abstractmethod
+    def clear(self) -> None:
+        """ Reset the playing state of the Memory Space without removing its corpus memory. """
 
     def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters: Dict = {}
@@ -88,6 +91,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
         self._ngram_size: Parameter = Parameter(history_len, 1, None, 'int',
                                                 "Number of events to hard-match. (TODO)")  # TODO
+        self.history_len: int = history_len
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
         self.corpus: Corpus = None
@@ -149,3 +153,9 @@ class NGramMemorySpace(AbstractMemorySpace):
     def ngram_size(self, new_size: int):
         self._ngram_size.value = new_size
         self.read(self.corpus)
+
+    def clear(self) -> None:
+        self.influence_history = deque([], self.history_len)
+
+
+

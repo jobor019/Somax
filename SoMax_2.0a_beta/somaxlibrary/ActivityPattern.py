@@ -30,7 +30,7 @@ class AbstractActivityPattern(Parametric):
         raise NotImplementedError("AbstractActivityPattern.update_peaks is abstract.")
 
     @abstractmethod
-    def reset(self) -> None:
+    def clear(self) -> None:
         raise NotImplementedError("AbstractActivityPattern.reset is abstract.")
 
     @staticmethod
@@ -76,5 +76,5 @@ class ClassicActivityPattern(AbstractActivityPattern):
         self.peaks = [peak for peak in self.peaks if peak.score > self.extinction_threshold.value
                       and peak.time < self.corpus.duration()]
 
-    def reset(self) -> None:
+    def clear(self) -> None:
         self.peaks = []

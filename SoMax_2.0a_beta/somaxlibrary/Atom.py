@@ -82,6 +82,10 @@ class Atom(Parametric):
     def self_influenced(self, self_influenced: bool):
         self._self_influenced.value = self_influenced
 
+    def clear(self):
+        self.activity_pattern.clear()
+        self.memory_space.clear()
+
     # TODO: Reimplement
     # external method to fetch properties of the atom
     # def get_parameter_dict(self):
