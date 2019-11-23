@@ -22,7 +22,7 @@ class Note:
 
 class CorpusEvent:
     def __init__(self, state_index, tempo, onset, duration, chroma, pitch, notes: [{str: Any}],
-                 timing_type: str):
+                 timing_type: str, absolute_time: (float, float)):
         self.logger = logging.getLogger(__name__)
         self.state_index: int = state_index
         self.tempo: float = tempo
@@ -30,7 +30,9 @@ class CorpusEvent:
         self.duration: float = duration
         self.chroma: [float] = chroma
         self.pitch: int = pitch
-        self.notes: [Note] = self._parse_notes(notes, timing_type)
+        # TODO: Clean up with separate classes
+        self.notes: [Note] = self._parse_notes(notes, timing_type)  # MIDI Only
+        self.absolute_time: (float, float) = absolute_time          # Audio only
         self._labels = {}  # {ClassVar[AbstractLabel]: AbstractLabel}, precompiled for performance
 
     def __repr__(self):
@@ -73,8 +75,3 @@ class CorpusEvent:
 
     def held_from(self) -> [Note]:
         return [note for note in self.notes if note.onset + note.duration > self.duration]
-
-
-
-
-

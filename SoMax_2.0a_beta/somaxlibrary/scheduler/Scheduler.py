@@ -70,7 +70,9 @@ class Scheduler:
         player.target.send_state(midi_event.state)
 
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
-        pass  # TODO
+        player: Player = audio_event.player
+        player.target.send_audio([audio_event.onset, audio_event.duration])
+        player.target.send_state(audio_event.state)
 
     def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
         player: Player = trigger_event.player
@@ -85,8 +87,12 @@ class Scheduler:
         self.add_corpus_event(player, trigger_event.target_time, event)
 
         if isinstance(trigger_event, AutomaticTriggerEvent) and player.trigger_mode == TriggerMode.AUTOMATIC:
-            next_trigger_time: float = trigger_event.trigger_time + event.duration
-            next_target_time: float = trigger_event.target_time + event.duration
+            if event.duration > 0:
+                next_trigger_time: float = trigger_event.trigger_time + event.duration
+                next_target_time: float = trigger_event.target_time + event.duration
+            else:
+                next_trigger_time: float = trigger_event.trigger_time + 1
+                next_target_time: float = trigger_event.target_time + 1
             self._add_automatic_trigger_event(player, next_trigger_time, next_target_time)
 
     def _process_osc_event(self, osc_event: OscEvent) -> None:
@@ -104,7 +110,8 @@ class Scheduler:
             self.add_tempo_event(trigger_time, corpus_event.tempo)
 
         if player.corpus.content_type == ContentType.AUDIO:
-            event: ScheduledEvent = AudioEvent(trigger_time, player, corpus_event.onset, corpus_event.duration, corpus_event.state_index)
+            event: ScheduledEvent = AudioEvent(trigger_time, player, corpus_event.absolute_time[0],
+                                               corpus_event.absolute_time[1], corpus_event.state_index)
             self.queue.append(event)
         elif player.corpus.content_type == ContentType.MIDI:
             # Handle held notes from previous state:

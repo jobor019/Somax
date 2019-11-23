@@ -16,6 +16,8 @@ class ContentType(Enum):
 
 class Corpus:
     DEFAULT_TIMING = "relative"
+    ONSET_IDX = 0
+    DURATION_IDX = 1
 
     def __init__(self, filepath: str = None, timing_type: str = DEFAULT_TIMING):
         """
@@ -60,8 +62,9 @@ class Corpus:
     def _parse_events(events: [Dict], timing_type: str) -> [CorpusEvent]:
         parsed_events: SequencedList[float, CorpusEvent] = SequencedList()
         for event in events:
-            c = CorpusEvent(event["state"], event["tempo"], event["time"][timing_type][0],
-                            event["time"][timing_type][1], event["chroma"], event["pitch"], event["notes"], timing_type)
+            c = CorpusEvent(event["state"], event["tempo"], event["time"][timing_type][Corpus.ONSET_IDX],
+                            event["time"][timing_type][Corpus.DURATION_IDX], event["chroma"], event["pitch"],
+                            event["notes"], timing_type, event["time"]["absolute"])
             parsed_events.append(event["time"][timing_type][0], c)
         return parsed_events
 
