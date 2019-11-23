@@ -103,7 +103,7 @@ class SequencedList(list):
         return i
 
     def append(self, date, state):
-        self.logger.debug(f"Appending event with date {date} and state {state}.")
+        # self.logger.debug(f"Appending event with date {date} and state {state}.")
         if len(self.orderedDateList):
             if date<self.orderedDateList[-1]:
                 raise Exception("ERROR in Memory : trying to append a event that comes sooner")

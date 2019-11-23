@@ -10,8 +10,8 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
-from somaxlibrary.Labels import AbstractLabel, PitchClassLabel
-from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Labels import AbstractLabel, PitchClassLabel, HarmonicLabel
+from somaxlibrary.Parameter import Parameter, ParamWithSetter
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
@@ -89,9 +89,8 @@ class NGramMemorySpace(AbstractMemorySpace):
         self.logger.debug(f"[__init__] Initializing NGramMemorySpace with corpus {corpus}, "
                           f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
-        self._ngram_size: Parameter = Parameter(history_len, 1, None, 'int',
-                                                "Number of events to hard-match. (TODO)")  # TODO
-        self.history_len: int = history_len
+        self._ngram_size: Parameter = ParamWithSetter(history_len, 1, None, 'int',
+                                                "Number of events to hard-match. (TODO)", self.set_ngram_size)  # TODO
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
         self.corpus: Corpus = None
@@ -100,16 +99,16 @@ class NGramMemorySpace(AbstractMemorySpace):
         self._parse_parameters()
 
     def __repr__(self):
-        return f"NGramMemorySpace with size {self.ngram_size}, type {self.label_type} and corpus {self.corpus}."
+        return f"NGramMemorySpace with size {self._ngram_size.value}, type {self.label_type} and corpus {self.corpus}."
 
     def read(self, corpus: Corpus, **_kwargs) -> None:
         self.corpus = corpus
         self.structured_data = {}
-        labels: deque = deque([], self.ngram_size)
+        labels: deque = deque([], self._ngram_size.value)
         for event in self.corpus.events:
             label: AbstractLabel = event.label(self.label_type)
             labels.append(label.label)
-            if len(labels) < self.ngram_size:
+            if len(labels) < self._ngram_size.value:
                 continue
             else:
                 key: Tuple[int, ...] = tuple(labels)
@@ -126,7 +125,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         else:
             self.logger.debug(f"[influence] Influencing memory space with label {self.label_type} with label {label}.")
         self.influence_history.append(label)
-        if len(self.influence_history) < self.ngram_size:
+        if len(self.influence_history) < self._ngram_size.value:
             return []
         else:
             matches: [AbstractInfluence] = []
@@ -145,17 +144,14 @@ class NGramMemorySpace(AbstractMemorySpace):
                     continue
         return matches
 
-    @property
-    def ngram_size(self):
-        return self._ngram_size.value
 
-    @ngram_size.setter
-    def ngram_size(self, new_size: int):
+    def set_ngram_size(self, new_size: int):
         self._ngram_size.value = new_size
-        self.read(self.corpus)
+        if self.corpus:
+            self.read(self.corpus)
 
     def clear(self) -> None:
-        self.influence_history = deque([], self.history_len)
+        self.influence_history = deque([], self._ngram_size.value)
 
 
 

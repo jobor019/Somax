@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 1106.0, 718.0 ],
+		"rect" : [ 34.0, 379.0, 1106.0, 718.0 ],
 		"bglocked" : 1,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -340,7 +340,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 236.0, 877.0, 64.0, 22.0 ],
-					"text" : "47 0 128"
+					"text" : "60 65 128"
 				}
 
 			}
@@ -667,7 +667,7 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-28",
-					"items" : [ 1, ",", 1 ],
+					"items" : [ 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1, ",", 1 ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,

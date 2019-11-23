@@ -81,7 +81,10 @@ class IOParser:
 
     @staticmethod
     def parse_ip(ip: str) -> str:
-        raise NotImplementedError("parse_ip is not implemented.")  # TODO
+        # TODO: Real format checking
+        if ip:
+            return ip
+        return IOParser.DEFAULT_IP
 
     def parse_transforms(self, transforms: (str, ...), parse_mode: str) -> [(ClassVar[AbstractTransform],...)]:
         """ Raises: IOError """

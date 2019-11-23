@@ -45,7 +45,7 @@ class SimpleOscTarget(Target):
             msg_builder.add_arg(content)
         message = msg_builder.build()
         self._client.send(message)
-        self.logger.debug(f"[send] Sent message '{content}' with keyword '{keyword}' on address '{self.address}'")
+        # self.logger.debug(f"[send] Sent message '{content}' with keyword '{keyword}' on address '{self.address}'")
 
     def send_midi(self, content: Any, **kwargs):
         self.send_simple("midi", content)

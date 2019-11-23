@@ -41,7 +41,7 @@ class SoMaxServer(Caller):
         self.io_parser: IOParser = IOParser()
 
     async def _run(self) -> None:
-        self.logger.info("Starting SoMaxServer...")
+        self.logger.info("SoMaxServer started.")
         osc_dispatcher: Dispatcher = Dispatcher()
         osc_dispatcher.map("/server", self._process_osc)
         osc_dispatcher.set_default_handler(self._unmatched_osc)
@@ -84,6 +84,7 @@ class SoMaxServer(Caller):
             else:
                 self.delete_player(name)
         address: str = self.io_parser.parse_osc_address(name)
+        ip: str = self.io_parser.parse_ip(ip)
         trig_mode: TriggerMode = self.io_parser.parse_trigger_mode(trig_mode)
         target: Target = SimpleOscTarget(address, port, ip)
         self.players[name] = Player(name, target, trig_mode)
@@ -327,6 +328,7 @@ class SoMaxServer(Caller):
 
     def influence_onset(self, player):
         if self.players[player].trigger_mode == TriggerMode.MANUAL:
+            self.logger.debug(f"[influence_onset] Influence onset triggered for player '{player}'.")
             self.scheduler.add_trigger_event(self.players[player])
 
     # TODO: Implement jump

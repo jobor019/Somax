@@ -1,7 +1,7 @@
 import collections
 import functools
-from abc import ABC, abstractmethod
-from typing import TypeVar, Union, Dict, Any
+from abc import ABC
+from typing import TypeVar, Union, Dict, Any, Callable
 
 # TODO: Poor type description
 MaxCompatible = TypeVar('MaxCompatible', int, float, bool)
@@ -47,6 +47,11 @@ class Parameter(HasParameterDict):
         return
 
 
+class ParamWithSetter(Parameter):
+    def __init__(self, default_value: MaxCompatible, min: Ranged, max: Ranged, type_str: str, description,
+                 set_function: Callable):
+        super().__init__(default_value, min, max, type_str, description)
+        self.set_value = set_function
 
 
 class Parametric(HasParameterDict):

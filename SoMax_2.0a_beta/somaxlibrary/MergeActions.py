@@ -59,7 +59,7 @@ class DistanceMergeAction(AbstractMergeAction):
             cur = peaks[i]
             if abs(
                     cur.time - prev.time) < 0.9 * self.t_width and cur.transform_hash == prev.transform_hash:  # TODO: magic nr
-                self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
+                # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
                 merged_time: float = (prev.time * prev.score + cur.time * cur.score) / (prev.score + cur.score)
                 merged_score: float = prev.score + cur.score
                 peaks[i - 1] = Peak(merged_time, merged_score, cur.transforms, cur.last_update_time)
