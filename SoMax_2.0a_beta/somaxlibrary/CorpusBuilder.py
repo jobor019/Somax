@@ -29,8 +29,9 @@ class CorpusBuilder(object):
 
         elif os.path.isfile(path):
             corpus = self.read_file(path, name, **kwargs)
-        f = open(output + name + '.json', 'w')
-        json.dump(corpus, f)
+        output_filepath: str = os.path.join(os.path.dirname(__file__), '..', output, name + '.json')
+        with open(output_filepath, 'w') as f:
+            json.dump(corpus, f)
         return corpus
 
     def read_file(self, path, name, **kwargs):
@@ -224,10 +225,10 @@ class CorpusBuilder(object):
             harm_ctxt_li[:, n] = (1 - hop_t / tau) * harm_ctxt_li[:, n - 1] + hop_t / tau * harm_ctxt[:, n]
 
         # initizalization
-        corpus = {"name": name, "typeID": "Audio", "type": 3, "size": 1, "data": []}
-        corpus["data"].append({"state": 0, "time": {"absolute": [0.0, 0.0], "relative": [0.0, 0.0]}, \
+        corpus = {"name": name, "typeID": "Audio", "size": 1, "data": []}
+        corpus["data"].append({"state": 0, "tempo": 120, "time": {"absolute": [0.0, 0.0], "relative": [0.0, 0.0]},
                                "chroma": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                               "pitch": [140, 0.0], "notes": dict()})
+                               "pitch": 140, "notes": []})
         seg_samp = librosa.core.frames_to_samples(seg) / 512
         beats = insert(beats, len(beats), librosa.core.time_to_frames(librosa.core.get_duration(y)))
 
@@ -249,19 +250,19 @@ class CorpusBuilder(object):
             if previous_beat < len(beats) - 1:
                 next_beat_t = librosa.core.frames_to_time(beats[previous_beat + 1])
                 if current_time != next_time:
-                    tmp["tempo"] = 60.0 / (next_beat_t - current_beat_t)
+                    tmp["tempo"] = float(60.0 / (next_beat_t - current_beat_t))
                     tmp["time"]["relative"] = [current_beat, next_beat_t - current_beat_t]
                 else:
                     tmp["time"]["relative"] = [current_beat, corpus["data"][o]["time"]["relative"][1]]
-                    tmp["tempo"] = corpus["data"][o]["time"]["relative"][1]
+                    tmp["tempo"] = float(corpus["data"][o]["time"]["relative"][1])
             else:
                 tmp["time"]["relative"] = [current_beat, corpus["data"][o]["time"]["relative"][1]]
-                tmp["tempo"] = corpus["data"][o]["time"]["relative"][1]
+                tmp["tempo"] = float(corpus["data"][o]["time"]["relative"][1])
 
-            pitch_maxs = argmax(harm_ctxt[:, seg_samp[o]:e], axis=0)
-            tmp["chroma"] = average(harm_ctxt_li[:, seg_samp[o]:e], 1).tolist()
-            tmp["pitch"] = most_common(pitch_maxs)
-            tmp["notes"] = dict()
+            pitch_maxs = argmax(harm_ctxt[:, int(seg_samp[o]):int(e)], axis=0)
+            tmp["chroma"] = average(harm_ctxt_li[:, int(seg_samp[o]):int(e)], 1).tolist()
+            tmp["pitch"] = int(most_common(pitch_maxs))
+            tmp["notes"] = []
             corpus["data"].append(tmp)
 
         return corpus
