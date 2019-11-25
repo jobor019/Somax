@@ -30,11 +30,12 @@ class MidiEvent(ScheduledPlayerEvent):
 
 
 class AudioEvent(ScheduledPlayerEvent):
-    def __init__(self, trigger_time: float, player: Player, onset: float, duration: float, state: int):
+    def __init__(self, trigger_time: float, player: Player, onset: float, duration: float, state: int, tempo: float):
         super(AudioEvent, self).__init__(trigger_time, player)
         self.onset: float = onset
         self.duration: float = duration
         self.state: int = state
+        self.tempo: float = tempo
 
 
 class AbstractTriggerEvent(ScheduledPlayerEvent, ABC):

@@ -71,7 +71,8 @@ class Scheduler:
 
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
         player: Player = audio_event.player
-        player.target.send_audio([audio_event.onset, audio_event.duration])
+        tempo_factor: float = audio_event.tempo / self.tempo
+        player.target.send_audio([audio_event.onset, audio_event.duration, tempo_factor])
         player.target.send_state(audio_event.state)
 
     def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
@@ -111,7 +112,8 @@ class Scheduler:
 
         if player.corpus.content_type == ContentType.AUDIO:
             event: ScheduledEvent = AudioEvent(trigger_time, player, corpus_event.absolute_time[0],
-                                               corpus_event.absolute_time[1], corpus_event.state_index)
+                                               corpus_event.absolute_time[1], corpus_event.state_index,
+                                               corpus_event.tempo)
             self.queue.append(event)
         elif player.corpus.content_type == ContentType.MIDI:
             # Handle held notes from previous state:
@@ -122,12 +124,15 @@ class Scheduler:
 
             # Queue midi events for note ons/offs
             for note in note_offs_previous:
-                self.queue.append(MidiEvent(trigger_time, player, note.pitch, 0, note.channel, corpus_event.state_index))
+                self.queue.append(
+                    MidiEvent(trigger_time, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_ons:
-                self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
+                self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel,
+                                            corpus_event.state_index))
             for note in note_offs:
                 position_in_state: float = note.onset + note.duration
-                self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel, corpus_event.state_index))
+                self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel,
+                                            corpus_event.state_index))
 
     def add_trigger_event(self, player: Player):
         if player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player):

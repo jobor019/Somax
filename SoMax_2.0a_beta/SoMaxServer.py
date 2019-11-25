@@ -327,9 +327,12 @@ class SoMaxServer(Caller):
             self.logger.error(f"No player named '{player}' exists.")
 
     def influence_onset(self, player):
-        if self.players[player].trigger_mode == TriggerMode.MANUAL:
-            self.logger.debug(f"[influence_onset] Influence onset triggered for player '{player}'.")
-            self.scheduler.add_trigger_event(self.players[player])
+        try:
+            if self.players[player].trigger_mode == TriggerMode.MANUAL:
+                self.logger.debug(f"[influence_onset] Influence onset triggered for player '{player}'.")
+                self.scheduler.add_trigger_event(self.players[player])
+        except KeyError:
+            self.logger.error(f"No player named '{player}' exists.")
 
     # TODO: Implement jump
     # def jump(self, player):

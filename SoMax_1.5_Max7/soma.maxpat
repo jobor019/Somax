@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 34.0, 79.0, 1589.0, 1010.0 ],
+		"rect" : [ 34.0, 79.0, 1276.0, 1010.0 ],
 		"bglocked" : 1,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -102,7 +102,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 114.00293, 1064.328613, 158.0, 22.0 ],
 					"style" : "",
-					"text" : "27 14259.557617"
+					"text" : "586 5717.54248"
 				}
 
 			}
@@ -703,7 +703,7 @@
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 50.0, 227.0, 112.0, 35.0 ],
 									"style" : "",
-									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/bach_invention_1\""
+									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
 								}
 
 							}
@@ -7283,7 +7283,7 @@
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 50.0, 227.0, 112.0, 35.0 ],
 									"style" : "",
-									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/bach_invention_1\""
+									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
 								}
 
 							}
@@ -10066,14 +10066,14 @@
 									"fontname" : "Arial",
 									"fontsize" : 12.0,
 									"id" : "obj-12",
-									"linecount" : 8,
+									"linecount" : 10,
 									"maxclass" : "message",
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 581.0, 376.5, 73.0, 85.0 ],
 									"style" : "",
-									"text" : "/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/bach_invention_1"
+									"text" : "\"/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
 								}
 
 							}
@@ -11299,7 +11299,7 @@
 									"patching_rect" : [ 187.0, 510.0, 173.0, 20.0 ],
 									"saved_object_attributes" : 									{
 										"embed" : 0,
-										"name" : "1124_taboo_mod_values",
+										"name" : "1142_taboo_mod_values",
 										"parameter_enable" : 0,
 										"range" : 129,
 										"showeditor" : 0,
@@ -11549,7 +11549,7 @@
 													"patching_rect" : [ 33.0, 156.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1233_taboo_mod_values",
+														"name" : "1142_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -11621,7 +11621,7 @@
 													"patching_rect" : [ 59.0, 280.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1233_taboo_mod_values",
+														"name" : "1142_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -20041,6 +20041,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"patching_rect" : [ 1177.176147, 1373.988525, 84.0, 42.0 ],
+					"presentation" : 1,
 					"presentation_rect" : [ 238.5, 96.0, 66.0, 33.0 ],
 					"style" : ""
 				}
@@ -22341,7 +22342,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 410.0, 18.0, 39.0, 18.0 ],
 					"style" : "",
-					"text" : "4397"
+					"text" : "688"
 				}
 
 			}
@@ -22373,7 +22374,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 377.0, 18.0, 45.0, 18.0 ],
 					"style" : "",
-					"text" : "27"
+					"text" : "586"
 				}
 
 			}
@@ -28393,7 +28394,7 @@
 					"bgfillcolor_type" : "color",
 					"depth" : 2,
 					"id" : "obj-35",
-					"items" : [ "-- click to refresh --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "Sax_gentle cat_Slow", ",", "schoenberg" ],
+					"items" : [ "-- click to refresh --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "Beethoven_SonF-1_Knorre_11025", ",", "best_composition", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "debussy_part", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "noteMatrix", ",", "Sax_gentle cat_Slow_OLD", ",", "schoenberg" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -30182,7 +30183,7 @@
 					"destination" : [ "obj-789", 2 ],
 					"source" : [ "obj-481", 0 ],
 					"watchpoint_flags" : 2,
-					"watchpoint_id" : 1
+					"watchpoint_id" : 2
 				}
 
 			}
