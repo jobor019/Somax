@@ -208,7 +208,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 643.0, 717.0, 150.0, 33.0 ],
+					"patching_rect" : [ 643.0, 717.0, 151.0, 33.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 297.0, 122.0, 232.0, 20.0 ],
 					"text" : "generate trigger from...:     (manual mode)"
@@ -284,7 +284,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "int" ],
 					"patching_rect" : [ 106.0, 202.0, 29.0, 22.0 ],
 					"text" : "thru"
 				}
@@ -296,7 +296,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "" ],
 					"patching_rect" : [ 65.0, 202.0, 29.0, 22.0 ],
 					"text" : "thru"
 				}
@@ -308,7 +308,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 1,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "" ],
 					"patching_rect" : [ 22.0, 207.0, 29.0, 22.0 ],
 					"text" : "thru"
 				}
@@ -322,7 +322,7 @@
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "int" ],
 					"patching_rect" : [ 300.5, 34.0, 30.0, 30.0 ]
 				}
 
@@ -335,7 +335,7 @@
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "" ],
 					"patching_rect" : [ 246.0, 34.0, 30.0, 30.0 ]
 				}
 
@@ -348,7 +348,7 @@
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "float" ],
+					"outlettype" : [ "" ],
 					"patching_rect" : [ 196.0, 34.0, 30.0, 30.0 ]
 				}
 
@@ -1267,9 +1267,10 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "int", "int" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 12.5, 439.0, 196.0, 34.0 ],
+					"patching_rect" : [ 12.5, 439.0, 357.0, 34.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 13.0, 44.0, 196.0, 34.0 ]
+					"presentation_rect" : [ 13.0, 44.0, 357.0, 34.0 ],
+					"range" : 88
 				}
 
 			}

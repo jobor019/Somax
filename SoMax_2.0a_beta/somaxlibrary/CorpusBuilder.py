@@ -233,6 +233,7 @@ class CorpusBuilder(object):
         beats = insert(beats, len(beats), librosa.core.time_to_frames(librosa.core.get_duration(y)))
 
         # process
+        current_tick: float = 0
         for o in range(0, len(seg_samp) - 1):
             e = harm_ctxt.shape[1] if o == len(seg_samp) - 1 else seg_samp[o + 1]
             tmp = dict()
@@ -251,13 +252,14 @@ class CorpusBuilder(object):
                 next_beat_t = librosa.core.frames_to_time(beats[previous_beat + 1])
                 if current_time != next_time:
                     tmp["tempo"] = float(60.0 / (next_beat_t - current_beat_t))
-                    tmp["time"]["relative"] = [current_beat, next_beat_t - current_beat_t]
                 else:
-                    tmp["time"]["relative"] = [current_beat, corpus["data"][o]["time"]["relative"][1]]
                     tmp["tempo"] = float(corpus["data"][o]["time"]["relative"][1])
             else:
-                tmp["time"]["relative"] = [current_beat, corpus["data"][o]["time"]["relative"][1]]
                 tmp["tempo"] = float(corpus["data"][o]["time"]["relative"][1])
+
+            duration_tick: float = tmp["time"]["absolute"][1] * tmp["tempo"] / 60000.0
+            tmp["time"]["relative"] = [current_tick, duration_tick]
+            current_tick += duration_tick
 
             pitch_maxs = argmax(harm_ctxt[:, int(seg_samp[o]):int(e)], axis=0)
             tmp["chroma"] = average(harm_ctxt_li[:, int(seg_samp[o]):int(e)], 1).tolist()
