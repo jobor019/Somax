@@ -67,6 +67,7 @@ class DistanceMergeAction(AbstractMergeAction):
             # TODO: Handle different merge modes
             else:
                 i += 1
+        self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {len(peaks)}.")
         return peaks
 
     @property

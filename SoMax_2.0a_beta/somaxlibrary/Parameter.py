@@ -75,7 +75,6 @@ class Parametric(HasParameterDict):
         """
         param: Parameter = self.get_param(path)
         param.set_value(value)
-        self.logger.debug(f"Parameter {param} set to {value}.")
 
     def get_param(self, param_path: [str]) -> Parameter:
         """ raises KeyError """

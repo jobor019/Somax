@@ -142,6 +142,7 @@ class Player(ScheduledMidiObject, Parametric):
             event = transform.transform(event)
 
         self._influence_self(event, scheduler_time)
+        self.logger.debug(f"[new_event] Player {self.name} successfully created new event.")
         return event
 
     def _influence_self(self, event: CorpusEvent, time: float) -> None:
@@ -248,7 +249,7 @@ class Player(ScheduledMidiObject, Parametric):
 
     def send_peaks(self, scheduler_time: float):
         self._update_peaks(scheduler_time)
-        peak_group: int = 0
+        peak_group: str = self.name
         merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
         self.logger.debug(f"[send_peaks] sending {len(merged_peaks)} merged peaks...")
         for peak in merged_peaks:
@@ -256,9 +257,10 @@ class Player(ScheduledMidiObject, Parametric):
             self.target.send_simple("peak", [peak_group, state_index, peak.score])
         self.target.send_simple("num_peaks", [peak_group, len(merged_peaks)])
         self.logger.debug(f"[send_peaks] sending raw peaks...")
+        # TODO: Does not handle nested streamviews
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
-                peak_group += 1
+                peak_group = "::".join([streamview.name, atom.name])
                 peaks: [Peak] = atom.activity_pattern.peaks
                 for peak in peaks:
                     state_index: int = self.corpus.event_closest(peak.time).state_index

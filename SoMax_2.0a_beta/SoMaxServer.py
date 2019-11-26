@@ -168,15 +168,19 @@ class SoMaxServer(Caller):
     ######################################################
 
     def start(self):
+        self.clear_all()
         self.scheduler.start()
 
     def stop(self):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
         self.scheduler.stop()
+        self.clear_all()
+        self.logger.info("Scheduler was stopped.")
+
+    def clear_all(self):
         for player in self.players.values():
             player.clear()
-        self.logger.info("Scheduler was stopped.")
 
     def get_time(self):
         self.target.send_simple("time", self.scheduler.time)
@@ -353,7 +357,7 @@ class SoMaxServer(Caller):
             self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
 
     def set_param(self, path: str, value: Any):
-        self.logger.debug(f"[set_param] attempting to set param at '{path}' to {value}.")
+        self.logger.debug(f"[set_param] Setting parameter at '{path}' to {value}.")
         path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
         try:
             player: str = path_parsed.pop(0)

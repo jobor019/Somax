@@ -102,6 +102,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         return f"NGramMemorySpace with size {self._ngram_size.value}, type {self.label_type} and corpus {self.corpus}."
 
     def read(self, corpus: Corpus, **_kwargs) -> None:
+        self.logger.debug(f"[read] Reading corpus '{corpus}'.")
         self.corpus = corpus
         self.structured_data = {}
         labels: deque = deque([], self._ngram_size.value)
