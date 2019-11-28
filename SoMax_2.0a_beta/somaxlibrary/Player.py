@@ -163,12 +163,14 @@ class Player(ScheduledMidiObject, Parametric):
                 try:
                     atom.influence(label, time, **kwargs)
                 except InvalidLabelInput as e:
-                    self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
+                    # self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
+                    continue
         else:
             try:
                 self._get_atom(path).influence(label, time, **kwargs)
             except InvalidLabelInput as e:
-                self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
+                # self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
+                pass
 
 
     def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
