@@ -6,6 +6,7 @@ from typing import Dict, Union
 from somaxlibrary import Parameter
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform, NoTransform
@@ -42,11 +43,12 @@ class MaxPeakSelector(AbstractPeakSelector):
 
 
 class DefaultPeakSelector(AbstractPeakSelector):
-    def decide(self, _peaks: [Peak], influence_history: (CorpusEvent, (AbstractTransform, ...)),
+    def decide(self, _peaks: [Peak], influence_history: ImprovisationMemory,
                corpus: Corpus, **_kwargs) -> [CorpusEvent, AbstractTransform]:
         self.logger.debug("[decide] DefaultPeakSelector called.")
-        if not influence_history:
+        try:
+            last_event, _, last_transform = influence_history.get_latest()
+            next_state_idx: int = (last_event.state_index + 1) % corpus.length()
+            return corpus.event_at(next_state_idx), last_transform
+        except IndexError:
             return corpus.event_at(0), (NoTransform(),)
-        last_event, last_transform = influence_history[-1]
-        next_state_idx: int = (last_event.state_index + 1) % corpus.length()
-        return corpus.event_at(next_state_idx), last_transform

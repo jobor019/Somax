@@ -6,7 +6,7 @@ from abc import abstractmethod
 from typing import ClassVar, Dict, Union
 
 from somaxlibrary.Corpus import Corpus
-from somaxlibrary.CorpusEvent import CorpusEvent
+from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Peak import Peak
 
@@ -17,8 +17,8 @@ class AbstractMergeAction(Parametric):
         self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this MergeAction.")
 
     @abstractmethod
-    def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
-        Peak]:
+    def merge(self, peaks: [Peak], time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> [Peak]:
         raise NotImplementedError("AbstractMergeAction.peaks is abstract.")
 
     @staticmethod
@@ -53,8 +53,8 @@ class DistanceMergeAction(AbstractMergeAction):
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
 
-    def merge(self, peaks: [Peak], _time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
-        Peak]:
+    def merge(self, peaks: [Peak], _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> [Peak]:
         self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
         peaks.sort(key=lambda p: (p.transform_hash, p.time))
         if len(peaks) <= 1:
@@ -95,8 +95,8 @@ class PhaseModulationMergeAction(AbstractMergeAction):
         self._selectivity: Parameter = Parameter(selectivity, None, None, 'float', "Very unclear parameter.")  # TODO
         self._parse_parameters()
 
-    def merge(self, peaks: [Peak], time: float, _history: [CorpusEvent] = None, _corpus: Corpus = None, **_kwargs) -> [
-        Peak]:
+    def merge(self, peaks: [Peak], time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> [Peak]:
         for peak in peaks:
             factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))
             peak.score *= factor
@@ -109,6 +109,32 @@ class PhaseModulationMergeAction(AbstractMergeAction):
     @selectivity.setter
     def selectivity(self, value):
         self._selectivity.value = value
+
+
+class NextStateMergeAction(AbstractMergeAction):
+
+    def __init__(self, factor: float = 1.5, t_width: float = 0.5):
+        """ t_width in bars """
+        super().__init__()
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("[__init__] Creating NextStateMergeAction with width {} and merge mode {}.")
+        self.factor: Parameter = Parameter(factor, 0.0, None, 'float', "Scaling factor for peaks close to previous output.")
+        self._t_width: Parameter = Parameter(t_width, 0.0, None, 'float', "Very unclear parameter")  # TODO
+
+    def merge(self, peaks: [Peak], time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> [Peak]:
+
+        try:
+            last_event, trigger_time, _ = history.get_latest()
+            next_state_time: float = last_event.onset + time - trigger_time
+            for peak in peaks:
+                if next_state_time - self._t_width.value <= peak.time <= next_state_time + self._t_width.value:
+                    peak.score *= self.factor.value
+            return peaks
+        except IndexError:
+            return peaks
+
+
 
 # TODO: Reimplement!!!
 # class StateMergeAction(AbstractMergeAction):

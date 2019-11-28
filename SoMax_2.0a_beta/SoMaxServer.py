@@ -357,7 +357,7 @@ class SoMaxServer(Caller):
             self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
 
     def set_param(self, path: str, value: Any):
-        self.logger.debug(f"[set_param] Setting parameter at '{path}' to {value}.")
+        self.logger.debug(f"[set_param] Setting parameter at '{path}' to {value} (type={type(value)}).")
         path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
         try:
             player: str = path_parsed.pop(0)

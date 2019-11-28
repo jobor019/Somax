@@ -10,9 +10,11 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import DuplicateKeyError, TransformError
 from somaxlibrary.Exceptions import InvalidPath, InvalidCorpus, InvalidConfiguration, InvalidLabelInput
+from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction
+from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction, AbstractMergeAction, \
+    NextStateMergeAction
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
 from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
@@ -23,7 +25,6 @@ from somaxlibrary.scheduler.ScheduledObject import ScheduledMidiObject, TriggerM
 
 
 class Player(ScheduledMidiObject, Parametric):
-    MAX_HISTORY_LEN = 100  # TODO Remove or use
 
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
         super(Player, self).__init__(triggering_mode)
@@ -37,10 +38,10 @@ class Player(ScheduledMidiObject, Parametric):
         self.corpus: Corpus = None
         self.peak_selectors: {str: AbstractPeakSelector} = {}
 
-        self.improvisation_memory: deque[(CorpusEvent, AbstractTransform)] = deque('', self.MAX_HISTORY_LEN)
+        self.improvisation_memory: ImprovisationMemory = ImprovisationMemory()
 
         # TODO: Temp
-        for merge_action in [DistanceMergeAction, PhaseModulationMergeAction]:
+        for merge_action in [DistanceMergeAction, PhaseModulationMergeAction, NextStateMergeAction]:
             self.add_merge_action(merge_action())
         for peak_selector in [MaxPeakSelector(), DefaultPeakSelector()]:
             self.add_peak_selector(peak_selector)
@@ -125,7 +126,7 @@ class Player(ScheduledMidiObject, Parametric):
         self._update_peaks(scheduler_time)
         peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
 
-        event_and_transforms: (CorpusEvent, AbstractTransform) = None
+        event_and_transforms: (CorpusEvent, (AbstractTransform, ...)) = None
         for peak_selector in self.peak_selectors.values():
             event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)
             if event_and_transforms:
@@ -134,7 +135,7 @@ class Player(ScheduledMidiObject, Parametric):
             # TODO: Ensure that this never happens so that this error message can be removed
             raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
 
-        self.improvisation_memory.append(event_and_transforms)
+        self.improvisation_memory.append(event_and_transforms[0], scheduler_time, event_and_transforms[1])
 
         event: CorpusEvent = deepcopy(event_and_transforms[0])
         transforms: (AbstractTransform, ...) = event_and_transforms[1]
@@ -208,7 +209,7 @@ class Player(ScheduledMidiObject, Parametric):
         # self.update_memory_length()
         # self.send_parameter_dict()
 
-    def merged_peaks(self, time: float, history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
+    def merged_peaks(self, time: float, history: ImprovisationMemory, corpus: Corpus, **kwargs) -> [Peak]:
         weight_sum: float = 0.0
         for streamview in self.streamviews.values():
             weight_sum += streamview.weight if streamview.is_enabled() else 0.0
@@ -271,7 +272,7 @@ class Player(ScheduledMidiObject, Parametric):
                 self.target.send_simple("num_peaks", [atom.name, len(peaks)])
 
     def clear(self):
-        self.improvisation_memory = []
+        self.improvisation_memory = ImprovisationMemory()
         for streamview in self.streamviews.values():
             streamview.clear()
 
