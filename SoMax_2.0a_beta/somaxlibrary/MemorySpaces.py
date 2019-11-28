@@ -148,6 +148,7 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     def set_ngram_size(self, new_size: int):
         self._ngram_size.value = new_size
+        self.influence_history: deque[AbstractLabel] = deque([], new_size)
         if self.corpus:
             self.read(self.corpus)
 
