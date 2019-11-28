@@ -28,6 +28,7 @@ class StreamView(Parametric):
         self.atoms: {str: Atom} = dict()
         self.streamviews: {str: StreamView} = {}
         self._weight: Parameter = Parameter(weight, 0.0, None, 'float', "Relative scaling of streamview peaks.")
+        self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this Streamview.")
         self._parse_parameters()
 
         for merge_action in merge_actions:
@@ -121,8 +122,11 @@ class StreamView(Parametric):
         for streamview in self.streamviews.values():
             peaks.extend(streamview.merged_peaks(time, influence_history, corpus, **kwargs))
 
+        # TODO: Code duplication from player
         # Peaks from atoms
-        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.atoms.values(), 0.0))
+        weight_sum: float = 0.0
+        for atom in self.atoms.values():
+            weight_sum += atom.weight if atom.is_enabled() else 0.0
         for atom in self.atoms.values():
             peak_copies: [Peak] = atom.copy_peaks()
             normalized_weight = atom.weight / weight_sum
@@ -132,7 +136,8 @@ class StreamView(Parametric):
 
         # Apply merge actions on this level and return
         for merge_action in self._merge_actions.values():
-            peaks = merge_action.merge(peaks, time, influence_history, corpus, **kwargs)
+            if merge_action.is_enabled():
+                peaks = merge_action.merge(peaks, time, influence_history, corpus, **kwargs)
         return peaks
 
     def read(self, corpus: Corpus):
@@ -147,6 +152,9 @@ class StreamView(Parametric):
     @weight.setter
     def weight(self, value: float):
         self._weight.value = value
+
+    def is_enabled(self):
+        return self.enabled.value
 
     def clear(self):
         for streamview in self.streamviews.values():

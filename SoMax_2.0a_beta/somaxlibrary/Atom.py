@@ -21,6 +21,7 @@ class Atom(Parametric):
         self.logger.debug(f"[__init__ Creating atom '{name}'.")
         self.name = name
         self._weight: Parameter = Parameter(weight, 0.0, None, 'float', "Relative scaling of atom peaks.")
+        self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this Atom.")
         self.activity_pattern: AbstractActivityPattern = activity_type()  # creates activity
         self.memory_space: AbstractMemorySpace = memory_type(corpus, label_type, transforms)
         self._self_influenced: Parameter = Parameter(self_influenced, 0, 1, 'bool',
@@ -85,6 +86,9 @@ class Atom(Parametric):
     def clear(self):
         self.activity_pattern.clear()
         self.memory_space.clear()
+
+    def is_enabled(self):
+        return self.enabled.value
 
     # TODO: Reimplement
     # external method to fetch properties of the atom

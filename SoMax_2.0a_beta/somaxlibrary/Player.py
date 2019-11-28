@@ -209,7 +209,9 @@ class Player(ScheduledMidiObject, Parametric):
         # self.send_parameter_dict()
 
     def merged_peaks(self, time: float, history: [CorpusEvent], corpus: Corpus, **kwargs) -> [Peak]:
-        weight_sum: float = float(reduce(lambda a, b: a + b.weight, self.streamviews.values(), 0.0))
+        weight_sum: float = 0.0
+        for streamview in self.streamviews.values():
+            weight_sum += streamview.weight if streamview.is_enabled() else 0.0
         peaks: [Peak] = []
         for streamview in self.streamviews.values():
             normalized_weight = streamview.weight / weight_sum
@@ -218,7 +220,8 @@ class Player(ScheduledMidiObject, Parametric):
                 peaks.append(peak)
 
         for merge_action in self.merge_actions.values():
-            peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
+            if merge_action.is_enabled():
+                peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
         return peaks
 
     def add_transform(self, path: [str], transform: (AbstractTransform, ...)) -> None:

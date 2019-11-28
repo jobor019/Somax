@@ -12,6 +12,9 @@ from somaxlibrary.Peak import Peak
 
 
 class AbstractMergeAction(Parametric):
+    def __init__(self):
+        super().__init__()
+        self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this MergeAction.")
 
     @abstractmethod
     def merge(self, peaks: [Peak], time: float, history: [CorpusEvent] = None, corpus: Corpus = None, **kwargs) -> [
@@ -30,6 +33,9 @@ class AbstractMergeAction(Parametric):
             parameters[name] = parameter.update_parameter_dict()
         self.parameter_dict = {"parameters": parameters}
         return self.parameter_dict
+
+    def is_enabled(self):
+        return self.enabled.value
 
 
 class DistanceMergeAction(AbstractMergeAction):
