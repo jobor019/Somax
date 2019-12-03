@@ -29,7 +29,6 @@ class Player(ScheduledMidiObject, Parametric):
     def __init__(self, name: str, target: Target, triggering_mode: TriggerMode):
         super(Player, self).__init__(triggering_mode)
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Created Player with name '{name}' and trigger mode '{triggering_mode}'")
         self.name: str = name  # name of the player
         self.target: Target = target
 
@@ -39,6 +38,7 @@ class Player(ScheduledMidiObject, Parametric):
         self.peak_selectors: {str: AbstractPeakSelector} = {}
 
         self.improvisation_memory: ImprovisationMemory = ImprovisationMemory()
+        self._previous_peaks: [Peak] = []
 
         # TODO: Temp
         for merge_action in [DistanceMergeAction, PhaseModulationMergeAction, NextStateMergeAction]:
@@ -225,6 +225,7 @@ class Player(ScheduledMidiObject, Parametric):
         for merge_action in self.merge_actions.values():
             if merge_action.is_enabled():
                 peaks = merge_action.merge(peaks, time, history, corpus, **kwargs)
+        self._previous_peaks = peaks
         return peaks
 
     def add_transform(self, path: [str], transform: (AbstractTransform, ...)) -> None:
@@ -238,39 +239,26 @@ class Player(ScheduledMidiObject, Parametric):
         else:
             self._get_atom(path).memory_space.add_transforms(transform)
 
-    @property
-    def previous_peaks_raw(self) -> [(float, float, int)]:
-        peaks: [(int, float, int)] = []
-        transform_indices: {int: int} = {}
-        transform_tuple_index: int = 0
-        for peak in self._previous_peaks:
-            if peak.transforms not in transform_indices:
-                transform_indices[peak.transform_hash] = transform_tuple_index
-                transform_tuple_index += 1
-            state: int = self.corpus.event_closest(peak.time).state_index
-            score: float = peak.score
-            transform_index: int = transform_indices[peak.transform_hash]
-            peaks.append((state, score, transform_index))
-        return peaks
 
     def send_peaks(self, scheduler_time: float):
-        self._update_peaks(scheduler_time)
+        # TODO: Remove the lines that have been commented out.
+        # self._update_peaks(scheduler_time)
         peak_group: str = self.name
-        merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
-        self.logger.debug(f"[send_peaks] sending {len(merged_peaks)} merged peaks...")
-        for peak in merged_peaks:
-            state_index: int = self.corpus.event_closest(peak.time).state_index
-            self.target.send_simple("peak", [peak_group, state_index, peak.score])
-        self.target.send_simple("num_peaks", [peak_group, len(merged_peaks)])
+        # merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
+        # self.logger.debug(f"[send_peaks] sending {len(merged_peaks)} merged peaks...")
+        # for peak in merged_peaks:
+        #     state_index: int = self.corpus.event_closest(peak.time).state_index
+        #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
+        self.target.send_simple("num_peaks", [peak_group, len(self._previous_peaks)])
         self.logger.debug(f"[send_peaks] sending raw peaks...")
         # TODO: Does not handle nested streamviews
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
                 peak_group = "::".join([streamview.name, atom.name])
                 peaks: [Peak] = atom.activity_pattern.peaks
-                for peak in peaks:
-                    state_index: int = self.corpus.event_closest(peak.time).state_index
-                    self.target.send_simple("peak", [peak_group, state_index, peak.score])
+                # for peak in peaks:
+                #     state_index: int = self.corpus.event_closest(peak.time).state_index
+                #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
                 self.target.send_simple("num_peaks", [atom.name, len(peaks)])
 
     def clear(self):

@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 840.0, 718.0 ],
+		"rect" : [ 34.0, 79.0, 574.0, 718.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -38,6 +38,19 @@
 		"style" : "",
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
+				"box" : 				{
+					"color" : [ 0.82661509513855, 0.153967931866646, 0.629297733306885, 1.0 ],
+					"id" : "obj-128",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 245.0, 515.5, 70.0, 22.0 ],
+					"text" : "loadmess 1"
+				}
+
+			}
+, 			{
 				"box" : 				{
 					"id" : "obj-180",
 					"linecount" : 3,
@@ -225,7 +238,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 1208.416666666666515, 861.0, 339.0, 22.0 ],
-					"presentation_linecount" : 2,
 					"text" : "set_param player1::self::self::memory_space::_ngram_size $1"
 				}
 
@@ -239,7 +251,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 1289.0, 793.0, 280.0, 49.0 ],
-					"presentation_linecount" : 3,
 					"text" : "set_param player1::melodic::melodic::memory_space::_ngram_size $1"
 				}
 
@@ -808,8 +819,6 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 551.5, 660.0, 47.0, 55.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 236.5, 224.0, 182.0, 91.5 ],
 					"size" : 4494,
 					"slidercolor" : [ 0.082352941176471, 0.345098039215686, 0.996078431372549, 0.53 ]
 				}
@@ -825,8 +834,6 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 477.5, 660.0, 47.0, 55.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 236.5, 224.0, 182.0, 91.5 ],
 					"size" : 4494,
 					"slidercolor" : [ 0.729411764705882, 0.058823529411765, 0.058823529411765, 0.53 ]
 				}
@@ -842,8 +849,6 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 403.5, 660.0, 47.0, 55.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 236.5, 224.0, 182.0, 91.5 ],
 					"size" : 4494,
 					"slidercolor" : [ 0.082352941176471, 0.682352941176471, 0.011764705882353, 0.501960784313725 ]
 				}
@@ -885,8 +890,6 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 326.5, 660.0, 47.0, 55.0 ],
-					"presentation" : 1,
-					"presentation_rect" : [ 236.5, 224.0, 182.0, 91.5 ],
 					"size" : 4494,
 					"slidercolor" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
@@ -912,7 +915,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "bang" ],
 					"patching_rect" : [ 235.5, 568.5, 63.0, 22.0 ],
-					"text" : "metro 100"
+					"text" : "metro 250"
 				}
 
 			}
@@ -1876,7 +1879,7 @@
 					"patching_rect" : [ 695.0, 640.0, 36.0, 42.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 236.5, 345.0, 57.0, 24.0 ],
-					"text" : "1947"
+					"text" : "1600"
 				}
 
 			}
@@ -2224,7 +2227,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 9.41666666666697, 112.0, 18.0, 34.0 ],
 					"size" : 2,
-					"value" : 0
+					"value" : 1
 				}
 
 			}
@@ -2261,7 +2264,8 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 662.0, 114.5, 404.0, 76.0 ],
+					"patching_rect" : [ 656.0, 159.0, 404.0, 76.0 ],
+					"presentation_linecount" : 5,
 					"text" : "new_player $1 $2 override=True, create_streamview $1 self, create_atom $1 self::self label=MelodicLabel self_influenced=True, create_streamview $1 melodic, create_atom $1 melodic::melodic label=PitchClassLabel, create_streamview $1 harmonic, create_atom $1 harmonic::harmonic label=HarmonicLabel, bang"
 				}
 
@@ -2526,6 +2530,13 @@
 					"destination" : [ "obj-7", 0 ],
 					"order" : 4,
 					"source" : [ "obj-125", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-46", 0 ],
+					"source" : [ "obj-128", 0 ]
 				}
 
 			}
@@ -2887,7 +2898,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-9", 0 ],
-					"midpoints" : [ 671.5, 503.75, 54.5, 503.75 ],
+					"midpoints" : [ 665.5, 503.75, 54.5, 503.75 ],
 					"source" : [ "obj-38", 0 ]
 				}
 
@@ -3404,32 +3415,16 @@
  ],
 		"styles" : [ 			{
 				"name" : "dUG Yello 01-1",
-				"default" : 				{
-					"fontsize" : [ 10.0 ],
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"bgfillcolor" : 					{
-						"type" : "gradient",
-						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
-						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
-						"angle" : 270.0,
-						"proportion" : 0.39,
-						"autogradient" : 0
-					}
-,
-					"fontface" : [ 1 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
-				}
-,
 				"newobj" : 				{
-					"fontsize" : [ 10.0 ],
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontface" : [ 1 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"fontsize" : [ 10.0 ]
 				}
 ,
 				"message" : 				{
-					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"fontface" : [ 1 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -3440,8 +3435,24 @@
 						"autogradient" : 0
 					}
 ,
+					"fontsize" : [ 10.0 ]
+				}
+,
+				"default" : 				{
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"fontface" : [ 1 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
+					"bgfillcolor" : 					{
+						"type" : "gradient",
+						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
+						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
+						"angle" : 270.0,
+						"proportion" : 0.39,
+						"autogradient" : 0
+					}
+,
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"fontsize" : [ 10.0 ]
 				}
 ,
 				"button" : 				{

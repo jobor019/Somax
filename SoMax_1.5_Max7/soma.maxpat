@@ -39,6 +39,18 @@
 		"title" : "#1",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-71",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 448.0, 950.0, 74.0, 22.0 ],
+					"style" : "",
+					"text" : "print WGEB"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-74",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
@@ -114,7 +126,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 114.00293, 1064.328613, 158.0, 22.0 ],
 					"style" : "",
-					"text" : "586 5717.54248"
+					"text" : "23 4477.502441"
 				}
 
 			}
@@ -715,7 +727,7 @@
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 50.0, 227.0, 112.0, 35.0 ],
 									"style" : "",
-									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
+									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/debussy_part\""
 								}
 
 							}
@@ -1140,9 +1152,8 @@
 					"bgcolor" : [ 0.666667, 0.666667, 0.666667, 1.0 ],
 					"bgoncolor" : [ 0.666667, 0.666667, 0.666667, 1.0 ],
 					"fontface" : 1,
-					"fontsize" : 11.0,
+					"fontsize" : 13.0,
 					"id" : "obj-481",
-					"ignoreclick" : 1,
 					"legacytextcolor" : 1,
 					"maxclass" : "textbutton",
 					"mode" : 1,
@@ -1155,8 +1166,8 @@
 					"presentation_rect" : [ 269.0, 19.0, 62.0, 20.0 ],
 					"rounded" : 11.0,
 					"style" : "",
-					"text" : "not ready",
-					"textcolor" : [ 0.45, 0.45, 0.45, 1.0 ],
+					"text" : "start",
+					"textcolor" : [ 0.15, 0.15, 0.15, 1.0 ],
 					"texton" : "stop",
 					"textoncolor" : [ 0.698039, 0.145098, 0.145098, 1.0 ],
 					"textovercolor" : [ 0.1, 0.1, 0.1, 1.0 ],
@@ -1226,7 +1237,7 @@
 						"tags" : "",
 						"style" : "",
 						"subpatcher_template" : "",
-						"title" : "player_2",
+						"title" : "player_1",
 						"boxes" : [ 							{
 								"box" : 								{
 									"fontname" : "Arial",
@@ -7296,7 +7307,7 @@
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 50.0, 227.0, 112.0, 35.0 ],
 									"style" : "",
-									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
+									"text" : "\"Macintosh HD:/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/debussy_part\""
 								}
 
 							}
@@ -10079,14 +10090,14 @@
 									"fontname" : "Arial",
 									"fontsize" : 12.0,
 									"id" : "obj-12",
-									"linecount" : 10,
+									"linecount" : 8,
 									"maxclass" : "message",
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 581.0, 376.5, 73.0, 85.0 ],
 									"style" : "",
-									"text" : "\"/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/Sax_gentle cat_Slow_OLD\""
+									"text" : "/Users/joakimborg/MaxProjects/somax-dyci2/SoMax_1.5_Max7/corpus/debussy_part"
 								}
 
 							}
@@ -11312,7 +11323,7 @@
 									"patching_rect" : [ 187.0, 510.0, 173.0, 20.0 ],
 									"saved_object_attributes" : 									{
 										"embed" : 0,
-										"name" : "1014_taboo_mod_values",
+										"name" : "1046_taboo_mod_values",
 										"parameter_enable" : 0,
 										"range" : 129,
 										"showeditor" : 0,
@@ -11562,7 +11573,7 @@
 													"patching_rect" : [ 33.0, 156.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1014_taboo_mod_values",
+														"name" : "1046_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -11634,7 +11645,7 @@
 													"patching_rect" : [ 59.0, 280.0, 173.0, 20.0 ],
 													"saved_object_attributes" : 													{
 														"embed" : 0,
-														"name" : "1014_taboo_mod_values",
+														"name" : "1046_taboo_mod_values",
 														"parameter_enable" : 0,
 														"range" : 129,
 														"showeditor" : 0,
@@ -20055,7 +20066,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "int" ],
 					"patching_rect" : [ 1177.176147, 1373.988525, 84.0, 42.0 ],
-					"presentation" : 1,
 					"presentation_rect" : [ 238.5, 96.0, 66.0, 33.0 ],
 					"style" : ""
 				}
@@ -20896,7 +20906,7 @@
 , 			{
 				"box" : 				{
 					"blackkeycolor" : [ 0.0, 0.0, 0.0, 0.698039 ],
-					"hkeycolor" : [ 0.618173, 0.668162, 0.964477, 1.0 ],
+					"hkeycolor" : [ 0.327474, 0.417182, 0.185534, 1.0 ],
 					"id" : "obj-717",
 					"ignoreclick" : 1,
 					"maxclass" : "kslider",
@@ -20947,7 +20957,7 @@
 					"presentation_rect" : [ 63.600006, -1.5, 68.0, 18.0 ],
 					"style" : "",
 					"text" : "v0.1.4",
-					"textcolor" : [ 0.0, 0.0, 0.0, 1.0 ]
+					"textcolor" : [ 1.0, 1.0, 1.0, 1.0 ]
 				}
 
 			}
@@ -21000,7 +21010,7 @@
 					"presentation_rect" : [ 7.0, -5.0, 49.0, 25.0 ],
 					"style" : "",
 					"text" : "soma",
-					"textcolor" : [ 0.0, 0.0, 0.0, 1.0 ]
+					"textcolor" : [ 1.0, 1.0, 1.0, 1.0 ]
 				}
 
 			}
@@ -22356,7 +22366,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 410.0, 18.0, 39.0, 18.0 ],
 					"style" : "",
-					"text" : " "
+					"text" : "68"
 				}
 
 			}
@@ -22388,7 +22398,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 377.0, 18.0, 45.0, 18.0 ],
 					"style" : "",
-					"text" : " "
+					"text" : "23"
 				}
 
 			}
@@ -28408,7 +28418,7 @@
 					"bgfillcolor_type" : "color",
 					"depth" : 2,
 					"id" : "obj-35",
-					"items" : [ "-- click to load a corpus --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "Beethoven_SonF-1_Knorre_11025", ",", "best_composition", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "debussy_part", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "noteMatrix", ",", "Sax_gentle cat_Slow_OLD", ",", "Scarbo", ",", "schoenberg" ],
+					"items" : [ "-- click to refresh --", ",", "<separator>", ",", "bach_invention_1", ",", "bach_invention_2", ",", "Beethoven_SonF-1_Knorre_11025", ",", "best_composition", ",", "carine_chorus", ",", "carine_piano", ",", "CarineIntuition", ",", "dbs", ",", "debussy", ",", "debussy_part", ",", "evans", ",", "keith_lh", ",", "keith_rh", ",", "noteMatrix", ",", "Sax_gentle cat_Slow_OLD", ",", "Scarbo", ",", "schoenberg" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -28937,7 +28947,7 @@
 				"box" : 				{
 					"angle" : 0.0,
 					"background" : 1,
-					"bgcolor" : [ 0.618173, 0.668162, 0.964477, 1.0 ],
+					"bgcolor" : [ 0.327474, 0.417182, 0.185534, 1.0 ],
 					"id" : "obj-444",
 					"maxclass" : "panel",
 					"mode" : 0,
@@ -29340,8 +29350,17 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-71", 0 ],
+					"order" : 0,
+					"source" : [ "obj-174", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-852", 0 ],
 					"midpoints" : [ 466.264648, 1018.002075, 329.69043, 1018.002075 ],
+					"order" : 1,
 					"source" : [ "obj-174", 0 ]
 				}
 
@@ -30197,7 +30216,7 @@
 					"destination" : [ "obj-789", 2 ],
 					"source" : [ "obj-481", 0 ],
 					"watchpoint_flags" : 2,
-					"watchpoint_id" : 2
+					"watchpoint_id" : 1
 				}
 
 			}

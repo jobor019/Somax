@@ -36,7 +36,6 @@ class Scheduler:
         self.terminated = True
 
     def start(self) -> None:
-        self.logger.info(f"Scheduler Started. Current beat is {self.beat}.")
         self._last_callback_time = time.time()
         self.running = True
 

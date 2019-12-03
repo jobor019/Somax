@@ -10,7 +10,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.Exceptions import InvalidLabelInput, TransformError
 from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
-from somaxlibrary.Labels import AbstractLabel, PitchClassLabel, HarmonicLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Parameter import Parameter, ParamWithSetter
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peak import Peak
@@ -46,6 +46,7 @@ class AbstractMemorySpace(Parametric):
         return dict(inspect.getmembers(sys.modules[__name__],
                                        lambda member: inspect.isclass(member) and not inspect.isabstract(
                                            member) and member.__module__ == __name__))
+
     @abstractmethod
     def clear(self) -> None:
         """ Reset the playing state of the Memory Space without removing its corpus memory. """
@@ -90,7 +91,8 @@ class NGramMemorySpace(AbstractMemorySpace):
                           f"label type {label_type} and history length {history_len}.")
         self.structured_data: {Tuple[int, ...]: [CorpusEvent]} = {}
         self._ngram_size: Parameter = ParamWithSetter(history_len, 1, None, 'int',
-                                                "Number of events to hard-match. (TODO)", self.set_ngram_size)  # TODO
+                                                      "Number of events to hard-match. (TODO)",
+                                                      self.set_ngram_size)  # TODO
         self.influence_history: deque[AbstractLabel] = deque([], history_len)
 
         self.corpus: Corpus = None
@@ -121,7 +123,7 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [AbstractInfluence]:
         """ Raises: InvalidLabelInput"""
-        if not type(label) == self.label_type:      # Rejects subclasses
+        if not type(label) == self.label_type:  # Rejects subclasses
             raise InvalidLabelInput(f"An atom with type {self.label_type} can't handle labels of type {type(label)}.")
         else:
             self.logger.debug(f"[influence] Influencing memory space with label {self.label_type} with label {label}.")
@@ -145,7 +147,6 @@ class NGramMemorySpace(AbstractMemorySpace):
                     continue
         return matches
 
-
     def set_ngram_size(self, new_size: int):
         self._ngram_size.value = new_size
         self.influence_history: deque[AbstractLabel] = deque([], new_size)
@@ -154,6 +155,3 @@ class NGramMemorySpace(AbstractMemorySpace):
 
     def clear(self) -> None:
         self.influence_history = deque([], self._ngram_size.value)
-
-
-

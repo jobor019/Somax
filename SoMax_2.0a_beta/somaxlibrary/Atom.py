@@ -45,6 +45,7 @@ class Atom(Parametric):
         self.memory_space.read(corpus)
         self.activity_pattern.corpus = corpus
 
+    # TODO: Legacy?
     # set current weight of atom
     def set_weight(self, weight: float):
         self.logger.debug("[set_weight] Atom {} setting weight to {}.".format(self.name, weight))
