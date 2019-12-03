@@ -149,6 +149,18 @@ class SoMaxServer(Caller):
         except DuplicateKeyError as e:
             self.logger.error(f"{str(e)}. No atom was created.")
 
+    def delete_atom(self, player: str, path: str):
+        self.logger.debug(f"[delete_atom] called for player {player} with path {path}.")
+        path_as_list: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            self.players[player].delete_atom(path_as_list)
+            self.logger.debug(f"Deleted atom with path '{player + '::' + path}'")
+            self.players[player]._parse_parameters()    # TODO: Not ideal
+        except InvalidPath as e:
+            self.logger.error(f"Could not delet atom at path {path}. [Message]: {str(e)}")
+        except KeyError:
+            self.logger.error(f"Could not delete atom at path {path}. The parent streamview/player does not exist.")
+
     def add_transform(self, player: str, path: str, transforms: [str], parse_mode=""):
         self.logger.debug(f"[add_transform] called for player {player} with path {path}.")
         path_and_name: [str] = self.io_parser.parse_streamview_atom_path(path)

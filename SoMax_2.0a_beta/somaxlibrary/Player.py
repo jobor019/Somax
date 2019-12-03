@@ -202,6 +202,10 @@ class Player(ScheduledMidiObject, Parametric):
                                                      self.corpus, self_influenced, transforms)
         self._parse_parameters()
 
+    def delete_atom(self, path: [str]):
+        atom_name: str = path.pop(-1)
+
+
     def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
         for streamview in self.streamviews.values():

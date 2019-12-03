@@ -39,6 +39,17 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-107",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 480.0, 739.0, 32.0, 22.0 ],
+					"text" : "print"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-106",
 					"maxclass" : "newobj",
 					"numinlets" : 4,
@@ -581,7 +592,7 @@
 					"numoutlets" : 0,
 					"patching_rect" : [ 247.0, 117.0, 150.0, 20.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 247.0, 117.0, 150.0, 20.0 ],
+					"presentation_rect" : [ 101.0, 71.568755966789638, 43.5, 20.0 ],
 					"text" : "Listen"
 				}
 
@@ -1025,7 +1036,7 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 249.0, 133.896678966789636, 24.0, 24.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 249.0, 133.896678966789636, 24.0, 24.0 ]
+					"presentation_rect" : [ 148.0, 71.568755966789638, 24.0, 24.0 ]
 				}
 
 			}
@@ -1272,7 +1283,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "float" ],
-					"patching_rect" : [ 618.0, 191.5, 80.0, 13.0 ],
+					"patching_rect" : [ 628.166666666666515, 216.0, 80.0, 13.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 664.0, 94.896678966789636, 104.0, 21.0 ]
 				}
@@ -1314,7 +1325,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "signal" ],
-					"patching_rect" : [ 648.666666666666515, 167.5, 39.0, 22.0 ],
+					"patching_rect" : [ 704.666666666666515, 167.5, 39.0, 22.0 ],
 					"text" : "gate~"
 				}
 
@@ -1431,7 +1442,7 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "signal", "" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 561.666666666666515, 139.896678966789636, 41.0, 10.0 ],
+					"patching_rect" : [ 561.666666666666515, 127.896678966789636, 41.0, 10.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 436.0, 76.24083296678964, 332.0, 14.655845999999997 ]
 				}
@@ -1478,8 +1489,8 @@
 
 							}
 , 							{
-								"absolutepath" : "/Users/joakimborg/Music/cg.aiff",
-								"filename" : "cg.aiff",
+								"absolutepath" : "/Users/joakimborg/Music/Monophonic/Fabrice_Lent.aif",
+								"filename" : "Fabrice_Lent.aif",
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
@@ -2460,6 +2471,14 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-107", 0 ],
+					"order" : 0,
+					"source" : [ "obj-20", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-14", 0 ],
 					"source" : [ "obj-20", 1 ]
 				}
@@ -2468,6 +2487,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-65", 0 ],
+					"order" : 1,
 					"source" : [ "obj-20", 0 ]
 				}
 
@@ -2502,32 +2522,23 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-43", 1 ],
-					"midpoints" : [ 571.166666666666515, 159.095018450184455, 595.166666666666515, 159.095018450184455 ],
-					"order" : 1,
+					"destination" : [ "obj-54", 1 ],
 					"source" : [ "obj-29", 0 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-43", 0 ],
-					"order" : 2,
-					"source" : [ "obj-29", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-59", 0 ],
+					"destination" : [ "obj-107", 0 ],
 					"order" : 0,
-					"source" : [ "obj-29", 0 ]
+					"source" : [ "obj-3", 0 ]
 				}
 
 			}
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-65", 0 ],
+					"order" : 1,
 					"source" : [ "obj-3", 0 ]
 				}
 
@@ -2661,8 +2672,41 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-65", 0 ],
+					"destination" : [ "obj-107", 0 ],
+					"order" : 0,
 					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-65", 0 ],
+					"order" : 1,
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-43", 1 ],
+					"order" : 1,
+					"source" : [ "obj-54", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-43", 0 ],
+					"order" : 2,
+					"source" : [ "obj-54", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-59", 0 ],
+					"order" : 0,
+					"source" : [ "obj-54", 0 ]
 				}
 
 			}
@@ -2734,7 +2778,16 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-107", 0 ],
+					"order" : 0,
+					"source" : [ "obj-67", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-65", 0 ],
+					"order" : 1,
 					"source" : [ "obj-67", 0 ]
 				}
 
@@ -2778,7 +2831,16 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-107", 0 ],
+					"order" : 0,
+					"source" : [ "obj-8", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-65", 0 ],
+					"order" : 1,
 					"source" : [ "obj-8", 0 ]
 				}
 
@@ -2807,6 +2869,14 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-107", 0 ],
+					"order" : 0,
+					"source" : [ "obj-9", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-30", 0 ],
 					"order" : 0,
 					"source" : [ "obj-9", 1 ]
@@ -2817,6 +2887,7 @@
 				"patchline" : 				{
 					"destination" : [ "obj-65", 0 ],
 					"midpoints" : [ 132.5, 1409.5, 47.5, 1409.5, 47.5, 703.5, 108.5, 703.5 ],
+					"order" : 1,
 					"source" : [ "obj-9", 0 ]
 				}
 
@@ -2964,9 +3035,9 @@
 				"implicit" : 1
 			}
 , 			{
-				"name" : "cg.aiff",
-				"bootpath" : "~/Music",
-				"patcherrelativepath" : "../../../../Music",
+				"name" : "Fabrice_Lent.aif",
+				"bootpath" : "~/Music/Monophonic",
+				"patcherrelativepath" : "../../../../Music/Monophonic",
 				"type" : "AIFF",
 				"implicit" : 1
 			}

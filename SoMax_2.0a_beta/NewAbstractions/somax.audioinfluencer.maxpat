@@ -39,6 +39,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-1",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "bang", "bang" ],
+					"patching_rect" : [ 150.0, 321.0, 32.0, 22.0 ],
+					"text" : "t b b"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"fontsize" : 9.0,
 					"id" : "obj-39",
 					"maxclass" : "comment",
@@ -98,7 +110,7 @@
 				"box" : 				{
 					"comment" : "(list) Raw midi analysis: [nn, vel, ch]",
 					"id" : "obj-33",
-					"index" : 0,
+					"index" : 4,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -110,7 +122,7 @@
 				"box" : 				{
 					"comment" : "(list) Continous chroma output",
 					"id" : "obj-32",
-					"index" : 0,
+					"index" : 2,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -150,7 +162,7 @@
 				"box" : 				{
 					"comment" : "(list) Bonk thresholds",
 					"id" : "obj-28",
-					"index" : 0,
+					"index" : 2,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
@@ -163,7 +175,7 @@
 				"box" : 				{
 					"comment" : "(int) Pitch influence",
 					"id" : "obj-25",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -175,7 +187,7 @@
 				"box" : 				{
 					"comment" : "(bang) Influence onset",
 					"id" : "obj-24",
-					"index" : 0,
+					"index" : 3,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
@@ -226,7 +238,7 @@
 					"numinlets" : 4,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 69.0, 451.0, 259.999999999999943, 22.0 ],
+					"patching_rect" : [ 69.0, 451.0, 301.0, 22.0 ],
 					"text" : "switch 3"
 				}
 
@@ -262,7 +274,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 668.0, 25.300932999999986, 47.0, 33.0 ],
+					"patching_rect" : [ 668.0, 25.300932999999986, 49.0, 33.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 197.815581999999949, 137.641662999999994, 79.0, 20.0 ],
 					"text" : "Thresh (ms):"
@@ -306,9 +318,9 @@
 					"offset" : 21,
 					"outlettype" : [ "int", "int" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 56.541565000000006, 551.0, 357.0, 34.0 ],
+					"patching_rect" : [ 56.541565000000006, 551.0, 364.0, 34.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 2.089607000000001, 173.261108000000036, 357.0, 34.0 ],
+					"presentation_rect" : [ 2.089607000000001, 173.261108000000036, 364.0, 34.0 ],
 					"range" : 88
 				}
 
@@ -317,7 +329,7 @@
 				"box" : 				{
 					"comment" : "(bang) External trigger",
 					"id" : "obj-14",
-					"index" : 0,
+					"index" : 3,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
@@ -617,18 +629,17 @@
 				"box" : 				{
 					"comment" : "(signal) Audio Input",
 					"id" : "obj-4",
-					"index" : 0,
+					"index" : 1,
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "" ],
+					"outlettype" : [ "signal" ],
 					"patching_rect" : [ 43.0, 37.0, 30.0, 30.0 ]
 				}
 
 			}
 , 			{
 				"box" : 				{
-					"bgcolor" : [ 0.2, 0.2, 0.2, 1.0 ],
 					"ghostbar" : 20,
 					"id" : "obj-179",
 					"ignoreclick" : 1,
@@ -687,6 +698,21 @@
  ],
 		"lines" : [ 			{
 				"patchline" : 				{
+					"destination" : [ "obj-19", 1 ],
+					"source" : [ "obj-1", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-20", 1 ],
+					"midpoints" : [ 159.5, 442.0, 664.5, 442.0 ],
+					"source" : [ "obj-1", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-95", 0 ],
 					"source" : [ "obj-11", 0 ]
 				}
@@ -695,7 +721,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-19", 3 ],
-					"midpoints" : [ 1035.5, 414.5, 319.499999999999886, 414.5 ],
+					"midpoints" : [ 1035.5, 414.5, 360.5, 414.5 ],
 					"order" : 1,
 					"source" : [ "obj-14", 0 ]
 				}
@@ -759,17 +785,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-19", 1 ],
-					"order" : 1,
-					"source" : [ "obj-18", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-20", 1 ],
-					"midpoints" : [ 158.833333333333314, 442.0, 664.5, 442.0 ],
-					"order" : 0,
+					"destination" : [ "obj-1", 0 ],
 					"source" : [ "obj-18", 0 ]
 				}
 
@@ -944,7 +960,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-19", 2 ],
-					"midpoints" : [ 726.5, 428.5, 239.166666666666629, 428.5 ],
+					"midpoints" : [ 726.5, 428.5, 266.5, 428.5 ],
 					"order" : 1,
 					"source" : [ "obj-80", 0 ]
 				}
@@ -1007,60 +1023,7 @@
 				}
 
 			}
- ],
-		"dependency_cache" : [ 			{
-				"name" : "OMax.yin+.maxpat",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Abstractions/Signal",
-				"patcherrelativepath" : "../Abstractions/Signal",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "Yin+.maxpat",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Abstractions/Signal",
-				"patcherrelativepath" : "../Abstractions/Signal",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "sr.maxpat",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Externals",
-				"patcherrelativepath" : "../Externals",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "bc.autoname.js",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Externals",
-				"patcherrelativepath" : "../Externals",
-				"type" : "TEXT",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "audio2chroma.maxpat",
-				"bootpath" : "~/MaxProjects/somax-dyci2/SoMax_2.0a_beta/Abstractions/Signal",
-				"patcherrelativepath" : "../Abstractions/Signal",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "yin~.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "bc.yinstats.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "ircamdescriptor~.mxo",
-				"type" : "iLaX"
-			}
-, 			{
-				"name" : "bonk~.mxo",
-				"type" : "iLaX"
-			}
- ],
-		"autosave" : 0
+ ]
 	}
 
 }
