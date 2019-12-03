@@ -157,7 +157,7 @@ class SoMaxServer(Caller):
             self.logger.debug(f"Deleted atom with path '{player + '::' + path}'")
             self.players[player]._parse_parameters()    # TODO: Not ideal
         except InvalidPath as e:
-            self.logger.error(f"Could not delet atom at path {path}. [Message]: {str(e)}")
+            self.logger.error(f"Could not delete atom at path {path}. [Message]: {str(e)}")
         except KeyError:
             self.logger.error(f"Could not delete atom at path {path}. The parent streamview/player does not exist.")
 
@@ -174,6 +174,16 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"Could not add transform at path {path}. The parent streamview/player does not exist.")
         # TODO: parameter dict
+
+    def set_label(self, player: str, path: str, label:str == ""):
+        self.logger.debug(f"[set_label] called for player '{player}' with path '{path}' and new label '{label}'.")
+        label_class: ClassVar[AbstractLabel] = self.io_parser.parse_label_type(label)
+        path_as_list: [str] = self.io_parser.parse_streamview_atom_path(path)
+        try:
+            self.players[player].set_label(path_as_list, label_class)
+        except KeyError:
+            self.logger.error(f"Could not set label for atom at {path}.")
+
 
     ######################################################
     # SCHEDULER

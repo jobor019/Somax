@@ -204,7 +204,12 @@ class Player(ScheduledMidiObject, Parametric):
 
     def delete_atom(self, path: [str]):
         atom_name: str = path.pop(-1)
+        streamview: StreamView = self._get_streamview(path)
+        streamview.delete_atom(atom_name)
 
+    def set_label(self, path: [str], label_class: ClassVar[AbstractLabel]):
+        atom: Atom = self._get_atom(path)
+        atom.set_label(label_class)
 
     def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
@@ -254,7 +259,7 @@ class Player(ScheduledMidiObject, Parametric):
         #     state_index: int = self.corpus.event_closest(peak.time).state_index
         #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
         self.target.send_simple("num_peaks", [peak_group, len(self._previous_peaks)])
-        self.logger.debug(f"[send_peaks] sending raw peaks...")
+        # self.logger.debug(f"[send_peaks] sending raw peaks...")
         # TODO: Does not handle nested streamviews
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():

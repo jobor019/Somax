@@ -122,11 +122,11 @@
 				"box" : 				{
 					"comment" : "(list) Continous chroma output",
 					"id" : "obj-32",
-					"index" : 2,
+					"index" : 3,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 413.5, 677.0, 30.0, 30.0 ]
+					"patching_rect" : [ 720.0, 671.0, 30.0, 30.0 ]
 				}
 
 			}
@@ -175,11 +175,11 @@
 				"box" : 				{
 					"comment" : "(int) Pitch influence",
 					"id" : "obj-25",
-					"index" : 1,
+					"index" : 2,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 24.0, 677.0, 30.0, 30.0 ]
+					"patching_rect" : [ 641.0, 677.0, 30.0, 30.0 ]
 				}
 
 			}
@@ -187,11 +187,11 @@
 				"box" : 				{
 					"comment" : "(bang) Influence onset",
 					"id" : "obj-24",
-					"index" : 3,
+					"index" : 1,
 					"maxclass" : "outlet",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 593.0, 677.0, 30.0, 30.0 ]
+					"patching_rect" : [ 24.0, 690.0, 30.0, 30.0 ]
 				}
 
 			}
@@ -746,7 +746,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-25", 0 ],
-					"order" : 1,
+					"order" : 0,
 					"source" : [ "obj-16", 0 ]
 				}
 
@@ -754,7 +754,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-9", 0 ],
-					"order" : 0,
+					"order" : 1,
 					"source" : [ "obj-16", 0 ]
 				}
 
@@ -801,7 +801,7 @@
 				"patchline" : 				{
 					"destination" : [ "obj-179", 0 ],
 					"midpoints" : [ 423.0, 504.25, 449.5, 504.25 ],
-					"order" : 0,
+					"order" : 1,
 					"source" : [ "obj-191", 0 ]
 				}
 
@@ -809,7 +809,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-32", 0 ],
-					"order" : 1,
+					"order" : 0,
 					"source" : [ "obj-191", 0 ]
 				}
 

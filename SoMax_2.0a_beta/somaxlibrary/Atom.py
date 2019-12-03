@@ -7,7 +7,7 @@ from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.Parameter import Parametric, Parameter
+from somaxlibrary.Parameter import Parametric, Parameter, ParamWithSetter
 from somaxlibrary.Peak import Peak
 from somaxlibrary.Transforms import AbstractTransform
 
@@ -27,7 +27,7 @@ class Atom(Parametric):
         self._self_influenced: Parameter = Parameter(self_influenced, 0, 1, 'bool',
                                                      "Whether new events creates by player should influence this atom or not.")
         if corpus:
-            self.read(corpus, label_type)
+            self.read(corpus)
 
         self._parse_parameters()
 
@@ -57,6 +57,9 @@ class Atom(Parametric):
         matched_events: [AbstractInfluence] = self.memory_space.influence(label, time, **kwargs)
         if matched_events:
             self.activity_pattern.insert(matched_events)  # we insert the events into the activity profile
+
+    def set_label(self, label: ClassVar[AbstractLabel]):
+        self.memory_space.set_label(label)
 
     def update_peaks(self, time: float) -> None:
         self.activity_pattern.update_peaks(time)

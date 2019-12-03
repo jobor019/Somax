@@ -97,6 +97,9 @@ class StreamView(Parametric):
         parent_streamview.atoms[new_atom_name] = Atom(new_atom_name, weight, label_type, activity_type, memory_type,
                                                       corpus, self_influenced, transforms)
 
+    def delete_atom(self, name: str):
+        del self.atoms[name]
+
     def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
         """creating a streamview at required path
         Raises: KeyError, InvalidPath, DuplicateKeyError"""

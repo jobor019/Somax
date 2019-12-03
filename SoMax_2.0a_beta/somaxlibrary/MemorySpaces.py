@@ -51,6 +51,12 @@ class AbstractMemorySpace(Parametric):
     def clear(self) -> None:
         """ Reset the playing state of the Memory Space without removing its corpus memory. """
 
+    def set_label(self, label: ClassVar[AbstractLabel]):
+        self.clear()
+        self.label_type = label
+        if self.corpus:
+            self.read(self.corpus)
+
     def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
         parameters: Dict = {}
         for name, parameter in self._parse_parameters().items():
@@ -104,7 +110,7 @@ class NGramMemorySpace(AbstractMemorySpace):
         return f"NGramMemorySpace with size {self._ngram_size.value}, type {self.label_type} and corpus {self.corpus}."
 
     def read(self, corpus: Corpus, **_kwargs) -> None:
-        self.logger.debug(f"[read] Reading corpus '{corpus}'.")
+        self.logger.debug(f"[read] Reading corpus '{corpus}' using label type '{self.label_type}'.")
         self.corpus = corpus
         self.structured_data = {}
         labels: deque = deque([], self._ngram_size.value)
