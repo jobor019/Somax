@@ -18,5 +18,5 @@ class ClassicInfluence(AbstractInfluence):
     def __init__(self, event: CorpusEvent, time_of_influence: float, transforms: (AbstractTransform, ...), **_kwargs):
         super(ClassicInfluence, self).__init__(event, time_of_influence, transforms)
 
-    def __repr__(self):
-        return f"ClassicInfluence(onset={self.event.onset},time={self.time_of_influence})"
+    # def __repr__(self):
+    #     return f"ClassicInfluence(onset={self.event.onset},time={self.time_of_influence})"

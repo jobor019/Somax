@@ -57,6 +57,7 @@ class DistanceMergeAction(AbstractMergeAction):
               **_kwargs) -> [Peak]:
         self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
         peaks.sort(key=lambda p: (p.transform_hash, p.time))
+        self.logger.debug(f"[merge] Sorting completed.")
         if len(peaks) <= 1:
             return peaks
         i = 1

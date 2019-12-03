@@ -124,8 +124,9 @@ class Player(ScheduledMidiObject, Parametric):
             raise InvalidCorpus(f"No Corpus has been loaded in player '{self.name}'.")
 
         self._update_peaks(scheduler_time)
+        self.logger.debug("[new_event] Peaks were updated")
         peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
-
+        self.logger.debug("[new_event] Merge finished")
         event_and_transforms: (CorpusEvent, (AbstractTransform, ...)) = None
         for peak_selector in self.peak_selectors.values():
             event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)

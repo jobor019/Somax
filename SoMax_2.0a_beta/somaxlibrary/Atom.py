@@ -66,9 +66,11 @@ class Atom(Parametric):
 
     def copy_peaks(self) -> [Peak]:
         """Returns shallow copies of all peaks. """
+        self.logger.debug(f"Copying peaks in atom '{self.name}'...")
         peak_copies: [Peak] = []
         for peak in self.activity_pattern.peaks:
             peak_copies.append(copy.copy(peak))
+        self.logger.debug(f"Peaks successfully copied in atom '{self.name}'.")
         return peak_copies
 
     @property
