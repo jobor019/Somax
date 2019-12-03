@@ -223,6 +223,7 @@ class SoMaxServer(Caller):
         except KeyError:
             if player is None:
                 self.scheduler.tempo_master = None
+                self.target.send_simple("tempo_master", False)
             else:
                 self.logger.error(f"No player named '{player}' exists.")
                 self.target.send_simple("tempo_master", False)

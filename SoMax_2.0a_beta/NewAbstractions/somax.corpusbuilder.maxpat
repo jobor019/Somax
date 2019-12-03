@@ -39,6 +39,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-1",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 225.0, 606.0, 57.0, 22.0 ],
+					"text" : "tosymbol"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"fontface" : 1,
 					"id" : "obj-22",
 					"maxclass" : "comment",
@@ -568,15 +580,15 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-62",
-					"linecount" : 2,
+					"linecount" : 3,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 278.0, 697.0, 455.0, 33.0 ],
+					"patching_rect" : [ 278.0, 697.0, 455.0, 47.0 ],
 					"presentation" : 1,
-					"presentation_linecount" : 2,
-					"presentation_rect" : [ 9.0, 245.0, 414.0, 33.0 ],
-					"text" : "build_corpus 0 fg_channels= [ 1 ] bg_channels= [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ] melody_from_top_note= False"
+					"presentation_linecount" : 3,
+					"presentation_rect" : [ 9.0, 245.0, 414.0, 47.0 ],
+					"text" : "build_corpus /Users/joakimborg/MIDI/Scarbo copy.mid fg_channels= [ 1 ] bg_channels= [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ] melody_from_top_note= False"
 				}
 
 			}
@@ -1221,28 +1233,27 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-8",
-					"linecount" : 16,
+					"linecount" : 7,
 					"maxclass" : "message",
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 415.0, 430.0, 50.0, 223.0 ],
-					"text" : "/Users/joakimborg/MIDI/Midifiles_for_Corpus/Beethoven_Late_Quartets/0046_Beethoven_Quartet_127_3-4.mid"
+					"patching_rect" : [ 415.0, 430.0, 50.0, 102.0 ],
+					"text" : "\"/Users/joakimborg/MIDI/Scarbo copy.mid\""
 				}
 
 			}
 , 			{
 				"box" : 				{
 					"id" : "obj-30",
-					"linecount" : 2,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 252.75, 319.0, 147.5, 33.0 ],
+					"patching_rect" : [ 252.75, 319.0, 147.5, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 12.75, 153.0, 281.5, 20.0 ],
 					"style" : "helpfile_label",
-					"text" : "drag and drop a file here..."
+					"text" : "Scarbo copy.mid"
 				}
 
 			}
@@ -1261,6 +1272,13 @@
 			}
  ],
 		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-66", 1 ],
+					"source" : [ "obj-1", 0 ]
+				}
+
+			}
+, 			{
 				"patchline" : 				{
 					"destination" : [ "obj-115", 0 ],
 					"source" : [ "obj-10", 0 ]
@@ -1525,7 +1543,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-66", 1 ],
+					"destination" : [ "obj-1", 0 ],
 					"order" : 2,
 					"source" : [ "obj-9", 0 ]
 				}

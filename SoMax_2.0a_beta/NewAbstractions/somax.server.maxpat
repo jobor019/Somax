@@ -129,7 +129,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-80",
-					"items" : "None",
+					"items" : [ "None", ",", "player1" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -474,7 +474,7 @@
 					"maxclass" : "inlet",
 					"numinlets" : 0,
 					"numoutlets" : 1,
-					"outlettype" : [ "bang" ],
+					"outlettype" : [ "" ],
 					"patching_rect" : [ 589.0, 107.0, 30.0, 30.0 ]
 				}
 
@@ -681,6 +681,7 @@
 				"box" : 				{
 					"format" : 6,
 					"id" : "obj-38",
+					"ignoreclick" : 1,
 					"maxclass" : "flonum",
 					"numinlets" : 1,
 					"numoutlets" : 2,
@@ -688,7 +689,8 @@
 					"parameter_enable" : 0,
 					"patching_rect" : [ 441.0, 559.0, 50.0, 22.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 136.0, 59.0, 50.0, 22.0 ]
+					"presentation_rect" : [ 136.0, 59.0, 50.0, 22.0 ],
+					"triangle" : 0
 				}
 
 			}
