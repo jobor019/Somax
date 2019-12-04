@@ -5,20 +5,27 @@ import sys
 from abc import abstractmethod
 from typing import ClassVar, Dict, Union
 
+import numpy as np
+
+from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric, Parameter
-from somaxlibrary.Peak import Peak
+
 
 
 class AbstractMergeAction(Parametric):
+    TIME_IDX: int = AbstractActivityPattern.TIME_IDX
+    SCORE_IDX: int = AbstractActivityPattern.SCORE_IDX
+    TRANSFORM_IDX: int = AbstractActivityPattern.TRANSFORM_IDX
+
     def __init__(self):
         super().__init__()
         self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this MergeAction.")
 
     @abstractmethod
-    def merge(self, peaks: [Peak], time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
-              **kwargs) -> [Peak]:
+    def merge(self, peaks: np.ndarray, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> np.ndarray:
         raise NotImplementedError("AbstractMergeAction.peaks is abstract.")
 
     @staticmethod
@@ -53,28 +60,34 @@ class DistanceMergeAction(AbstractMergeAction):
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
 
-    def merge(self, peaks: [Peak], _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
-              **_kwargs) -> [Peak]:
+    def merge(self, peaks: np.ndarray, _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> np.ndarray:
         self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
-        peaks.sort(key=lambda p: (p.transform_hash, p.time))
+        # Sort by primary axis transforms, secondary axis time
+        peaks = np.lexsort(
+            (peaks[:, AbstractActivityPattern.TIME_IDX], peaks[:, AbstractActivityPattern.TRANSFORM_IDX]))
         self.logger.debug(f"[merge] Sorting completed.")
         if len(peaks) <= 1:
             return peaks
+        idx_to_delete: [int] = []
         i = 1
-        while i < len(peaks):
-            prev: Peak = peaks[i - 1]
-            cur: Peak = peaks[i]
+        while i < peaks.shape[0]:
+            prev: np.ndarray = peaks[i - 1, :]
+            cur: np.ndarray = peaks[i, :]
             # TODO: magic nr
-            if abs(cur.time - prev.time) < 0.9 * self.t_width and cur.transform_hash == prev.transform_hash:
+            if abs(cur[self.TIME_IDX] - prev[self.TIME_IDX]) < 0.9 * self.t_width and cur[self.TRANSFORM_IDX] == prev[
+                self.TRANSFORM_IDX]:
                 # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
-                merged_time: float = (prev.time * prev.score + cur.time * cur.score) / (prev.score + cur.score)
-                merged_score: float = prev.score + cur.score
-                peaks[i - 1] = Peak(merged_time, merged_score, cur.transforms, cur.last_update_time)
-                del peaks[i]
+                merged_time: float = (prev[self.TIME_IDX] * prev[self.SCORE_IDX] + cur[self.TIME_IDX] * cur[
+                    self.SCORE_IDX]) / (prev[self.SCORE_IDX] + cur[self.SCORE_IDX])
+                merged_score: float = prev[self.SCORE_IDX]+ cur[self.SCORE_IDX]
+                peaks[i - 1, :] = [merged_time, merged_score, cur[self.TRANSFORM_IDX]]
+                idx_to_delete.append(i)
             # TODO: Handle different merge modes
             else:
                 i += 1
         self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {len(peaks)}.")
+        peaks = np.delete(peaks, i, axis=0)
         return peaks
 
     @property
@@ -96,11 +109,9 @@ class PhaseModulationMergeAction(AbstractMergeAction):
         self._selectivity: Parameter = Parameter(selectivity, None, None, 'float', "Very unclear parameter.")  # TODO
         self._parse_parameters()
 
-    def merge(self, peaks: [Peak], time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
-              **_kwargs) -> [Peak]:
-        for peak in peaks:
-            factor = math.exp(self.selectivity * (math.cos(2 * math.pi * (time - peak.time)) - 1))
-            peak.score *= factor
+    def merge(self, peaks: np.ndarray, time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> np.ndarray:
+        peaks[:, self.SCORE_IDX] *= np.exp(self.selectivity * (np.cos(2 * np.pi * (time - peaks[:, self.TIME_IDX])) - 1))
         return peaks
 
     @property
@@ -119,23 +130,20 @@ class NextStateMergeAction(AbstractMergeAction):
         super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating NextStateMergeAction with width {} and merge mode {}.")
-        self.factor: Parameter = Parameter(factor, 0.0, None, 'float', "Scaling factor for peaks close to previous output.")
+        self.factor: Parameter = Parameter(factor, 0.0, None, 'float',
+                                           "Scaling factor for peaks close to previous output.")
         self._t_width: Parameter = Parameter(t_width, 0.0, None, 'float', "Very unclear parameter")  # TODO
 
-    def merge(self, peaks: [Peak], time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
-              **kwargs) -> [Peak]:
-
+    def merge(self, peaks: np.ndarray, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> np.ndarray:
         try:
             last_event, trigger_time, _ = history.get_latest()
             next_state_time: float = last_event.onset + time - trigger_time
-            for peak in peaks:
-                if next_state_time - self._t_width.value <= peak.time <= next_state_time + self._t_width.value:
-                    peak.score *= self.factor.value
+            next_state_idx: np.ndarray = np.abs(peaks[:, self.TIME_IDX] - next_state_time) < self._t_width.value
+            peaks[next_state_idx, self.SCORE_IDX] *= self.factor.value
             return peaks
-        except IndexError:
+        except IndexError:  # Thrown if history is empty
             return peaks
-
-
 
 # TODO: Reimplement!!!
 # class StateMergeAction(AbstractMergeAction):

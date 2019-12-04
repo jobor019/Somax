@@ -13,7 +13,7 @@ from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Parameter import Parameter, ParamWithSetter
 from somaxlibrary.Parameter import Parametric
-from somaxlibrary.Peak import Peak
+
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -37,7 +37,7 @@ class AbstractMemorySpace(Parametric):
         raise NotImplementedError("AbstractMemorySpace.read is abstract.")
 
     @abstractmethod
-    def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [Peak]:
+    def influence(self, label: AbstractLabel, time: float, **_kwargs) -> [AbstractInfluence]:
         raise NotImplementedError("AbstractMemorySpace.influence is abstract.")
 
     @staticmethod
@@ -144,11 +144,12 @@ class NGramMemorySpace(AbstractMemorySpace):
                 for transform in reversed(transform_tuple):
                     transformed_labels = [transform.inverse(l) for l in transformed_labels]
                 key: Tuple[int, ...] = tuple(l.label for l in transformed_labels)
+                transform_hash: int = hash(transform_tuple)
                 try:
                     matching_events: [CorpusEvent] = self.structured_data[key]
                     for event in matching_events:
                         # TODO: Generalize rather than specific ClassicInfluence.
-                        matches.append(ClassicInfluence(event, time, transform_tuple))
+                        matches.append(ClassicInfluence(event, transform_hash))
                 except KeyError:  # no matches found
                     continue
         return matches

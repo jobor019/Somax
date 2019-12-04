@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeAction
-from somaxlibrary.Peak import Peak
+
 from somaxlibrary.Transforms import NoTransform, TransposeTransform
 
 

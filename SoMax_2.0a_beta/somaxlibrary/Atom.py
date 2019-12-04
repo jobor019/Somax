@@ -2,13 +2,15 @@ import copy
 import logging
 from typing import ClassVar, Dict, Union
 
+import numpy as np
+
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Influence import AbstractInfluence
 from somaxlibrary.Labels import MelodicLabel, AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.Parameter import Parametric, Parameter, ParamWithSetter
-from somaxlibrary.Peak import Peak
+
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -56,6 +58,7 @@ class Atom(Parametric):
         """ Raises: InvalidLabelInput"""
         matched_events: [AbstractInfluence] = self.memory_space.influence(label, time, **kwargs)
         if matched_events:
+            self.activity_pattern.update_peaks(time)
             self.activity_pattern.insert(matched_events)  # we insert the events into the activity profile
 
     def set_label(self, label: ClassVar[AbstractLabel]):
@@ -64,14 +67,6 @@ class Atom(Parametric):
     def update_peaks(self, time: float) -> None:
         self.activity_pattern.update_peaks(time)
 
-    def copy_peaks(self) -> [Peak]:
-        """Returns shallow copies of all peaks. """
-        self.logger.debug(f"Copying peaks in atom '{self.name}'...")
-        peak_copies: [Peak] = []
-        for peak in self.activity_pattern.peaks:
-            peak_copies.append(copy.copy(peak))
-        self.logger.debug(f"Peaks successfully copied in atom '{self.name}'.")
-        return peak_copies
 
     @property
     def weight(self) -> float:
