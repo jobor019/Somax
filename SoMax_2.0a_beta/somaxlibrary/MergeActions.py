@@ -1,31 +1,26 @@
 import inspect
 import logging
-import math
 import sys
 from abc import abstractmethod
 from typing import ClassVar, Dict, Union
 
 import numpy as np
 
-from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric, Parameter
-
+from somaxlibrary.Peaks import Peaks
 
 
 class AbstractMergeAction(Parametric):
-    TIME_IDX: int = AbstractActivityPattern.TIME_IDX
-    SCORE_IDX: int = AbstractActivityPattern.SCORE_IDX
-    TRANSFORM_IDX: int = AbstractActivityPattern.TRANSFORM_IDX
 
     def __init__(self):
         super().__init__()
         self.enabled: Parameter = Parameter(True, False, True, "bool", "Enables this MergeAction.")
 
     @abstractmethod
-    def merge(self, peaks: np.ndarray, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
-              **kwargs) -> np.ndarray:
+    def merge(self, peaks: Peaks, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> Peaks:
         raise NotImplementedError("AbstractMergeAction.peaks is abstract.")
 
     @staticmethod
@@ -60,34 +55,32 @@ class DistanceMergeAction(AbstractMergeAction):
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
 
-    def merge(self, peaks: np.ndarray, _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
-              **_kwargs) -> np.ndarray:
-        self.logger.debug(f"[merge] Merging activity with {len(peaks)} peaks.")
-        # Sort by primary axis transforms, secondary axis time
-        peaks = np.lexsort(
-            (peaks[:, AbstractActivityPattern.TIME_IDX], peaks[:, AbstractActivityPattern.TRANSFORM_IDX]))
-        self.logger.debug(f"[merge] Sorting completed.")
-        if len(peaks) <= 1:
+    def merge(self, peaks: Peaks, _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> Peaks:
+        if peaks.size() <= 1:
             return peaks
-        idx_to_delete: [int] = []
-        i = 1
-        while i < peaks.shape[0]:
-            prev: np.ndarray = peaks[i - 1, :]
-            cur: np.ndarray = peaks[i, :]
+        self.logger.debug(f"[merge] Merging activity with {peaks.size()} peaks.")
+        # Sort by primary axis transforms, secondary axis time
+        sorting_indices: np.ndarray = np.lexsort((peaks.times, peaks.transform_hashes))
+        peaks.reorder(sorting_indices)
+        self.logger.debug(f"[merge] Sorting completed.")
+
+        indices_to_remove: [int] = []
+        prev: int = 0
+        scores, times, transforms = peaks.dump()
+        for cur in range(1, peaks.size()):
             # TODO: magic nr
-            if abs(cur[self.TIME_IDX] - prev[self.TIME_IDX]) < 0.9 * self.t_width and cur[self.TRANSFORM_IDX] == prev[
-                self.TRANSFORM_IDX]:
+            if np.abs(times[cur] - times[prev]) < 0.9 * self.t_width \
+                    and transforms[cur] == transforms[prev]:
                 # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
-                merged_time: float = (prev[self.TIME_IDX] * prev[self.SCORE_IDX] + cur[self.TIME_IDX] * cur[
-                    self.SCORE_IDX]) / (prev[self.SCORE_IDX] + cur[self.SCORE_IDX])
-                merged_score: float = prev[self.SCORE_IDX]+ cur[self.SCORE_IDX]
-                peaks[i - 1, :] = [merged_time, merged_score, cur[self.TRANSFORM_IDX]]
-                idx_to_delete.append(i)
+                scores[prev] += scores[cur]
+                times[prev] = (times[prev] * scores[prev] + times[cur] * scores[cur]) / (scores[prev] + scores[cur])
+                indices_to_remove.append(cur)
             # TODO: Handle different merge modes
             else:
-                i += 1
-        self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {len(peaks)}.")
-        peaks = np.delete(peaks, i, axis=0)
+                prev = cur
+        peaks.remove(indices_to_remove)
+        self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {peaks.size()}.")
         return peaks
 
     @property
@@ -109,9 +102,9 @@ class PhaseModulationMergeAction(AbstractMergeAction):
         self._selectivity: Parameter = Parameter(selectivity, None, None, 'float', "Very unclear parameter.")  # TODO
         self._parse_parameters()
 
-    def merge(self, peaks: np.ndarray, time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
-              **_kwargs) -> np.ndarray:
-        peaks[:, self.SCORE_IDX] *= np.exp(self.selectivity * (np.cos(2 * np.pi * (time - peaks[:, self.TIME_IDX])) - 1))
+    def merge(self, peaks: Peaks, time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+              **_kwargs) -> Peaks:
+        peaks.scores *= np.exp(self.selectivity * (np.cos(2 * np.pi * (time - peaks.times) - 1)))
         return peaks
 
     @property
@@ -134,13 +127,13 @@ class NextStateMergeAction(AbstractMergeAction):
                                            "Scaling factor for peaks close to previous output.")
         self._t_width: Parameter = Parameter(t_width, 0.0, None, 'float', "Very unclear parameter")  # TODO
 
-    def merge(self, peaks: np.ndarray, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
-              **kwargs) -> np.ndarray:
+    def merge(self, peaks: Peaks, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
+              **kwargs) -> Peaks:
         try:
             last_event, trigger_time, _ = history.get_latest()
             next_state_time: float = last_event.onset + time - trigger_time
-            next_state_idx: np.ndarray = np.abs(peaks[:, self.TIME_IDX] - next_state_time) < self._t_width.value
-            peaks[next_state_idx, self.SCORE_IDX] *= self.factor.value
+            next_state_idx: np.ndarray = np.abs(peaks.times - next_state_time) < self._t_width.value
+            peaks.scores[next_state_idx] *= self.factor.value
             return peaks
         except IndexError:  # Thrown if history is empty
             return peaks

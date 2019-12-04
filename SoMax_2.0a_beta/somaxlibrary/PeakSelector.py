@@ -4,26 +4,24 @@ from abc import abstractmethod
 
 import numpy as np
 
-from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric
-
+from somaxlibrary.Peaks import Peaks
 from somaxlibrary.Transforms import AbstractTransform, NoTransform
 
 
 class AbstractPeakSelector(Parametric):
-    TIME_IDX: int = AbstractActivityPattern.TIME_IDX
-    SCORE_IDX: int = AbstractActivityPattern.SCORE_IDX
-    TRANSFORM_IDX: int = AbstractActivityPattern.TRANSFORM_IDX
+
     def __init__(self):
         super(AbstractPeakSelector, self).__init__()
         self.logger = logging.getLogger(__name__)
 
+    # TODO: Should probably pass transform dict too for future uses/extendability
     @abstractmethod
-    def decide(self, peaks: np.ndarray, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
-               corpus: Corpus, **kwargs) -> [CorpusEvent, AbstractTransform]:
+    def decide(self, peaks: Peaks, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
+               corpus: Corpus, **kwargs) -> (CorpusEvent, int):
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
 
     # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
@@ -35,20 +33,20 @@ class AbstractPeakSelector(Parametric):
 
 
 class MaxPeakSelector(AbstractPeakSelector):
-    def decide(self, peaks: np.ndarray, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
-               corpus: Corpus, **_kwargs) -> [CorpusEvent, int]:
+    def decide(self, peaks: Peaks, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
+               corpus: Corpus, **_kwargs) -> (CorpusEvent, int):
         self.logger.debug("[decide] MaxPeakSelector called.")
-        if peaks.size == 0:
+        if peaks.empty():
             return None
-        max_peak_value: float = np.max(peaks[:, self.SCORE_IDX])
-        max_peaks_idx: [int] = np.argwhere(peaks[:, self.SCORE_IDX] == max_peak_value)
+        max_peak_value: float = np.max(peaks.scores)
+        max_peaks_idx: [int] = np.argwhere(peaks.scores == max_peak_value)
         peak_idx: int = random.choice(max_peaks_idx)
-        return corpus.event_closest(peaks[peak_idx, self.TIME_IDX]), peaks[peak_idx, self.TRANSFORM_IDX]
+        return corpus.event_closest(peaks.times[peak_idx]), peaks.transform_hashes[peak_idx]
 
 
 class DefaultPeakSelector(AbstractPeakSelector):
-    def decide(self, _peaks: np.ndarray, influence_history: ImprovisationMemory,
-               corpus: Corpus, **_kwargs) -> [CorpusEvent, AbstractTransform]:
+    def decide(self, _peaks: Peaks, influence_history: ImprovisationMemory,
+               corpus: Corpus, **_kwargs) -> (CorpusEvent, int):
         self.logger.debug("[decide] DefaultPeakSelector called.")
         try:
             last_event, _, last_transform = influence_history.get_latest()

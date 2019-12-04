@@ -17,6 +17,7 @@ from somaxlibrary.MergeActions import DistanceMergeAction, PhaseModulationMergeA
     NextStateMergeAction
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.PeakSelector import AbstractPeakSelector, MaxPeakSelector, DefaultPeakSelector
+from somaxlibrary.Peaks import Peaks
 from somaxlibrary.StreamView import StreamView
 from somaxlibrary.Target import Target
 from somaxlibrary.Transforms import AbstractTransform
@@ -38,7 +39,7 @@ class Player(ScheduledMidiObject, Parametric):
         self.transforms: {int: (AbstractTransform, ...)} = {}   # key: hash
 
         self.improvisation_memory: ImprovisationMemory = ImprovisationMemory()
-        self._previous_peaks: np.ndarray = np.empty(0, 3)
+        self._previous_peaks: Peaks = Peaks.create_empty()
 
         # TODO: Temp
         for merge_action in [DistanceMergeAction, PhaseModulationMergeAction, NextStateMergeAction]:
@@ -125,7 +126,7 @@ class Player(ScheduledMidiObject, Parametric):
 
         self._update_peaks(scheduler_time)
         self.logger.debug("[new_event] Peaks were updated")
-        peaks: np.ndarray = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
+        peaks: Peaks = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
         self.logger.debug("[new_event] Merge finished")
         event_and_transforms: (CorpusEvent, int) = None
         for peak_selector in self.peak_selectors.values():
@@ -137,7 +138,8 @@ class Player(ScheduledMidiObject, Parametric):
             raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
 
         event: CorpusEvent = deepcopy(event_and_transforms[0])
-        transforms: (AbstractTransform, ...) = self.transforms[event_and_transforms[1]]     # access by hash
+        transform_hash: int = int(event_and_transforms[1])
+        transforms: (AbstractTransform, ...) = self.transforms[transform_hash]
         self.improvisation_memory.append(event, scheduler_time, transforms)
 
         for transform in transforms:
@@ -201,12 +203,21 @@ class Player(ScheduledMidiObject, Parametric):
         else:
             self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
                                                      self.corpus, self_influenced, transforms)
+        for transform_tuple in transforms:
+            self.store_transform(transform_tuple)
         self._parse_parameters()
 
     def delete_atom(self, path: [str]):
         atom_name: str = path.pop(-1)
         streamview: StreamView = self._get_streamview(path)
         streamview.delete_atom(atom_name)
+
+    def store_transform(self, transform: (AbstractTransform, ...)) -> None:
+        transform_hash: int = hash(transform)
+        if transform_hash in self.transforms and self.transforms[transform_hash] != transform:
+            # TODO
+            raise TypeError("Critical Implementation error in transforms. TODO")
+        self.transforms[transform_hash] = transform
 
     def set_label(self, path: [str], label_class: ClassVar[AbstractLabel]):
         atom: Atom = self._get_atom(path)
@@ -221,17 +232,17 @@ class Player(ScheduledMidiObject, Parametric):
         # self.update_memory_length()
         # self.send_parameter_dict()
 
-    def merged_peaks(self, time: float, history: ImprovisationMemory, corpus: Corpus, **kwargs) -> np.ndarray:
+    def merged_peaks(self, time: float, history: ImprovisationMemory, corpus: Corpus, **kwargs) -> Peaks:
         weight_sum: float = 0.0
         for streamview in self.streamviews.values():
             weight_sum += streamview.weight if streamview.is_enabled() else 0.0
-        peaks_list: [np.ndarray] = []
+        peaks_list: [Peaks] = []
         for streamview in self.streamviews.values():
             normalized_weight = streamview.weight / weight_sum
-            for peaks in streamview.merged_peaks(time, history, corpus, **kwargs):
-                peaks.score *= normalized_weight
-                peaks_list.append(peaks)
-        all_peaks: np.ndarray = np.concatenate(peaks_list)
+            peaks: Peaks = streamview.merged_peaks(time, history, corpus, **kwargs)
+            peaks.scores *= normalized_weight
+            peaks_list.append(peaks)
+        all_peaks: Peaks = Peaks.concatenate(peaks_list)
 
         for merge_action in self.merge_actions.values():
             if merge_action.is_enabled():

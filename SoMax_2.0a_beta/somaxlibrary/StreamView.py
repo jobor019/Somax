@@ -13,6 +13,7 @@ from somaxlibrary.MemorySpaces import NGramMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Parameter import Parameter
 from somaxlibrary.Parameter import Parametric
+from somaxlibrary.Peaks import Peaks
 
 from somaxlibrary.Transforms import AbstractTransform
 
@@ -119,8 +120,9 @@ class StreamView(Parametric):
         for atom in self.atoms.values():
             atom.update_peaks(time)
 
-    def merged_peaks(self, time: float, influence_history: [CorpusEvent], corpus: Corpus, **kwargs) -> np.ndarray:
-        peaks_list: [np.ndarray] = []
+    def merged_peaks(self, time: float, influence_history: [CorpusEvent], corpus: Corpus, **kwargs) -> Peaks:
+        # TODO: Crashes if streamview doesn't contain any atoms or streamviews
+        peaks_list: [Peaks] = []
         # TODO: Does not account for nested streamview weights
         # Peaks from child streamviews
         for streamview in self.streamviews.values():
@@ -132,10 +134,11 @@ class StreamView(Parametric):
         for atom in self.atoms.values():
             weight_sum += atom.weight if atom.is_enabled() else 0.0
         for atom in self.atoms.values():
-            peaks: np.ndarray = atom.activity_pattern.peaks * (atom.weight / weight_sum)
+            peaks: Peaks = atom.activity_pattern.peaks
+            peaks.scores *= atom.weight / weight_sum
             peaks_list.append(peaks)
 
-        all_peaks: np.ndarray = np.concatenate(peaks_list)
+        all_peaks: Peaks = Peaks.concatenate(peaks_list)
 
         # Apply merge actions on this level and return
         for merge_action in self._merge_actions.values():
