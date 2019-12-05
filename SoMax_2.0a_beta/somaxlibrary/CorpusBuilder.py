@@ -114,7 +114,7 @@ class CorpusBuilder(object):
                 if frameNbTmp <= 0:
                     tmp["chroma"] = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
                 else:
-                    tmp["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1]))].tolist()
+                    tmp["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1] - 1))].tolist()
                 tmp["pitch"] = 0;
                 tmp["notes"] = []
 
@@ -191,7 +191,7 @@ class CorpusBuilder(object):
         if (frameNbTmp <= 0):
             corpus["data"][state_nb]["chroma"] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         else:
-            corpus["data"][state_nb]["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1]))].tolist()
+            corpus["data"][state_nb]["chroma"] = harm_ctxt[:, min(frameNbTmp, int(harm_ctxt.shape[1] - 1))].tolist()
         corpus["size"] = state_nb + 1
         return corpus
 
