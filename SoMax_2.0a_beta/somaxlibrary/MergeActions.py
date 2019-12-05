@@ -5,6 +5,7 @@ from abc import abstractmethod
 from typing import ClassVar, Dict, Union
 
 import numpy as np
+from scipy import sparse
 
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.ImprovisationMemory import ImprovisationMemory
@@ -43,7 +44,7 @@ class AbstractMergeAction(Parametric):
 class DistanceMergeAction(AbstractMergeAction):
 
     # TODO: Clean up constructor
-    def __init__(self, t_width: float = 0.1, transform_merge_mode='OR'):
+    def __init__(self, t_width: float = 0.09, transform_merge_mode='OR'):
         super().__init__()
         self.logger = logging.getLogger(__name__)
         self.logger.debug("[__init__] Creating DistanceMergeAction with width {} and merge mode {}."
@@ -55,33 +56,56 @@ class DistanceMergeAction(AbstractMergeAction):
     def __repr__(self):
         return f"DistanceMergeAction(t_width={self.t_width}, merge_mode={self.transform_merge_mode})"
 
-    def merge(self, peaks: Peaks, _time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
+    def merge(self, peaks: Peaks, _time: float, _history: ImprovisationMemory = None, corpus: Corpus = None,
               **_kwargs) -> Peaks:
         if peaks.size() <= 1:
             return peaks
         self.logger.debug(f"[merge] Merging activity with {peaks.size()} peaks.")
-        # Sort by primary axis transforms, secondary axis time
-        sorting_indices: np.ndarray = np.lexsort((peaks.times, peaks.transform_hashes))
-        peaks.reorder(sorting_indices)
-        self.logger.debug(f"[merge] Sorting completed.")
 
-        indices_to_remove: [int] = []
-        prev: int = 0
-        scores, times, transforms = peaks.dump()
-        for cur in range(1, peaks.size()):
-            # TODO: magic nr
-            if np.abs(times[cur] - times[prev]) < 0.9 * self.t_width \
-                    and transforms[cur] == transforms[prev]:
-                # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
-                scores[prev] += scores[cur]
-                times[prev] = (times[prev] * scores[prev] + times[cur] * scores[cur]) / (scores[prev] + scores[cur])
-                indices_to_remove.append(cur)
-            # TODO: Handle different merge modes
-            else:
-                prev = cur
-        peaks.remove(indices_to_remove)
+        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
+        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
+        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
+        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
+
+        duration: float = corpus.duration()
+        inv_duration: float = 1 / duration
+        num_rows: int = int(duration / self._t_width.value)
+        num_cols: int = peaks.size()
+        row_indices: np.ndarray = np.floor(peaks.times * inv_duration * num_rows).astype(np.int32)
+        interp_matrix = sparse.coo_matrix((np.ones(num_cols), (row_indices, np.arange(num_cols))), shape=(num_rows, num_cols))
+        interp_matrix = interp_matrix.tocsc()
+
+        interpolated_scores: np.ndarray = interp_matrix.dot(peaks.scores)
+        peak_indices: np.ndarray = interpolated_scores.nonzero()[0]
+        scores: np.ndarray = interpolated_scores[peak_indices]
+        times: np.ndarray = peak_indices * self._t_width.value
         self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {peaks.size()}.")
-        return peaks
+        # TODO: Temporary, does not handle transforms correctly
+        return Peaks(scores, times, np.ones(scores.size, dtype=np.int32) * peaks.transform_hashes[0])
+
+
+        # TODO: Legacy, remove
+        # # Sort by primary axis transforms, secondary axis time
+        # sorting_indices: np.ndarray = np.lexsort((peaks.times, peaks.transform_hashes))
+        # peaks.reorder(sorting_indices)
+        # self.logger.debug(f"[merge] Sorting completed.")
+        #
+        # indices_to_remove: [int] = []
+        # prev: int = 0
+        # scores, times, transforms = peaks.dump()
+        # for cur in range(1, peaks.size()):
+        #     if np.abs(times[cur] - times[prev]) < self._t_width.value \
+        #             and transforms[cur] == transforms[prev]:
+        #         # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
+        #         scores[prev] += scores[cur]
+        #         times[prev] = (times[prev] * scores[prev] + times[cur] * scores[cur]) / (scores[prev] + scores[cur])
+        #         indices_to_remove.append(cur)
+        #     # TODO: Handle different merge modes
+        #     else:
+        #         prev = cur
+        # peaks.remove(indices_to_remove)
+        # self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {peaks.size()}.")
+        # return peaks
 
     @property
     def t_width(self):
