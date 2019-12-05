@@ -21,7 +21,7 @@ class AbstractPeakSelector(Parametric):
     # TODO: Should probably pass transform dict too for future uses/extendability
     @abstractmethod
     def decide(self, peaks: Peaks, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
-               corpus: Corpus, **kwargs) -> (CorpusEvent, int):
+               corpus: Corpus, transform_dict: {int: (AbstractTransform, ...)}, **kwargs) -> (CorpusEvent, int):
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
 
     # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
@@ -34,19 +34,20 @@ class AbstractPeakSelector(Parametric):
 
 class MaxPeakSelector(AbstractPeakSelector):
     def decide(self, peaks: Peaks, influence_history: [(CorpusEvent, (AbstractTransform, ...))],
-               corpus: Corpus, **_kwargs) -> (CorpusEvent, int):
+               corpus: Corpus, transform_dict: {int: (AbstractTransform, ...)}, **_kwargs) -> (CorpusEvent, int):
         self.logger.debug("[decide] MaxPeakSelector called.")
         if peaks.empty():
             return None
         max_peak_value: float = np.max(peaks.scores)
         max_peaks_idx: [int] = np.argwhere(peaks.scores == max_peak_value)
         peak_idx: int = random.choice(max_peaks_idx)
-        return corpus.event_closest(peaks.times[peak_idx]), peaks.transform_hashes[peak_idx]
+        transform_hash: int = int(peaks.transform_hashes[peak_idx])
+        return corpus.event_closest(peaks.times[peak_idx]), transform_dict[transform_hash]
 
 
 class DefaultPeakSelector(AbstractPeakSelector):
     def decide(self, _peaks: Peaks, influence_history: ImprovisationMemory,
-               corpus: Corpus, **_kwargs) -> (CorpusEvent, int):
+               corpus: Corpus, transform_dict: {int: (AbstractTransform, ...)}, **_kwargs) -> (CorpusEvent, int):
         self.logger.debug("[decide] DefaultPeakSelector called.")
         try:
             last_event, _, last_transform = influence_history.get_latest()

@@ -130,7 +130,7 @@ class Player(ScheduledMidiObject, Parametric):
         self.logger.debug("[new_event] Merge finished")
         event_and_transforms: (CorpusEvent, int) = None
         for peak_selector in self.peak_selectors.values():
-            event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, **kwargs)
+            event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, self.transforms, **kwargs)
             if event_and_transforms:
                 break
         if not event_and_transforms:
@@ -138,8 +138,7 @@ class Player(ScheduledMidiObject, Parametric):
             raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
 
         event: CorpusEvent = deepcopy(event_and_transforms[0])
-        transform_hash: int = int(event_and_transforms[1])
-        transforms: (AbstractTransform, ...) = self.transforms[transform_hash]
+        transforms: (AbstractTransform, ...) = event_and_transforms[1]
         self.improvisation_memory.append(event, scheduler_time, transforms)
 
         for transform in transforms:
@@ -271,17 +270,17 @@ class Player(ScheduledMidiObject, Parametric):
         # for peak in merged_peaks:
         #     state_index: int = self.corpus.event_closest(peak.time).state_index
         #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
-        self.target.send_simple("num_peaks", [peak_group, self._previous_peaks.shape[0]])
+        self.target.send_simple("num_peaks", [peak_group, self._previous_peaks.size()])
         # self.logger.debug(f"[send_peaks] sending raw peaks...")
         # TODO: Does not handle nested streamviews
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
                 peak_group = "::".join([streamview.name, atom.name])
-                peaks: [Peak] = atom.activity_pattern.peaks
+                peaks: Peaks = atom.activity_pattern.peaks
                 # for peak in peaks:
                 #     state_index: int = self.corpus.event_closest(peak.time).state_index
                 #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
-                self.target.send_simple("num_peaks", [atom.name, peaks.shape[0]])
+                self.target.send_simple("num_peaks", [atom.name, peaks.size()])
 
     def clear(self):
         self.improvisation_memory = ImprovisationMemory()

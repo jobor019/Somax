@@ -72,7 +72,7 @@ class CorpusBuilder(object):
         global_time = time_offset
         corpus = dict({'name': "", 'typeID': "MIDI", 'size': 1, 'data': []})
         corpus["data"].append(
-            {"state": 0, "tempo": 120, "time": {"absolute": [-1, 0], "relative": [-1, 0]}, "seg": [1, 0],
+            {"state": 0, "tempo": 120, "time": {"absolute": [0, 0], "relative": [0, 0]}, "seg": [1, 0],
              "beat": [0.0, 0.0, 0, 0], \
              "chroma": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "pitch": 140, "notes": []})
         tmp = dict()
