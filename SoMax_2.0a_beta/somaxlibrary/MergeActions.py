@@ -62,50 +62,31 @@ class DistanceMergeAction(AbstractMergeAction):
             return peaks
         self.logger.debug(f"[merge] Merging activity with {peaks.size()} peaks.")
 
-        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
-        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
-        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
-        # TODO: HANDLE TRANSFORMS: Split by transform hash first and do the operations below on each transform group
-
         duration: float = corpus.duration()
         inv_duration: float = 1 / duration
         num_rows: int = int(duration / self._t_width.value)
-        num_cols: int = peaks.size()
-        row_indices: np.ndarray = np.floor(peaks.times * inv_duration * num_rows).astype(np.int32)
-        interp_matrix = sparse.coo_matrix((np.ones(num_cols), (row_indices, np.arange(num_cols))), shape=(num_rows, num_cols))
-        interp_matrix = interp_matrix.tocsc()
 
-        interpolated_scores: np.ndarray = interp_matrix.dot(peaks.scores)
-        peak_indices: np.ndarray = interpolated_scores.nonzero()[0]
-        scores: np.ndarray = interpolated_scores[peak_indices]
-        times: np.ndarray = peak_indices * self._t_width.value
-        self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {peaks.size()}.")
-        # TODO: Temporary, does not handle transforms correctly
-        return Peaks(scores, times, np.ones(scores.size, dtype=np.int32) * peaks.transform_hashes[0])
+        peaks_list: [Peaks] = []
+        for transform_hash in np.unique(peaks.transform_hashes):
+            indices: np.ndarray = np.argwhere(peaks.transform_hashes == transform_hash)
+            indices = indices.reshape((indices.size,))
+            scores: np.ndarray = peaks.scores[indices]
+            times: np.ndarray = peaks.times[indices]
+            num_cols: int = scores.size
 
+            row_indices: np.ndarray = np.floor(times * inv_duration * num_rows).astype(np.int32)
+            interp_matrix = sparse.coo_matrix((np.ones(num_cols), (row_indices, np.arange(num_cols))),
+                                              shape=(num_rows, num_cols))
+            interp_matrix = interp_matrix.tocsc()
 
-        # TODO: Legacy, remove
-        # # Sort by primary axis transforms, secondary axis time
-        # sorting_indices: np.ndarray = np.lexsort((peaks.times, peaks.transform_hashes))
-        # peaks.reorder(sorting_indices)
-        # self.logger.debug(f"[merge] Sorting completed.")
-        #
-        # indices_to_remove: [int] = []
-        # prev: int = 0
-        # scores, times, transforms = peaks.dump()
-        # for cur in range(1, peaks.size()):
-        #     if np.abs(times[cur] - times[prev]) < self._t_width.value \
-        #             and transforms[cur] == transforms[prev]:
-        #         # self.logger.debug(f"Merging peak '{prev}' with peak '{cur}'.")
-        #         scores[prev] += scores[cur]
-        #         times[prev] = (times[prev] * scores[prev] + times[cur] * scores[cur]) / (scores[prev] + scores[cur])
-        #         indices_to_remove.append(cur)
-        #     # TODO: Handle different merge modes
-        #     else:
-        #         prev = cur
-        # peaks.remove(indices_to_remove)
-        # self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {peaks.size()}.")
-        # return peaks
+            interpolated_scores: np.ndarray = interp_matrix.dot(scores)
+            peak_indices: np.ndarray = interpolated_scores.nonzero()[0]
+            peaks_list.append(Peaks(interpolated_scores[peak_indices], peak_indices * self._t_width.value,
+                                    np.ones(peak_indices.size, dtype=np.int32) * transform_hash))
+
+        merged_peaks: Peaks = Peaks.concatenate(peaks_list)
+        self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {merged_peaks.size()}.")
+        return merged_peaks
 
     @property
     def t_width(self):
