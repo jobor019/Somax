@@ -39,6 +39,49 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-124",
+					"linecount" : 3,
+					"maxclass" : "message",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 1574.0, 584.0, 128.0, 49.0 ],
+					"presentation_linecount" : 3,
+					"text" : "set_param player1::NextStateMergeAction::_t_width $1"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"color" : [ 0.82661509513855, 0.153967931866646, 0.629297733306885, 1.0 ],
+					"id" : "obj-131",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 1602.0, 547.0, 80.0, 22.0 ],
+					"text" : "loadmess 0.5"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"format" : 6,
+					"id" : "obj-133",
+					"maxclass" : "flonum",
+					"minimum" : 0.0,
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "", "bang" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 1535.5, 529.0, 50.0, 22.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 149.0, 349.0, 50.0, 22.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-185",
 					"maxclass" : "message",
 					"numinlets" : 2,
@@ -91,7 +134,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 103.0, 1018.0, 266.0, 22.0 ],
-					"presentation_linecount" : 2,
 					"text" : "set_label #1 melodic::melodic MelodicLabel"
 				}
 
@@ -104,7 +146,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 120.5, 989.0, 281.0, 22.0 ],
-					"presentation_linecount" : 2,
 					"text" : "set_label #1 melodic::melodic PitchClassLabel"
 				}
 
@@ -979,7 +1020,7 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 551.5, 660.0, 47.0, 55.0 ],
-					"size" : 4494,
+					"size" : 7878,
 					"slidercolor" : [ 0.082352941176471, 0.345098039215686, 0.996078431372549, 0.53 ]
 				}
 
@@ -994,7 +1035,7 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 477.5, 660.0, 47.0, 55.0 ],
-					"size" : 4494,
+					"size" : 7878,
 					"slidercolor" : [ 0.729411764705882, 0.058823529411765, 0.058823529411765, 0.53 ]
 				}
 
@@ -1009,7 +1050,7 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 403.5, 660.0, 47.0, 55.0 ],
-					"size" : 4494,
+					"size" : 7878,
 					"slidercolor" : [ 0.082352941176471, 0.682352941176471, 0.011764705882353, 0.501960784313725 ]
 				}
 
@@ -1050,7 +1091,7 @@
 					"outlettype" : [ "", "" ],
 					"parameter_enable" : 0,
 					"patching_rect" : [ 326.5, 660.0, 47.0, 55.0 ],
-					"size" : 4494,
+					"size" : 7878,
 					"slidercolor" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 
@@ -1417,7 +1458,7 @@
 					"patching_rect" : [ 645.499999999999886, 673.0, 60.000000000000114, 18.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 236.5, 323.0, 182.0, 19.0 ],
-					"size" : 4494.0
+					"size" : 7878.0
 				}
 
 			}
@@ -1506,7 +1547,7 @@
 					"patching_rect" : [ 1050.25, 613.0, 45.0, 20.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 304.5, 347.0, 47.41666666666697, 20.0 ],
-					"text" : "4494"
+					"text" : "7878"
 				}
 
 			}
@@ -2032,14 +2073,13 @@
 				"box" : 				{
 					"fontsize" : 16.0,
 					"id" : "obj-50",
-					"linecount" : 2,
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 695.0, 640.0, 36.0, 42.0 ],
+					"patching_rect" : [ 695.0, 640.0, 36.0, 24.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 236.5, 345.0, 57.0, 24.0 ],
-					"text" : "1990"
+					"text" : "647"
 				}
 
 			}
@@ -2311,7 +2351,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-26",
-					"items" : [ "Obama_original", ",", "debussy_part_harm", ",", "Sax_gentle cat_Slow", ",", "corpus", ",", "0046_Beethoven_Quartet_127_3-4", ",", "0048_Beethoven_Quartet_131_1-7", ",", "Sax_gentle_cat_Slow", ",", "Scarbo", ",", "debussy", ",", "tests_audio", ",", "CarineIntuition", ",", "debussy_part", ",", "keith_rh", ",", "keith_lh", ",", "best_composition", ",", ".json" ],
+					"items" : [ "Obama_original", ",", "debussy_part_harm", ",", "Sax_gentle cat_Slow", ",", "corpus", ",", "0046_Beethoven_Quartet_127_3-4", ",", "0048_Beethoven_Quartet_131_1-7", ",", "Sax_gentle_cat_Slow", ",", "Scarbo", ",", "debussy", ",", "tests_audio", ",", "CarineIntuition", ",", "ScarboXX normalized 75", ",", "debussy_part", ",", "keith_rh", ",", "Scarbo copy", ",", "keith_lh", ",", "best_composition", ",", ".json" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -2387,7 +2427,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 9.41666666666697, 112.0, 18.0, 34.0 ],
 					"size" : 2,
-					"value" : 0
+					"value" : 1
 				}
 
 			}
@@ -2425,7 +2465,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 656.0, 159.0, 404.0, 76.0 ],
-					"presentation_linecount" : 5,
 					"text" : "new_player $1 $2 override=True, create_streamview $1 self, create_atom $1 self::self label=MelodicLabel self_influenced=True, create_streamview $1 melodic, create_atom $1 melodic::melodic label=PitchClassLabel, create_streamview $1 harmonic, create_atom $1 harmonic::harmonic label=HarmonicLabel, bang"
 				}
 
@@ -2655,6 +2694,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-9", 0 ],
+					"source" : [ "obj-124", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-182", 0 ],
 					"source" : [ "obj-125", 0 ]
 				}
@@ -2664,6 +2710,20 @@
 				"patchline" : 				{
 					"destination" : [ "obj-46", 0 ],
 					"source" : [ "obj-128", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-133", 0 ],
+					"source" : [ "obj-131", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-124", 0 ],
+					"source" : [ "obj-133", 0 ]
 				}
 
 			}
@@ -2934,7 +2994,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-134", 0 ],
+					"destination" : [ "obj-133", 0 ],
 					"order" : 0,
 					"source" : [ "obj-182", 0 ]
 				}
@@ -2942,7 +3002,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-156", 0 ],
+					"destination" : [ "obj-134", 0 ],
 					"order" : 1,
 					"source" : [ "obj-182", 0 ]
 				}
@@ -2950,8 +3010,16 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-156", 0 ],
+					"order" : 2,
+					"source" : [ "obj-182", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-16", 0 ],
-					"order" : 4,
+					"order" : 5,
 					"source" : [ "obj-182", 0 ]
 				}
 
@@ -2959,7 +3027,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-176", 0 ],
-					"order" : 3,
+					"order" : 4,
 					"source" : [ "obj-182", 0 ]
 				}
 
@@ -2967,7 +3035,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-185", 0 ],
-					"order" : 5,
+					"order" : 6,
 					"source" : [ "obj-182", 0 ]
 				}
 
@@ -2982,7 +3050,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-727", 0 ],
-					"order" : 2,
+					"order" : 3,
 					"source" : [ "obj-182", 0 ]
 				}
 
@@ -3685,14 +3753,14 @@
 				"name" : "dUG Yello 01-1",
 				"newobj" : 				{
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"fontsize" : [ 10.0 ]
+					"fontface" : [ 1 ]
 				}
 ,
 				"message" : 				{
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -3703,12 +3771,13 @@
 						"autogradient" : 0
 					}
 ,
-					"fontsize" : [ 10.0 ]
+					"fontface" : [ 1 ]
 				}
 ,
 				"default" : 				{
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -3719,8 +3788,7 @@
 						"autogradient" : 0
 					}
 ,
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"fontsize" : [ 10.0 ]
+					"fontface" : [ 1 ]
 				}
 ,
 				"button" : 				{

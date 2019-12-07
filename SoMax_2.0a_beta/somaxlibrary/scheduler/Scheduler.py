@@ -14,7 +14,7 @@ from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 
 class Scheduler:
     DEFAULT_CALLBACK_INTERVAL: float = 0.001  # seconds
-    TRIGGER_PRETIME: float = 0.1  # seconds
+    TRIGGER_PRETIME: float = 0.01  # seconds
 
     def __init__(self, tempo: float = 120.0):
         self.logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class Scheduler:
         self.tempo: float = tempo
         self.beat: float = 0.0
         self.running: bool = False
-        self.queue: [ScheduledEvent] = []  # TODO: NO PREMATURE OPTIMIZATION PLEASE
+        self.queue: [ScheduledEvent] = []
         self.tempo_master: Player = None
         self.terminated = False
 
@@ -77,13 +77,10 @@ class Scheduler:
     def _process_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
         player: Player = trigger_event.player
         try:
-            # TODO: Critical bug here when event.duration is 0 (for example first event)
-            # event: CorpusEvent = player.new_event(trigger_event.target_time)
-            event: CorpusEvent = player.new_event(self.time)
+            event: CorpusEvent = player.new_event(trigger_event.target_time)
         except InvalidCorpus as e:
             self.logger.error(str(e))
             return
-
         self.add_corpus_event(player, trigger_event.target_time, event)
 
         if isinstance(trigger_event, AutomaticTriggerEvent) and player.trigger_mode == TriggerMode.AUTOMATIC:
@@ -123,15 +120,14 @@ class Scheduler:
 
             # Queue midi events for note ons/offs
             for note in note_offs_previous:
-                self.queue.append(
-                    MidiEvent(trigger_time, player, note.pitch, 0, note.channel, corpus_event.state_index))
+                onset: float = trigger_time
+                self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_ons:
-                self.queue.append(MidiEvent(trigger_time + note.onset, player, note.pitch, note.velocity, note.channel,
-                                            corpus_event.state_index))
+                onset: float = trigger_time + max(0.0, note.onset)
+                self.queue.append(MidiEvent(onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
             for note in note_offs:
-                position_in_state: float = note.onset + note.duration
-                self.queue.append(MidiEvent(trigger_time + position_in_state, player, note.pitch, 0, note.channel,
-                                            corpus_event.state_index))
+                onset: float = trigger_time + max(0.0, note.onset + note.duration)
+                self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
 
     def add_trigger_event(self, player: Player):
         if player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player):

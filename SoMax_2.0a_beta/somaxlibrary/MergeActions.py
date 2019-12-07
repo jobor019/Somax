@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from somaxlibrary.Corpus import Corpus
+from somaxlibrary.CorpusEvent import CorpusEvent
 from somaxlibrary.ImprovisationMemory import ImprovisationMemory
 from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Peaks import Peaks
@@ -75,14 +76,22 @@ class DistanceMergeAction(AbstractMergeAction):
             num_cols: int = scores.size
 
             row_indices: np.ndarray = np.floor(times * inv_duration * num_rows).astype(np.int32)
-            interp_matrix = sparse.coo_matrix((np.ones(num_cols), (row_indices, np.arange(num_cols))),
-                                              shape=(num_rows, num_cols))
-            interp_matrix = interp_matrix.tocsc()
+            interp_matrix: sparse.coo_matrix = sparse.coo_matrix(
+                (np.ones(num_cols), (row_indices, np.arange(num_cols))),
+                shape=(num_rows, num_cols))
+            interp_matrix: sparse.csc_matrix = interp_matrix.tocsc()
 
             interpolated_scores: np.ndarray = interp_matrix.dot(scores)
+            interpolated_times: np.ndarray = interp_matrix.dot(times)
+            num_peaks_per_index: np.ndarray = np.array(interp_matrix.sum(axis=1)).reshape(interp_matrix.shape[0])
             peak_indices: np.ndarray = interpolated_scores.nonzero()[0]
-            peaks_list.append(Peaks(interpolated_scores[peak_indices], peak_indices * self._t_width.value,
-                                    np.ones(peak_indices.size, dtype=np.int32) * transform_hash))
+
+            scores: np.ndarray = interpolated_scores[peak_indices]
+            times: np.ndarray = np.divide(interpolated_times[peak_indices], num_peaks_per_index[peak_indices])
+            transforms: np.ndarray = np.ones(peak_indices.size, dtype=np.int32) * transform_hash
+            # print("After merge:", scores.shape, times.shape, transforms.shape)
+
+            peaks_list.append(Peaks(scores, times, transforms))
 
         merged_peaks: Peaks = Peaks.concatenate(peaks_list)
         self.logger.debug(f"[merge] Merge successful. Number of peaks after merge: {merged_peaks.size()}.")
@@ -135,8 +144,9 @@ class NextStateMergeAction(AbstractMergeAction):
     def merge(self, peaks: Peaks, time: float, history: ImprovisationMemory = None, corpus: Corpus = None,
               **kwargs) -> Peaks:
         try:
-            last_event, trigger_time, _ = history.get_latest()
-            next_state_time: float = last_event.onset + time - trigger_time
+            last_event, _, _ = history.get_latest()
+            next_event: CorpusEvent = corpus.event_at(last_event.state_index + 1)
+            next_state_time: float = next_event.onset
             next_state_idx: np.ndarray = np.abs(peaks.times - next_state_time) < self._t_width.value
             peaks.scores[next_state_idx] *= self.factor.value
             return peaks

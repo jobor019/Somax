@@ -28,6 +28,9 @@ class MidiEvent(ScheduledPlayerEvent):
         self.channel: int = channel
         self.state: int = state
 
+    def __repr__(self):
+        return f"MidiEvent(trigger_time={self.trigger_time},player={self.player},note={self.note},velocity={self.velocity},channel={self.channel},state={self.state})"
+
 
 class AudioEvent(ScheduledPlayerEvent):
     def __init__(self, trigger_time: float, player: Player, onset: float, duration: float, state: int, tempo: float):
@@ -47,6 +50,9 @@ class AbstractTriggerEvent(ScheduledPlayerEvent, ABC):
 class AutomaticTriggerEvent(AbstractTriggerEvent):
     def __init__(self, trigger_time: float, player: Player, target_time: float):
         super().__init__(trigger_time, player, target_time)
+
+    def __repr__(self):
+        return f"AutomaticTriggerEvent(trigger_time={self.trigger_time},player={self.player},target_time={self.target_time}"
 
 
 class ManualTriggerEvent(AbstractTriggerEvent):

@@ -387,7 +387,7 @@ class SoMaxServer(Caller):
             player: str = path_parsed.pop(0)
             self.players[player].set_param(path_parsed, value)
         except (IndexError, KeyError):
-            self.logger.error(f"Invalid path")  # TODO Proper message
+            self.logger.error(f"Invalid parameter path: '{path}'. Could not set parameter.")
         except ParameterError as e:
             self.logger.error(str(e))
 

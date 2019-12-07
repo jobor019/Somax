@@ -339,6 +339,7 @@ class Player():
             self.next_state = 8.15*np.exp(-(date-self.last_jump)/self.tau_next_state)
 
         ztmp_self, vtmp_self = self.s_l.activity.get_activity()
+
         # 'imagine' what the activity will look like
         ztmp_self += date - self.s_l.activity.date
         vtmp_self *= np.exp(-np.divide(date - self.s_l.activity.date,
@@ -369,7 +370,8 @@ class Player():
         ztmp_h = np.delete(ztmp_h,itmp)
 
         if self.verbose_mode:
-            print 'selfsize ', vtmp_self.size, 'melsize ', vtmp_mel.size,  'hsize ', vtmp_h.size
+            print 'selfsize ', vtmp_self.size, 'selfmax', np.max(vtmp_self) if vtmp_self.size > 0 else 0, date, 'melsize ', vtmp_mel.size,  'hsize ', vtmp_h.size
+
 
         vtmp_self *= self.s_w
         vtmp_mel *= self.m_w

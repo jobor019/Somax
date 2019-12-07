@@ -13,7 +13,7 @@ from somaxlibrary.scheduler.ScheduledObject import TriggerMode
 class IOParser:
     DEFAULT_IP = "127.0.0.1"
     DEFAULT_ACTIVITY_TYPE: ClassVar = ClassicActivityPattern
-    DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction, PhaseModulationMergeAction)
+    DEFAULT_MERGE_ACTIONS: (ClassVar, ...) = (DistanceMergeAction,) # Only for StreamView!!
     DEFAULT_LABEL_TYPE: ClassVar = MelodicLabel
     DEFAULT_TRANSFORMS: [(ClassVar, ...)] = [(NoTransform(),)]      # objects, not classes
     DEFAULT_TRIGGER = TriggerMode.AUTOMATIC
