@@ -107,7 +107,7 @@ class DistanceMergeAction(AbstractMergeAction):
 
 
 class PhaseModulationMergeAction(AbstractMergeAction):
-    DEFAULT_SELECTIVITY = 1.0
+    DEFAULT_SELECTIVITY = 3.0
 
     def __init__(self, selectivity=DEFAULT_SELECTIVITY):
         super().__init__()
@@ -118,7 +118,7 @@ class PhaseModulationMergeAction(AbstractMergeAction):
 
     def merge(self, peaks: Peaks, time: float, _history: ImprovisationMemory = None, _corpus: Corpus = None,
               **_kwargs) -> Peaks:
-        peaks.scores *= np.exp(self.selectivity * (np.cos(2 * np.pi * (time - peaks.times) - 1)))
+        peaks.scores *= np.exp(self.selectivity * (np.cos(2 * np.pi * (time - peaks.times)) - 1))
         return peaks
 
     @property
