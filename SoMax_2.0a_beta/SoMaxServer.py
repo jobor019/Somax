@@ -52,7 +52,6 @@ class SoMaxServer(Caller):
         transport.close()
         self.logger.info("SoMaxServer was successfully terminated.")
 
-
     def _process_osc(self, _address, *args):
         # TODO: Move string formatting elsewhere
         args_formatted: [str] = []
@@ -100,7 +99,6 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"No player deleted as a player named {name} does not exist.")
 
-
     @staticmethod
     def _osc_callback(self):
         pass  # TODO: implement
@@ -141,7 +139,7 @@ class SoMaxServer(Caller):
             self.players[player].create_atom(path_and_name, weight, label, activity_type, memory_type,
                                              self_influenced, transforms)
             self.logger.info(f"Created atom with path '{player + '::' + path}'")
-            self.players[player]._parse_parameters()    # TODO: Not ideal
+            self.players[player]._parse_parameters()  # TODO: Not ideal
         except InvalidPath as e:
             self.logger.error(f"Could not create atom at path {path}. [Message]: {str(e)}")
         except KeyError:
@@ -155,7 +153,7 @@ class SoMaxServer(Caller):
         try:
             self.players[player].delete_atom(path_as_list)
             self.logger.debug(f"Deleted atom with path '{player + '::' + path}'")
-            self.players[player]._parse_parameters()    # TODO: Not ideal
+            self.players[player]._parse_parameters()  # TODO: Not ideal
         except InvalidPath as e:
             self.logger.error(f"Could not delete atom at path {path}. [Message]: {str(e)}")
         except KeyError:
@@ -175,7 +173,8 @@ class SoMaxServer(Caller):
             self.logger.error(f"Could not add transform at path {path}. The parent streamview/player does not exist.")
         # TODO: parameter dict
 
-    def set_label(self, player: str, path: str, label:str == ""):
+    def set_label(self, player: str, path: str, label: str == ""):
+        # TODO: Will (probably) return default if not found. Should fail instead
         self.logger.debug(f"[set_label] called for player '{player}' with path '{path}' and new label '{label}'.")
         label_class: ClassVar[AbstractLabel] = self.io_parser.parse_label_type(label)
         path_as_list: [str] = self.io_parser.parse_streamview_atom_path(path)
@@ -184,6 +183,16 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"Could not set label for atom at {path}.")
 
+    def set_activity_pattern(self, player: str, path: str, activity_pattern: str == ""):
+        # TODO: Will return default if not found. Should fail instead
+        self.logger.debug(f"[set_activity_pattern] called for player '{player}' with path '{path}' "
+                          f"and new pattern '{activity_pattern}'.")
+        activity_class: ClassVar[AbstractActivityPattern] = self.io_parser.parse_activity_type(activity_pattern)
+        path_as_list: [str] = self.io_parser.parse_streamview_atom_path(path)
+        try:
+            self.players[player].set_activity_pattern(path_as_list, activity_class)
+        except KeyError:
+            self.logger.error(f"Could not set activity pattern for atom at {path}.")
 
     ######################################################
     # SCHEDULER
@@ -203,6 +212,7 @@ class SoMaxServer(Caller):
 
     def clear_all(self):
         for player in self.players.values():
+            self.scheduler.flush_held(player)
             player.clear()
 
     def get_time(self):
@@ -227,8 +237,6 @@ class SoMaxServer(Caller):
             else:
                 self.logger.error(f"No player named '{player}' exists.")
                 self.target.send_simple("tempo_master", False)
-
-
 
     ######################################################
     # TIMING METHODS
@@ -318,7 +326,8 @@ class SoMaxServer(Caller):
         try:
             previous_trigger_mode: TriggerMode = self.players[player].trigger_mode
             self.players[player].trigger_mode = trigger_mode
-            self.players[player]._parse_parameters()    # TODO: Definitely not ideal
+            self.players[player]._parse_parameters()  # TODO: Definitely not ideal
+            self.scheduler.flush_held(self.players[player])
             # self.players[player].update_parameter_dict()
         except KeyError:
             self.logger.error(f"Could not set mode. No player named '{player}' exists.")
@@ -326,6 +335,14 @@ class SoMaxServer(Caller):
         if previous_trigger_mode != trigger_mode and trigger_mode == TriggerMode.AUTOMATIC:
             self.scheduler.add_trigger_event(self.players[player])
         self.logger.debug(f"[trigger_mode]: Trigger mode set to '{trigger_mode}' for player '{player}'.")
+
+    def held_notes_mode(self, player: str, enable: bool):
+        try:
+            p: Player = self.players[player]
+            p.hold_notes_artificially = enable
+            self.scheduler.flush_held(p)
+        except KeyError:
+            self.logger.error(f"Could not set mode. No player named '{player}' exists.")
 
     # TODO: Reimplement or remove
     # def new_event(self, player_name, time=None, event=None):
@@ -405,7 +422,6 @@ class SoMaxServer(Caller):
     # MAX INTERFACE INFORMATION
     ######################################################
 
-
     def parameter_dict(self):
         self.logger.debug(f"[parameter_dict] creating parameter_dict.")
         parameter_dict: Dict[str, Dict[str, ...]] = {}
@@ -435,8 +451,6 @@ class SoMaxServer(Caller):
     def poll_server(self):
         self.target.send_simple("poll_server", ["bang"])
 
-
-
     ######################################################
     # CORPUS METHODS
     ######################################################
@@ -456,6 +470,7 @@ class SoMaxServer(Caller):
     def _debug_state(self, player: str, state_index: int):
         event: CorpusEvent = self.players[player].corpus.event_at(state_index)
         self.scheduler.add_corpus_event(self.players[player], self.scheduler.time, event)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Launch and manage a SoMaxServer')

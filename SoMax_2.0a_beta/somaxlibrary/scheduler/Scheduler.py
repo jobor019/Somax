@@ -118,16 +118,23 @@ class Scheduler:
             note_offs: [Note] = [n for n in corpus_event.notes if n not in corpus_event.held_from()]
             player.held_notes = corpus_event.held_from()
 
+            # TODO: Why is state index even in here?
             # Queue midi events for note ons/offs
+            for note in player.artificially_held_notes:
+                onset: float = trigger_time
+                self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_offs_previous:
                 onset: float = trigger_time
                 self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_ons:
                 onset: float = trigger_time + max(0.0, note.onset)
                 self.queue.append(MidiEvent(onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
-            for note in note_offs:
-                onset: float = trigger_time + max(0.0, note.onset + note.duration)
-                self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
+            if player.hold_notes_artificially:
+                player.artificially_held_notes = note_offs
+            else:
+                for note in note_offs:
+                    onset: float = trigger_time + max(0.0, note.onset + note.duration)
+                    self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
 
     def add_trigger_event(self, player: Player):
         if player.trigger_mode == TriggerMode.AUTOMATIC and not self._has_trigger(player):
@@ -139,6 +146,14 @@ class Scheduler:
 
     def delete_trigger(self, player: Player):
         self.queue = [e for e in self.queue if not (isinstance(e, AutomaticTriggerEvent) and e.player == player)]
+
+    def flush_held(self, player: Player):
+        for note in player.held_notes:
+            self.queue.append(MidiEvent(self.time, player, note.pitch, 0, note.channel, None))
+        for note in player.artificially_held_notes:
+            self.queue.append(MidiEvent(self.time, player, note.pitch, 0, note.channel, None))
+        player.held_notes = []
+        player.artificially_held_notes = []
 
     def _has_trigger(self, player: Player) -> bool:  # TODO: Unoptimized approach
         for event in self.queue:

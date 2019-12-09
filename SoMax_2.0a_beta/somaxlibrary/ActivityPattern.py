@@ -8,7 +8,7 @@ import numpy as np
 
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Influence import AbstractInfluence
-from somaxlibrary.Parameter import Parameter
+from somaxlibrary.Parameter import Parameter, ParamWithSetter
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peaks import Peaks
 
@@ -57,9 +57,12 @@ class AbstractActivityPattern(Parametric):
 
 
 class ClassicActivityPattern(AbstractActivityPattern):
+    """
+        Decay: score = exp(-(Δt)/tau), where Δt is the time since creation in beats
+    """
 
-    def __init__(self):
-        super(ClassicActivityPattern, self).__init__()
+    def __init__(self, corpus: Corpus = None):
+        super().__init__(corpus)
         self.logger.debug("[__init__]: ClassicActivityPattern initialized.")
         self.tau_mem_decay: Parameter = Parameter(2.0, 0.0, None, 'float', "Very unclear param")  # TODO
         self.extinction_threshold: Parameter = Parameter(0.1, 0.0, None, 'float', "Score below which peaks are removed")
@@ -89,3 +92,56 @@ class ClassicActivityPattern(AbstractActivityPattern):
 
     def clear(self) -> None:
         self._peaks = Peaks.create_empty()
+
+
+class ManualActivityPattern(AbstractActivityPattern):
+    """
+        Decay: score = exp(-n/tau), where n is the number of update calls since creation
+    """
+
+    DEFAULT_N = 6
+
+    def __init__(self, corpus: Corpus = None):
+        super().__init__(corpus)
+        self.logger.debug("[__init__]: ManualActivityPattern initialized.")
+        self.extinction_threshold: Parameter = Parameter(0.1, 0.0, None, 'float', "Score below which peaks are removed")
+        self.tau_mem_decay: Parameter = ParamWithSetter(self._calc_tau(self.DEFAULT_N), 1, None, "int",
+                                                        "Number of updates until peak is decayed below threshold.",
+                                                        self._set_tau)
+        self.default_score: Parameter = Parameter(1.0, None, None, 'float', "Value of a new peaks upon creation.")
+        self._peaks: Peaks = Peaks.create_empty()
+        self._event_indices: np.ndarray = np.zeros((1, 0), dtype=np.int32)
+        self._parse_parameters()
+
+    def insert(self, influences: [AbstractInfluence]) -> None:
+        self.logger.debug(f"[insert]: Inserting {len(influences)} influences.")
+        scores: [float] = []
+        times: [float] = []
+        transform_hashes: [int] = []
+        for influence in influences:
+            times.append(influence.event.onset)
+            scores.append(self.default_score.value)
+            transform_hashes.append(influence.transform_hash)
+        self._peaks.append(scores, times, transform_hashes)
+        new_event_indices: np.ndarray = np.array([i.event.state_index for i in influences], dtype=np.int32)
+        self._event_indices = np.concatenate((self._event_indices, new_event_indices))
+
+    def update_peaks(self, _new_time: float) -> None:
+        if not self._peaks.empty():
+            self._peaks.scores *= np.exp(-np.divide(1, self.tau_mem_decay.value))
+            self._peaks.times += [self.corpus.event_at(i).duration for i in self._event_indices]
+            self._event_indices += 1
+            indices_to_remove: np.ndarray = np.where((self._peaks.scores <= self.extinction_threshold.value)
+                                                     | (self._peaks.times >= self.corpus.duration()))
+            self._peaks.remove(indices_to_remove)
+            self._event_indices = np.delete(self._event_indices, indices_to_remove)
+
+    def clear(self) -> None:
+        self._peaks = Peaks.create_empty()
+
+    def _set_tau(self, n: int):
+        self.tau_mem_decay.value = self._calc_tau(n)
+
+    def _calc_tau(self, n: int):
+        """ n is the number of updates until peak decays below threshold"""
+        return -np.divide(n - 1, np.log(self.extinction_threshold.value))

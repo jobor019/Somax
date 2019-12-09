@@ -222,6 +222,10 @@ class Player(ScheduledMidiObject, Parametric):
         atom: Atom = self._get_atom(path)
         atom.set_label(label_class)
 
+    def set_activity_pattern(self, path: [str], activity_pattern_class: ClassVar[AbstractActivityPattern]):
+        atom: Atom = self._get_atom(path)
+        atom.set_activity_pattern(activity_pattern_class, self.corpus)
+
     def read_corpus(self, filepath: str):
         self.corpus = Corpus(filepath)
         for streamview in self.streamviews.values():

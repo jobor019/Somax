@@ -10,9 +10,9 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 79.0, 1586.0, 818.0 ],
+		"rect" : [ 34.0, 79.0, 1372.0, 718.0 ],
 		"bglocked" : 0,
-		"openinpresentation" : 0,
+		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
 		"default_fontface" : 0,
 		"default_fontname" : "Arial",
@@ -2147,21 +2147,21 @@
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
+									"originallength" : [ 0.0, "ticks" ],
+									"formant" : [ 1.0 ],
+									"speed" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"basictuning" : [ 440 ],
+									"quality" : [ "basic" ],
+									"pitchshift" : [ 1.0 ],
+									"mode" : [ "basic" ],
 									"pitchcorrection" : [ 0 ],
 									"followglobaltempo" : [ 0 ],
 									"originallengthms" : [ 0.0 ],
+									"play" : [ 0 ],
 									"timestretch" : [ 0 ],
 									"formantcorrection" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"quality" : [ "basic" ],
-									"speed" : [ 1.0 ],
-									"play" : [ 0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"formant" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"basictuning" : [ 440 ],
-									"pitchshift" : [ 1.0 ]
+									"slurtime" : [ 0.0 ]
 								}
 
 							}
@@ -2171,21 +2171,21 @@
 								"filekind" : "audiofile",
 								"loop" : 0,
 								"content_state" : 								{
+									"originallength" : [ 0.0, "ticks" ],
+									"formant" : [ 1.0 ],
+									"speed" : [ 1.0 ],
+									"originaltempo" : [ 120.0 ],
+									"basictuning" : [ 440 ],
+									"quality" : [ "basic" ],
+									"pitchshift" : [ 1.0 ],
+									"mode" : [ "basic" ],
 									"pitchcorrection" : [ 0 ],
 									"followglobaltempo" : [ 0 ],
 									"originallengthms" : [ 0.0 ],
+									"play" : [ 0 ],
 									"timestretch" : [ 0 ],
 									"formantcorrection" : [ 0 ],
-									"slurtime" : [ 0.0 ],
-									"quality" : [ "basic" ],
-									"speed" : [ 1.0 ],
-									"play" : [ 0 ],
-									"originallength" : [ 0.0, "ticks" ],
-									"mode" : [ "basic" ],
-									"formant" : [ 1.0 ],
-									"originaltempo" : [ 120.0 ],
-									"basictuning" : [ 440 ],
-									"pitchshift" : [ 1.0 ]
+									"slurtime" : [ 0.0 ]
 								}
 
 							}
@@ -3825,16 +3825,24 @@
 		"autosave" : 0,
 		"styles" : [ 			{
 				"name" : "dUG Yello 01-1",
-				"newobj" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontsize" : [ 10.0 ],
+				"default" : 				{
+					"bgfillcolor" : 					{
+						"type" : "gradient",
+						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
+						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
+						"angle" : 270.0,
+						"proportion" : 0.39,
+						"autogradient" : 0
+					}
+,
+					"fontface" : [ 1 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"fontface" : [ 1 ]
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 ,
 				"message" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontsize" : [ 10.0 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
 						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
@@ -3845,24 +3853,16 @@
 						"autogradient" : 0
 					}
 ,
-					"fontface" : [ 1 ]
+					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 ,
-				"default" : 				{
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"fontsize" : [ 10.0 ],
+				"newobj" : 				{
+					"fontface" : [ 1 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"bgfillcolor" : 					{
-						"type" : "gradient",
-						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
-						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
-						"angle" : 270.0,
-						"proportion" : 0.39,
-						"autogradient" : 0
-					}
-,
-					"fontface" : [ 1 ]
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ]
 				}
 ,
 				"button" : 				{
