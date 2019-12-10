@@ -66,7 +66,8 @@ class Scheduler:
     def _process_midi_event(self, midi_event: MidiEvent) -> None:
         player: Player = midi_event.player
         player.target.send_midi([midi_event.note, midi_event.velocity, midi_event.channel])
-        player.target.send_state(midi_event.state)
+        if midi_event.velocity > 0:
+            player.target.send_state(midi_event.state)
 
     def _process_audio_event(self, audio_event: AudioEvent) -> None:
         player: Player = audio_event.player
