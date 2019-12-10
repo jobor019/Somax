@@ -110,7 +110,7 @@ class ManualActivityPattern(AbstractActivityPattern):
                                                         self._set_tau)
         self.default_score: Parameter = Parameter(1.0, None, None, 'float', "Value of a new peaks upon creation.")
         self._peaks: Peaks = Peaks.create_empty()
-        self._event_indices: np.ndarray = np.zeros((1, 0), dtype=np.int32)
+        self._event_indices: np.ndarray = np.zeros(0, dtype=np.int32)
         self._parse_parameters()
 
     def insert(self, influences: [AbstractInfluence]) -> None:
@@ -144,4 +144,4 @@ class ManualActivityPattern(AbstractActivityPattern):
 
     def _calc_tau(self, n: int):
         """ n is the number of updates until peak decays below threshold"""
-        return -np.divide(n - 1, np.log(self.extinction_threshold.value))
+        return -np.divide(n, np.log(self.extinction_threshold.value))

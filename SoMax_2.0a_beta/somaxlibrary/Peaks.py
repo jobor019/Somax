@@ -13,7 +13,7 @@ class Peaks:
 
     @classmethod
     def create_empty(cls):
-        return cls(np.empty((0, 1), dtype=np.float), np.empty((0, 1), dtype=np.float), np.empty((0, 1), dtype=np.int32))
+        return cls(np.empty(0, dtype=np.float), np.empty(0, dtype=np.float), np.empty(0, dtype=np.int32))
 
     @classmethod
     def concatenate(cls, peaks: ['Peaks']):
