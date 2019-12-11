@@ -16,8 +16,11 @@ class ScheduledObject(Parametric):
 
 
 class ScheduledMidiObject(ScheduledObject):
-    def __init__(self, trigger_mode: TriggerMode, hold_notes_artificially: bool = False):
+    def __init__(self, trigger_mode: TriggerMode, hold_notes_artificially: bool = False,
+                 simultaneous_onsets: bool = False):
         super(ScheduledMidiObject, self).__init__(trigger_mode)
         self.held_notes: [Note] = []
-        self.hold_notes_artificially = hold_notes_artificially
+        self.hold_notes_artificially: bool = hold_notes_artificially
         self.artificially_held_notes: [Note] = []
+
+        self.simultaneous_onsets: bool = simultaneous_onsets

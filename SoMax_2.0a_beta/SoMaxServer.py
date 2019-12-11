@@ -341,7 +341,16 @@ class SoMaxServer(Caller):
             p: Player = self.players[player]
             p.hold_notes_artificially = enable
             self.scheduler.flush_held(p)
-            self.logger.debug(f"Held notes mode set to {enable} for player '{player}'")
+            self.logger.debug(f"Held notes mode set to {enable} for player '{player}'.")
+        except KeyError:
+            self.logger.error(f"Could not set mode. No player named '{player}' exists.")
+
+    def simultaneous_onset_mode(self, player: str, enable: bool):
+        try:
+            p: Player = self.players[player]
+            p.simultaneous_onsets = enable
+            self.scheduler.flush_held(p)
+            self.logger.debug(f"Simultaneous onset mode set to {enable} for player '{player}'.")
         except KeyError:
             self.logger.error(f"Could not set mode. No player named '{player}' exists.")
 

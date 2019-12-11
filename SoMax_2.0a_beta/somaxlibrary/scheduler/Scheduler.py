@@ -128,7 +128,10 @@ class Scheduler:
                 onset: float = trigger_time
                 self.queue.append(MidiEvent(onset, player, note.pitch, 0, note.channel, corpus_event.state_index))
             for note in note_ons:
-                onset: float = trigger_time + max(0.0, note.onset)
+                if player.simultaneous_onsets:
+                    onset: float = trigger_time
+                else:
+                    onset: float = trigger_time + max(0.0, note.onset)
                 self.queue.append(MidiEvent(onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
             if player.hold_notes_artificially:
                 player.artificially_held_notes = note_offs
