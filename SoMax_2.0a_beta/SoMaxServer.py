@@ -9,6 +9,7 @@ from maxosc.MaxOsc import Caller
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
+from somaxlibrary.OscLogForwarder import OscLogForwarder
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.CorpusEvent import CorpusEvent
@@ -29,6 +30,8 @@ class SoMaxServer(Caller):
     def __init__(self, in_port: int, out_port: int, ip: str = IOParser.DEFAULT_IP):
         super(SoMaxServer, self).__init__(parse_parenthesis_as_list=False)
         self.logger = logging.getLogger(__name__)
+        self.target: Target = SimpleOscTarget("/server", out_port, ip)  # TODO: Change to multiosctarget for distributed
+        self.logger.addHandler(OscLogForwarder(self.target))
         self.logger.info(f"Initializing SoMaxServer with input port {in_port} and ip '{ip}'.")
         self.players: {str: Player} = dict()
         self.scheduler = Scheduler()
@@ -36,7 +39,6 @@ class SoMaxServer(Caller):
         self.ip: str = ip
         self.in_port: int = in_port
         self.out_port: int = out_port
-        self.target: Target = SimpleOscTarget("/server", out_port, ip)  # TODO: Change to multiosctarget for distributed
         self.server: AsyncIOOSCUDPServer = None
         self.io_parser: IOParser = IOParser()
 
