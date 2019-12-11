@@ -152,7 +152,7 @@ class ManualActivityPattern(AbstractActivityPattern):
 
     def clear(self) -> None:
         self._peaks = Peaks.create_empty()
-        self.last_update_time = 0.0
+        self._event_indices = np.zeros(0, dtype=np.int32)
 
     def _set_tau(self, n: int):
         self.tau_mem_decay.value = self._calc_tau(n)
