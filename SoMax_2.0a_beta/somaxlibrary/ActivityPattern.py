@@ -97,6 +97,7 @@ class ClassicActivityPattern(AbstractActivityPattern):
 
     def clear(self) -> None:
         self._peaks = Peaks.create_empty()
+        self.last_update_time = 0.0
 
     def _set_tau(self, t: float):
         self.tau_mem_decay.value = self._calc_tau(t)
@@ -151,6 +152,7 @@ class ManualActivityPattern(AbstractActivityPattern):
 
     def clear(self) -> None:
         self._peaks = Peaks.create_empty()
+        self.last_update_time = 0.0
 
     def _set_tau(self, n: int):
         self.tau_mem_decay.value = self._calc_tau(n)

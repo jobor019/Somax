@@ -39,6 +39,18 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-183",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 2,
+					"outlettype" : [ "bang", "" ],
+					"patching_rect" : [ 510.5, 1131.0, 29.5, 22.0 ],
+					"text" : "t b l"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-218",
 					"linecount" : 2,
 					"maxclass" : "comment",
@@ -118,7 +130,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 862.5, 1198.316666666666606, 403.0, 22.0 ],
-					"presentation_linecount" : 2,
 					"text" : "set_param #1::melodic::melodic::activity_pattern::tau_mem_decay $1"
 				}
 
@@ -155,7 +166,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 862.5, 1223.633333333333439, 419.0, 22.0 ],
-					"presentation_linecount" : 3,
 					"text" : "set_param #1::harmonic::harmonic::activity_pattern::tau_mem_decay $1"
 				}
 
@@ -243,7 +253,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 451.0, 933.5, 211.0, 22.0 ],
-					"presentation_linecount" : 2,
 					"text" : "simultaneous_onset_mode #1 $1"
 				}
 
@@ -268,7 +277,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 2,
 					"outlettype" : [ "", "" ],
-					"patching_rect" : [ 581.0, 1142.0, 77.0, 22.0 ],
+					"patching_rect" : [ 547.5, 1163.0, 77.0, 22.0 ],
 					"text" : "route symbol"
 				}
 
@@ -355,7 +364,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 99.5, 112.0, 18.0, 34.0 ],
 					"size" : 2,
-					"value" : 1
+					"value" : 0
 				}
 
 			}
@@ -2796,7 +2805,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-26",
-					"items" : [ "Obama_original", ",", "debussy_part_harm", ",", "Sax_gentle cat_Slow", ",", "corpus", ",", "0046_Beethoven_Quartet_127_3-4", ",", "0048_Beethoven_Quartet_131_1-7", ",", "Sax_gentle_cat_Slow", ",", "Scarbo", ",", "debussy", ",", "tests_audio", ",", "CarineIntuition", ",", "ScarboXX normalized 75", ",", "debussy_part", ",", "keith_rh", ",", "Scarbo copy", ",", "keith_lh", ",", "best_composition", ",", ".json" ],
+					"items" : "<empty>",
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -3603,6 +3612,37 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-194", 0 ],
+					"source" : [ "obj-183", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-211", 0 ],
+					"order" : 2,
+					"source" : [ "obj-183", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-213", 0 ],
+					"order" : 1,
+					"source" : [ "obj-183", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-215", 0 ],
+					"order" : 0,
+					"source" : [ "obj-183", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-146", 0 ],
 					"order" : 1,
 					"source" : [ "obj-185", 0 ]
@@ -3619,7 +3659,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-194", 0 ],
+					"destination" : [ "obj-183", 0 ],
 					"source" : [ "obj-188", 0 ]
 				}
 
@@ -4481,32 +4521,15 @@
  ],
 		"styles" : [ 			{
 				"name" : "dUG Yello 01-1",
-				"default" : 				{
-					"fontface" : [ 1 ],
-					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
-					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"bgfillcolor" : 					{
-						"type" : "gradient",
-						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
-						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
-						"angle" : 270.0,
-						"proportion" : 0.39,
-						"autogradient" : 0
-					}
-,
-					"fontsize" : [ 10.0 ]
-				}
-,
 				"newobj" : 				{
-					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
-					"fontsize" : [ 10.0 ]
+					"fontface" : [ 1 ]
 				}
 ,
 				"message" : 				{
-					"fontface" : [ 1 ],
+					"fontsize" : [ 10.0 ],
 					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
 					"bgfillcolor" : 					{
 						"type" : "gradient",
@@ -4518,7 +4541,24 @@
 						"autogradient" : 0
 					}
 ,
-					"fontsize" : [ 10.0 ]
+					"fontface" : [ 1 ]
+				}
+,
+				"default" : 				{
+					"fontsize" : [ 10.0 ],
+					"textcolor_inverse" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"bgcolor" : [ 1.0, 0.941176, 0.803922, 1.0 ],
+					"bgfillcolor" : 					{
+						"type" : "gradient",
+						"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+						"color1" : [ 0.94902, 0.992157, 1.0, 1.0 ],
+						"color2" : [ 0.862745, 0.870588, 0.878431, 1.0 ],
+						"angle" : 270.0,
+						"proportion" : 0.39,
+						"autogradient" : 0
+					}
+,
+					"fontface" : [ 1 ]
 				}
 ,
 				"button" : 				{
