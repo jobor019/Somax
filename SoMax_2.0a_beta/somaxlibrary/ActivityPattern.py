@@ -61,11 +61,16 @@ class ClassicActivityPattern(AbstractActivityPattern):
         Decay: score = exp(-(Δt)/tau), where Δt is the time since creation in beats
     """
 
+    DEFAULT_T = 4.6
+
     def __init__(self, corpus: Corpus = None):
         super().__init__(corpus)
         self.logger.debug("[__init__]: ClassicActivityPattern initialized.")
-        self.tau_mem_decay: Parameter = Parameter(2.0, 0.0, None, 'float', "Very unclear param")  # TODO
         self.extinction_threshold: Parameter = Parameter(0.1, 0.0, None, 'float', "Score below which peaks are removed")
+        # TODO: tau shouldn't be the parameter: t should
+        self.tau_mem_decay: Parameter = ParamWithSetter(self._calc_tau(self.DEFAULT_T), 0, None, "float",
+                                                        "Number of updates until peak is decayed below threshold.",
+                                                        self._set_tau)
         self.default_score: Parameter = Parameter(1.0, None, None, 'float', "Value of a new peaks upon creation.")
         self._peaks: Peaks = Peaks.create_empty()
         self.last_update_time: float = 0.0
@@ -93,6 +98,13 @@ class ClassicActivityPattern(AbstractActivityPattern):
     def clear(self) -> None:
         self._peaks = Peaks.create_empty()
 
+    def _set_tau(self, t: float):
+        self.tau_mem_decay.value = self._calc_tau(t)
+
+    def _calc_tau(self, t: float):
+        """ n is the number of updates until peak decays below threshold"""
+        return -np.divide(t, np.log(self.extinction_threshold.value))
+
 
 class ManualActivityPattern(AbstractActivityPattern):
     """
@@ -105,6 +117,7 @@ class ManualActivityPattern(AbstractActivityPattern):
         super().__init__(corpus)
         self.logger.debug("[__init__]: ManualActivityPattern initialized.")
         self.extinction_threshold: Parameter = Parameter(0.1, 0.0, None, 'float', "Score below which peaks are removed")
+        # TODO: tau shouldn't be the parameter: n should
         self.tau_mem_decay: Parameter = ParamWithSetter(self._calc_tau(self.DEFAULT_N), 1, None, "int",
                                                         "Number of updates until peak is decayed below threshold.",
                                                         self._set_tau)

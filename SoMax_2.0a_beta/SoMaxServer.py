@@ -502,5 +502,9 @@ if __name__ == "__main__":
         # await asyncio.gather(somax_server._run(), somax_server._gui_callback())
         await asyncio.gather(somax_server._run())
 
+    try:
+        asyncio.run(gather())
+    except Exception as e:
+        logging.error(e)
+        raise
 
-    asyncio.run(gather())
