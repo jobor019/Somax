@@ -104,7 +104,7 @@ class ClassicActivityPattern(AbstractActivityPattern):
 
     def _calc_tau(self, t: float):
         """ n is the number of updates until peak decays below threshold"""
-        return -np.divide(t, np.log(self.extinction_threshold.value))
+        return -np.divide(t, np.log(self.extinction_threshold.value - 0.001))
 
 
 class ManualActivityPattern(AbstractActivityPattern):
@@ -136,9 +136,9 @@ class ManualActivityPattern(AbstractActivityPattern):
             times.append(influence.event.onset)
             scores.append(self.default_score.value)
             transform_hashes.append(influence.transform_hash)
-        self._peaks.append(scores, times, transform_hashes)
         new_event_indices: np.ndarray = np.array([i.event.state_index for i in influences], dtype=np.int32)
         self._event_indices = np.concatenate((self._event_indices, new_event_indices))
+        self._peaks.append(scores, times, transform_hashes)
 
     def update_peaks(self, _new_time: float) -> None:
         if not self._peaks.empty():
@@ -146,7 +146,8 @@ class ManualActivityPattern(AbstractActivityPattern):
             self._peaks.times += [self.corpus.event_at(i).duration for i in self._event_indices]
             self._event_indices += 1
             indices_to_remove: np.ndarray = np.where((self._peaks.scores <= self.extinction_threshold.value)
-                                                     | (self._peaks.times >= self.corpus.duration()))
+                                                     | (self._peaks.times >= self.corpus.duration())
+                                                     | (self._event_indices >= self.corpus.length()))
             self._peaks.remove(indices_to_remove)
             self._event_indices = np.delete(self._event_indices, indices_to_remove)
 
@@ -159,4 +160,4 @@ class ManualActivityPattern(AbstractActivityPattern):
 
     def _calc_tau(self, n: int):
         """ n is the number of updates until peak decays below threshold"""
-        return -np.divide(n, np.log(self.extinction_threshold.value))
+        return -np.divide(n, np.log(self.extinction_threshold.value - 0.001))
