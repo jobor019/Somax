@@ -10,7 +10,6 @@ from maxosc.MaxOsc import Caller
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
-from somaxlibrary.OscLogForwarder import OscLogForwarder
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.CorpusBuilder import CorpusBuilder
 from somaxlibrary.CorpusEvent import CorpusEvent
@@ -19,6 +18,7 @@ from somaxlibrary.IOParser import IOParser
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
 from somaxlibrary.MergeActions import AbstractMergeAction
+from somaxlibrary.OscLogForwarder import OscLogForwarder
 from somaxlibrary.Player import Player
 from somaxlibrary.Target import Target, SimpleOscTarget
 from somaxlibrary.Transforms import AbstractTransform
@@ -42,6 +42,10 @@ class SoMaxServer(Caller):
         self.out_port: int = out_port
         self.server: AsyncIOOSCUDPServer = None
         self.io_parser: IOParser = IOParser()
+
+    ######################################################
+    # INTERNAL/PRIVATE
+    ######################################################
 
     async def _run(self) -> None:
         self.logger.info("SoMaxServer started.")
@@ -74,7 +78,7 @@ class SoMaxServer(Caller):
         print(warning)
 
     ######################################################
-    # CREATION OF PLAYERS/STREAMVIEWS/ATOMS
+    # CREATION/DELETION PLAYER/STREAMVIEW/ATOM
     ######################################################
 
     def new_player(self, name: str, port: int, ip: str = "", trig_mode: str = "", override: bool = False):
@@ -101,10 +105,6 @@ class SoMaxServer(Caller):
             del self.players[name]
         except KeyError:
             self.logger.error(f"No player deleted as a player named {name} does not exist.")
-
-    @staticmethod
-    def _osc_callback(self):
-        pass  # TODO: implement
 
     # TODO: Clean up default arguments.
     # TODO: Rather player and path as one argument: player:s1:atom1, etc
@@ -162,6 +162,43 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"Could not delete atom at path {path}. The parent streamview/player does not exist.")
 
+    ######################################################
+    # MAIN RUNTIME CALLS
+    ######################################################
+
+    def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
+        self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
+                          f"label keyword '{label_keyword}', value '{value}' and kwargs {kwargs}")
+        if not self.scheduler.running:
+            return
+        try:
+            labels: [AbstractLabel] = AbstractLabel.classify_as(label_keyword, value, **kwargs)
+        except InvalidLabelInput as e:
+            self.logger.error(str(e) + "No action performed.")
+            return
+        # TODO: Error handling (KeyError players + path_and_name)
+        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
+        time: float = self.scheduler.time
+        try:
+            for label in labels:
+                self.players[player].influence(path_and_name, label, time, **kwargs)
+        except KeyError:
+            self.logger.error(f"No player named '{player}' exists.")
+
+    def influence_onset(self, player):
+        if not self.scheduler.running:
+            return
+        try:
+            if self.players[player].trigger_mode == TriggerMode.MANUAL:
+                self.logger.debug(f"[influence_onset] Influence onset triggered for player '{player}'.")
+                self.scheduler.add_trigger_event(self.players[player])
+        except KeyError:
+            self.logger.error(f"No player named '{player}' exists.")
+
+    ######################################################
+    # MODIFY PLAYER/STREAMVIEW/ATOM STATE
+    ######################################################
+
     def add_transform(self, player: str, path: str, transforms: [str], parse_mode=""):
         self.logger.debug(f"[add_transform] called for player {player} with path {path}.")
         path_and_name: [str] = self.io_parser.parse_streamview_atom_path(path)
@@ -196,6 +233,29 @@ class SoMaxServer(Caller):
             self.players[player].set_activity_pattern(path_as_list, activity_class)
         except KeyError:
             self.logger.error(f"Could not set activity pattern for atom at {path}.")
+
+    def read_corpus(self, player: str, filepath: str):
+        # TODO: IO Error handling
+        self.logger.debug(f"[read_corpus] called for player '{player}' and file '{filepath}'.")
+        self.logger.info(f"Reading corpus at '{filepath}' for player '{player}'...")
+        try:
+            self.players[player].read_corpus(filepath)
+            self.logger.info(f"Corpus successfully loaded in player '{player}'.")
+        except KeyError:
+            self.logger.error(f"Could not load corpus. No player named '{player}' exists.")
+        except InvalidJsonFormat as e:
+            self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
+
+    def set_param(self, path: str, value: Any):
+        self.logger.debug(f"[set_param] Setting parameter at '{path}' to {value} (type={type(value)}).")
+        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            player: str = path_parsed.pop(0)
+            self.players[player].set_param(path_parsed, value)
+        except (IndexError, KeyError):
+            self.logger.error(f"Invalid parameter path: '{path}'. Could not set parameter.")
+        except ParameterError as e:
+            self.logger.error(str(e))
 
     ######################################################
     # SCHEDULER
@@ -242,84 +302,6 @@ class SoMaxServer(Caller):
                 self.target.send_simple("tempo_master", False)
 
     ######################################################
-    # TIMING METHODS
-    ######################################################
-
-    # TODO: Reimplement
-    # def set_tempo(self, tempo):
-    #     tempo = float(tempo)
-    #     self.scheduler.set_tempo(tempo)
-    #     self.client.send_message("/tempo", tempo)
-
-    # TODO: Reimplement
-    # def set_original_tempo(self, original_tempo):
-    #     self.original_tempo = bool(original_tempo)
-    #     self.scheduler.set_original_tempo(self.original_tempo)
-
-    ######################################################
-    # FEEDBACK METHODS
-    ######################################################
-
-    # TODO:Reimplement
-    # def set_activity_feedback(self, _address, content):
-    #     path, player = content[0:2]
-    #     if path == "None":
-    #         path = None
-    #     if player in self.players:
-    #         self.players[player]["output_activity"] = path
-
-    # TODO: activity_profile
-    # def send_activity_profile(self, time):
-    #     for n, p in self.players.items():
-    #         if p["output_activity"]:
-    #             if p["output_activity"] == 'Player':
-    #                 path = None
-    #             else:
-    #                 path = p["output_activity"]
-    #             activity_profiles = p['player'].get_activities(time, path=path, weighted=True)
-    #             final_activity_str = ""
-    #             for st, pr in activity_profiles.iteritems():
-    #                 for d, e in pr:
-    #                     final_activity_str += str(d) + " " + str(e[0]) + " " + st + " "
-    #                     if len(final_activity_str) > 5000:
-    #                         break
-    #                 if len(final_activity_str) > 5000:
-    #                     break
-    #             p['player'].send(final_activity_str, "/activity")
-
-    # TODO: parameter_dict
-    # def send_parameter_dict(self, *_args):
-    #     info = dict()
-    #     info["players"] = dict()
-    #     for name, player in self.players.items():
-    #         info["players"][name] = player['player'].get_parameter_dict()
-    #
-    #     def get_class_name(obj):
-    #         return obj.__name__
-    #
-    #     def regularize(corpus_list):
-    #         corpus_list = list(map(lambda x: os.path.splitext(x)[0], corpus_list))
-    #         corpus_list = reduce(lambda x, y: str(x) + " " + str(y), corpus_list)
-    #         return corpus_list
-    #
-    #     info["memory_types"] = regularize(map(get_class_name, sm.MEMORY_TYPES))
-    #     info["event_types"] = regularize(map(get_class_name, sm.EVENT_TYPES))
-    #     info["label_types"] = regularize(map(get_class_name, sm.LABEL_TYPES))
-    #     info["contents_types"] = regularize(map(get_class_name, sm.CONTENTS_TYPES))
-    #     info["transform_types"] = regularize(map(get_class_name, sm.TRANSFORM_TYPES))
-    #     info["timing_type"] = self.scheduler.timing_type
-    #     corpus_list = filter(lambda x: x[0] != "." and os.path.splitext(x)[1] == ".json", os.listdir("corpus/"))
-    #     corpus_list = map(lambda x: os.path.splitext(x)[0], corpus_list)
-    #     corpus_list = reduce(lambda x, y: str(x) + " " + str(y), corpus_list)
-    #     info["corpus_list"] = corpus_list
-    #
-    #     self.client.send_message("/serverdict", "clear")
-    #     messages = sm.Tools.dic_to_strout(info)
-    #     for m in messages:
-    #         self.client.send_message("/serverdict", m)
-    #     self.client.send_message("/serverdict", " ")
-
-    ######################################################
     # EVENTS METHODS
     ######################################################
 
@@ -357,80 +339,6 @@ class SoMaxServer(Caller):
         except KeyError:
             self.logger.error(f"Could not set mode. No player named '{player}' exists.")
 
-    # TODO: Reimplement or remove
-    # def new_event(self, player_name, time=None, event=None):
-    #     self.logger.debug("[new_event] Call to new_event for player {} at time {} with content {}."
-    #                       .format(player_name, time, event))
-    #     time = self.scheduler.time if time is None else time
-    #     if event is not None:
-    #         self.scheduler.reset(player_name)
-    #     self.process_intern_event(('ask_for_event', player_name, time, event))
-    #     self.logger.debug("[new_event] New event created.")
-
-    def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
-        self.logger.debug(f"[influence] called for player '{player}' with path '{path}', "
-                          f"label keyword '{label_keyword}', value '{value}' and kwargs {kwargs}")
-        try:
-            labels: [AbstractLabel] = AbstractLabel.classify_as(label_keyword, value, **kwargs)
-        except InvalidLabelInput as e:
-            self.logger.error(str(e) + "No action performed.")
-            return
-        # TODO: Error handling (KeyError players + path_and_name)
-        path_and_name: [str] = IOParser.parse_streamview_atom_path(path)
-        time: float = self.scheduler.time
-        try:
-            for label in labels:
-                self.players[player].influence(path_and_name, label, time, **kwargs)
-        except KeyError:
-            self.logger.error(f"No player named '{player}' exists.")
-
-    def influence_onset(self, player):
-        try:
-            if self.players[player].trigger_mode == TriggerMode.MANUAL:
-                self.logger.debug(f"[influence_onset] Influence onset triggered for player '{player}'.")
-                self.scheduler.add_trigger_event(self.players[player])
-        except KeyError:
-            self.logger.error(f"No player named '{player}' exists.")
-
-    # TODO: Implement jump
-    # def jump(self, player):
-    #     # TODO: IO Error handling
-    #     self.logger.debug("[jump] called for player {0}.".format(player))
-    #     self.players[player].jump()
-
-    def read_corpus(self, player: str, filepath: str):
-        # TODO: IO Error handling
-        self.logger.debug(f"[read_corpus] called for player '{player}' and file '{filepath}'.")
-        self.logger.info(f"Reading corpus at '{filepath}' for player '{player}'...")
-        try:
-            self.players[player].read_corpus(filepath)
-            self.logger.info(f"Corpus successfully loaded in player '{player}'.")
-        except KeyError:
-            self.logger.error(f"Could not load corpus. No player named '{player}' exists.")
-        except InvalidJsonFormat as e:
-            self.logger.error(f"{str(e)} No corpus was read. (recommended action: rebuild corpus)")
-
-    def set_param(self, path: str, value: Any):
-        self.logger.debug(f"[set_param] Setting parameter at '{path}' to {value} (type={type(value)}).")
-        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
-        try:
-            player: str = path_parsed.pop(0)
-            self.players[player].set_param(path_parsed, value)
-        except (IndexError, KeyError):
-            self.logger.error(f"Invalid parameter path: '{path}'. Could not set parameter.")
-        except ParameterError as e:
-            self.logger.error(str(e))
-
-    def get_param(self, path: str):
-        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
-        try:
-            player: str = path_parsed.pop(0)
-            self.target.send_simple("param", [path, self.players[player].get_param(path_parsed).value])
-        except (IndexError, KeyError):
-            self.logger.error(f"Invalid path")  # TODO Proper message
-        except ParameterError as e:
-            self.logger.error(str(e))
-
     ######################################################
     # MAX INTERFACE INFORMATION
     ######################################################
@@ -461,8 +369,15 @@ class SoMaxServer(Caller):
         except KeyError:
             return
 
-    def poll_server(self):
-        self.target.send_simple("poll_server", ["bang"])
+    def get_param(self, path: str):
+        path_parsed: [str] = IOParser.parse_streamview_atom_path(path)
+        try:
+            player: str = path_parsed.pop(0)
+            self.target.send_simple("param", [path, self.players[player].get_param(path_parsed).value])
+        except (IndexError, KeyError):
+            self.logger.error(f"Invalid path")  # TODO Proper message
+        except ParameterError as e:
+            self.logger.error(str(e))
 
     ######################################################
     # CORPUS METHODS
@@ -473,8 +388,6 @@ class SoMaxServer(Caller):
         self.logger.info(f"Building corpus from file '{path}' to location'{output}.")
         self.builder.build_corpus(path, output, **kwargs)
         self.logger.info("File {0} has been output at location '{1}'".format(path, output))
-        # TODO: Info dict
-        # self.send_parameter_dict()
 
     ######################################################
     # DEBUGGING
@@ -484,26 +397,33 @@ class SoMaxServer(Caller):
         event: CorpusEvent = self.players[player].corpus.event_at(state_index)
         self.scheduler.add_corpus_event(self.players[player], self.scheduler.time, event)
 
+    @staticmethod
+    def _osc_callback(self):
+        pass  # TODO: implement
+
+    def poll_server(self):
+        self.target.send_simple("poll_server", ["bang"])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Launch and manage a SoMaxServer')
-    parser.add_argument('in_port', metavar='IN_PORT', type=int, nargs=1,
-                        help='in port used by the server')
-    parser.add_argument('out_port', metavar='OUT_PORT', type=int, nargs=1,
+    parser.add_argument('in_port', metavar='IN_PORT', type=int, nargs='?',
+                        help='in port used by the server', default=1234)
+    parser.add_argument('out_port', metavar='OUT_PORT', type=int, nargs='?', default=1235,
                         help='out port used by the server')
     # TODO: Ip as input argument
 
     logging.config.fileConfig('logging.ini', disable_existing_loggers=False)
 
     args = parser.parse_args()
-    in_port = args.in_port[0]
-    out_port = args.out_port[0]
+    in_port = args.in_port
+    out_port = args.out_port
     somax_server = SoMaxServer(in_port, out_port)
 
 
     async def gather():
-        # await asyncio.gather(somax_server._run(), somax_server._gui_callback())
         await asyncio.gather(somax_server._run())
+
 
     try:
         asyncio.run(gather())
@@ -513,5 +433,3 @@ if __name__ == "__main__":
     except Exception as e:
         somax_server.logger.error(e)
         raise
-
-

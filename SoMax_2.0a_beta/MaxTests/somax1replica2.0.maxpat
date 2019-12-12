@@ -2863,7 +2863,7 @@
 					"outlettype" : [ "", "", "dictionary", "", "", "", "" ],
 					"patching_rect" : [ 99.0, 802.5, 324.0, 157.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 481.965411840411889, 439.0, 331.0, 160.0 ],
+					"presentation_rect" : [ 481.965411840411889, 439.0, 273.0, 160.0 ],
 					"viewvisibility" : 1
 				}
 
