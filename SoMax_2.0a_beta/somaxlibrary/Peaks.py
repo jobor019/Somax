@@ -1,5 +1,3 @@
-from typing import Union, List
-
 import numpy as np
 
 
@@ -46,6 +44,3 @@ class Peaks:
 
     def dump(self) -> (np.ndarray, np.ndarray, np.ndarray):
         return self.scores, self.times, self.transform_hashes
-
-
-

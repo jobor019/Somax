@@ -57,9 +57,7 @@ class AbstractActivityPattern(Parametric):
 
 
 class ClassicActivityPattern(AbstractActivityPattern):
-    """
-        Decay: score = exp(-(Δt)/tau), where Δt is the time since creation in beats
-    """
+    """Decay: score = exp(-(Δt)/tau), where Δt is the time since creation in beats"""
 
     DEFAULT_T = 4.6
 
@@ -108,9 +106,7 @@ class ClassicActivityPattern(AbstractActivityPattern):
 
 
 class ManualActivityPattern(AbstractActivityPattern):
-    """
-        Decay: score = exp(-n/tau), where n is the number of update calls since creation
-    """
+    """Decay: score = exp(-n/tau), where n is the number of update calls since creation"""
 
     DEFAULT_N = 6
 

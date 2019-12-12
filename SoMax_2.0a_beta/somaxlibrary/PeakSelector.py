@@ -24,13 +24,6 @@ class AbstractPeakSelector(Parametric):
                corpus: Corpus, transform_dict: {int: (AbstractTransform, ...)}, **kwargs) -> (CorpusEvent, int):
         raise NotImplementedError("AbstractPeakSelector.decide is abstract.")
 
-    # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
-    #     parameters: Dict = {}
-    #     for name, parameter in self._parse_parameters().items():
-    #         parameters[name] = parameter.update_parameter_dict()
-    #     self.parameter_dict = {"parameters": parameters}
-    #     return self.parameter_dict
-
 
 class MaxPeakSelector(AbstractPeakSelector):
     def decide(self, peaks: Peaks, influence_history: [(CorpusEvent, (AbstractTransform, ...))],

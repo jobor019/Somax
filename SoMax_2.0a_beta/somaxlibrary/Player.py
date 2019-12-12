@@ -2,8 +2,6 @@ import logging
 from copy import deepcopy
 from typing import ClassVar
 
-import numpy as np
-
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
@@ -36,12 +34,12 @@ class Player(ScheduledMidiObject, Parametric):
         self.merge_actions: {str: AbstractMergeAction} = {}
         self.corpus: Corpus = None
         self.peak_selectors: {str: AbstractPeakSelector} = {}
-        self.transforms: {int: (AbstractTransform, ...)} = {}   # key: hash
+        self.transforms: {int: (AbstractTransform, ...)} = {}  # key: hash
 
         self.improvisation_memory: ImprovisationMemory = ImprovisationMemory()
         self._previous_peaks: Peaks = Peaks.create_empty()
 
-        # TODO: Temp
+        # TODO: Temporary: Add as input arguments instead
         for merge_action in [DistanceMergeAction, PhaseModulationMergeAction, NextStateMergeAction]:
             self.add_merge_action(merge_action())
         for peak_selector in [MaxPeakSelector(), DefaultPeakSelector()]:
@@ -49,8 +47,100 @@ class Player(ScheduledMidiObject, Parametric):
 
         self._parse_parameters()
 
-        # self.nextstate_mod: float = 1.5   # TODO
-        # self.waiting_to_jump: bool = False    # TODO
+    ######################################################
+    # CREATION/DELETION STREAMVIEWS/ATOMS
+    ######################################################
+
+    def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
+        """creates streamview at target path"""
+        self.logger.debug("[create_streamview] Creating streamview {} in player {} with merge_actions {}..."
+                          .format(path, self.name, merge_actions))
+        streamview: str = path.pop(0)
+        if not path:
+            if streamview in self.streamviews.keys():
+                raise DuplicateKeyError(f"A streamview '{streamview}' already exists in player '{self.name}'.")
+            else:
+                self.streamviews[streamview] = StreamView(name=streamview, weight=weight, merge_actions=merge_actions)
+        else:
+            self.streamviews[streamview].create_streamview(path, weight, merge_actions)
+        self._parse_parameters()
+
+    def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
+                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
+                    self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
+        """raises: InvalidPath, KeyError, DuplicateKeyError"""
+        self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
+        streamview: str = path.pop(0)
+        if not path:  # path is empty means no streamview path was given
+            raise InvalidPath(f"Cannot create an atom directly in Player.")
+        else:
+            self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
+                                                     self.corpus, self_influenced, transforms)
+        for transform_tuple in transforms:
+            self.store_transform(transform_tuple)
+        self._parse_parameters()
+
+    def delete_atom(self, path: [str]):
+        atom_name: str = path.pop(-1)
+        streamview: StreamView = self._get_streamview(path)
+        streamview.delete_atom(atom_name)
+
+    ######################################################
+    # MAIN RUNTIME FUNCTIONS
+    ######################################################
+
+    def new_event(self, scheduler_time: float, **kwargs) -> CorpusEvent:
+        """ Raises: InvalidCorpus """
+        self.logger.debug("[new_event] Player {} attempting to create a new event at scheduler time '{}'."
+                          .format(self.name, scheduler_time))
+
+        if not self.corpus:
+            raise InvalidCorpus(f"No Corpus has been loaded in player '{self.name}'.")
+
+        self._update_peaks(scheduler_time)
+        self.logger.debug("[new_event] Peaks were updated")
+        peaks: Peaks = self._merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
+        self.logger.debug("[new_event] Merge finished")
+        event_and_transforms: (CorpusEvent, int) = None
+        for peak_selector in self.peak_selectors.values():
+            event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, self.transforms,
+                                                        **kwargs)
+            if event_and_transforms:
+                break
+        if not event_and_transforms:
+            # TODO: Ensure that this never happens so that this error message can be removed
+            raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
+
+        event: CorpusEvent = deepcopy(event_and_transforms[0])
+        transforms: (AbstractTransform, ...) = event_and_transforms[1]
+        self.improvisation_memory.append(event, scheduler_time, transforms)
+
+        for transform in transforms:
+            event = transform.transform(event)
+
+        self._influence_self(event, scheduler_time)
+        self.logger.debug(f"[new_event] Player {self.name} successfully created new event.")
+        return event
+
+    def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs) -> None:
+        """ Raises: InvalidLabelInput, KeyError"""
+        if not path:
+            for atom in self._all_atoms():
+                try:
+                    atom.influence(label, time, **kwargs)
+                except InvalidLabelInput:
+                    # Ignore atom if label doesn't match
+                    continue
+        else:
+            try:
+                self._get_atom(path).influence(label, time, **kwargs)
+            except InvalidLabelInput:
+                # Ignore atom if label doesn't match
+                pass
+
+    ######################################################
+    # MODIFY STATE
+    ######################################################
 
     def add_merge_action(self, merge_action: AbstractMergeAction, override: bool = False):
         name: str = type(merge_action).__name__
@@ -68,26 +158,46 @@ class Player(ScheduledMidiObject, Parametric):
             self.peak_selectors[name] = peak_selector
             self._parse_parameters()
 
-    # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
-    #     streamviews = {}
-    #     merge_actions = {}
-    #     peak_selectors = {}
-    #     parameters: Dict = {}
-    #     for name, streamview in self.streamviews.items():
-    #         streamviews[name] = streamview.update_parameter_dict()
-    #     for merge_action in self.merge_actions:
-    #         key: str = type(merge_action).__name__
-    #         merge_actions[key] = merge_action.update_parameter_dict()
-    #     for peak_selector in self.peak_selectors:
-    #         key: str = type(peak_selector).__name__
-    #         peak_selectors[key] = peak_selector.update_parameter_dict()
-    #     for name, parameter in self._parse_parameters().items():
-    #         parameters[name] = parameter.update_parameter_dict()
-    #     self.parameter_dict = {"streamviews": streamviews,
-    #                            "merge_actions": merge_actions,
-    #                            "peak_selectors": peak_selectors,
-    #                            "parameters": parameters}
-    #     return self.parameter_dict
+    def store_transform(self, transform: (AbstractTransform, ...)) -> None:
+        transform_hash: int = hash(transform)
+        if transform_hash in self.transforms and self.transforms[transform_hash] != transform:
+            # TODO
+            raise TypeError("Critical Implementation error in transforms. TODO")
+        self.transforms[transform_hash] = transform
+
+    def set_label(self, path: [str], label_class: ClassVar[AbstractLabel]):
+        atom: Atom = self._get_atom(path)
+        atom.set_label(label_class)
+
+    def set_activity_pattern(self, path: [str], activity_pattern_class: ClassVar[AbstractActivityPattern]):
+        atom: Atom = self._get_atom(path)
+        atom.set_activity_pattern(activity_pattern_class, self.corpus)
+
+    def read_corpus(self, filepath: str):
+        self.corpus = Corpus(filepath)
+        for streamview in self.streamviews.values():
+            streamview.read(self.corpus)
+        self.target.send_simple("corpus", [self.corpus.name, str(self.corpus.content_type), self.corpus.length()])
+
+    def add_transform(self, path: [str], transform: (AbstractTransform, ...)) -> None:
+        """ raises TransformError, KeyError"""
+        if not path:
+            for atom in self._all_atoms():
+                try:
+                    atom.memory_space.add_transforms(transform)
+                except TransformError as e:
+                    self.logger.error(f"{str(e)}")
+        else:
+            self._get_atom(path).memory_space.add_transforms(transform)
+
+    def clear(self):
+        self.improvisation_memory = ImprovisationMemory()
+        for streamview in self.streamviews.values():
+            streamview.clear()
+
+    ######################################################
+    # PRIVATE
+    ######################################################
 
     def _get_streamview(self, path: [str]) -> StreamView:
         streamview: str = path.pop(0)
@@ -116,38 +226,6 @@ class Player(ScheduledMidiObject, Parametric):
         for streamview in self.streamviews.values():
             streamview.update_peaks(time)
 
-    def new_event(self, scheduler_time: float, **kwargs) -> CorpusEvent:
-        """ Raises: InvalidCorpus """
-        self.logger.debug("[new_event] Player {} attempting to create a new event at scheduler time '{}'."
-                          .format(self.name, scheduler_time))
-
-        if not self.corpus:
-            raise InvalidCorpus(f"No Corpus has been loaded in player '{self.name}'.")
-
-        self._update_peaks(scheduler_time)
-        self.logger.debug("[new_event] Peaks were updated")
-        peaks: Peaks = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus, **kwargs)
-        self.logger.debug("[new_event] Merge finished")
-        event_and_transforms: (CorpusEvent, int) = None
-        for peak_selector in self.peak_selectors.values():
-            event_and_transforms = peak_selector.decide(peaks, self.improvisation_memory, self.corpus, self.transforms, **kwargs)
-            if event_and_transforms:
-                break
-        if not event_and_transforms:
-            # TODO: Ensure that this never happens so that this error message can be removed
-            raise InvalidConfiguration("All PeakSelectors failed. SoMax requires at least one default peak selector.")
-
-        event: CorpusEvent = deepcopy(event_and_transforms[0])
-        transforms: (AbstractTransform, ...) = event_and_transforms[1]
-        self.improvisation_memory.append(event, scheduler_time, transforms)
-
-        for transform in transforms:
-            event = transform.transform(event)
-
-        self._influence_self(event, scheduler_time)
-        self.logger.debug(f"[new_event] Player {self.name} successfully created new event.")
-        return event
-
     def _influence_self(self, event: CorpusEvent, time: float) -> None:
         atoms: [Atom] = self._self_atoms()
         labels: [AbstractLabel] = event.labels
@@ -158,84 +236,7 @@ class Player(ScheduledMidiObject, Parametric):
                 except InvalidLabelInput:
                     continue
 
-    def influence(self, path: [str], label: AbstractLabel, time: float, **kwargs) -> None:
-        """ Raises: InvalidLabelInput, KeyError"""
-        if not path:
-            for atom in self._all_atoms():
-                try:
-                    atom.influence(label, time, **kwargs)
-                except InvalidLabelInput as e:
-                    # self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
-                    continue
-        else:
-            try:
-                self._get_atom(path).influence(label, time, **kwargs)
-            except InvalidLabelInput as e:
-                # self.logger.debug(f"[influence] {repr(e)} Likely expected behaviour, only in rare cases an issue.")
-                pass
-
-
-    def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
-        """creates streamview at target path"""
-        self.logger.debug("[create_streamview] Creating streamview {} in player {} with merge_actions {}..."
-                          .format(path, self.name, merge_actions))
-        streamview: str = path.pop(0)
-        if not path:
-            if streamview in self.streamviews.keys():
-                raise DuplicateKeyError(f"A streamview '{streamview}' already exists in player '{self.name}'.")
-            else:
-                self.streamviews[streamview] = StreamView(name=streamview, weight=weight, merge_actions=merge_actions)
-        else:
-            self.streamviews[streamview].create_streamview(path, weight, merge_actions)
-        self._parse_parameters()
-
-    def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
-                    activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[AbstractMemorySpace],
-                    self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
-        """creates atom at target path
-        raises: InvalidPath, KeyError, DuplicateKeyError"""
-        self.logger.debug(f"[create_atom] Attempting to create atom at {path}...")
-
-        streamview: str = path.pop(0)
-        if not path:  # path is empty means no streamview path was given
-            raise InvalidPath(f"Cannot create an atom directly in Player.")
-        else:
-            self.streamviews[streamview].create_atom(path, weight, label_type, activity_type, memory_type,
-                                                     self.corpus, self_influenced, transforms)
-        for transform_tuple in transforms:
-            self.store_transform(transform_tuple)
-        self._parse_parameters()
-
-    def delete_atom(self, path: [str]):
-        atom_name: str = path.pop(-1)
-        streamview: StreamView = self._get_streamview(path)
-        streamview.delete_atom(atom_name)
-
-    def store_transform(self, transform: (AbstractTransform, ...)) -> None:
-        transform_hash: int = hash(transform)
-        if transform_hash in self.transforms and self.transforms[transform_hash] != transform:
-            # TODO
-            raise TypeError("Critical Implementation error in transforms. TODO")
-        self.transforms[transform_hash] = transform
-
-    def set_label(self, path: [str], label_class: ClassVar[AbstractLabel]):
-        atom: Atom = self._get_atom(path)
-        atom.set_label(label_class)
-
-    def set_activity_pattern(self, path: [str], activity_pattern_class: ClassVar[AbstractActivityPattern]):
-        atom: Atom = self._get_atom(path)
-        atom.set_activity_pattern(activity_pattern_class, self.corpus)
-
-    def read_corpus(self, filepath: str):
-        self.corpus = Corpus(filepath)
-        for streamview in self.streamviews.values():
-            streamview.read(self.corpus)
-        self.target.send_simple("corpus", [self.corpus.name, str(self.corpus.content_type), self.corpus.length()])
-        # TODO: info dict
-        # self.update_memory_length()
-        # self.send_parameter_dict()
-
-    def merged_peaks(self, time: float, history: ImprovisationMemory, corpus: Corpus, **kwargs) -> Peaks:
+    def _merged_peaks(self, time: float, history: ImprovisationMemory, corpus: Corpus, **kwargs) -> Peaks:
         weight_sum: float = 0.0
         for streamview in self.streamviews.values():
             weight_sum += streamview.weight if streamview.is_enabled() else 0.0
@@ -253,163 +254,15 @@ class Player(ScheduledMidiObject, Parametric):
         self._previous_peaks = all_peaks
         return all_peaks
 
-    def add_transform(self, path: [str], transform: (AbstractTransform, ...)) -> None:
-        """ raises TransformError, KeyError"""
-        if not path:
-            for atom in self._all_atoms():
-                try:
-                    atom.memory_space.add_transforms(transform)
-                except TransformError as e:
-                    self.logger.error(f"{str(e)}")
-        else:
-            self._get_atom(path).memory_space.add_transforms(transform)
+    ######################################################
+    # MAX INTERFACE INFORMATION
+    ######################################################
 
-
-    def send_peaks(self, scheduler_time: float):
-        # TODO: Remove the lines that have been commented out.
-        # self._update_peaks(scheduler_time)
+    def send_peaks(self):
         peak_group: str = self.name
-        # merged_peaks: [Peak] = self.merged_peaks(scheduler_time, self.improvisation_memory, self.corpus)
-        # self.logger.debug(f"[send_peaks] sending {len(merged_peaks)} merged peaks...")
-        # for peak in merged_peaks:
-        #     state_index: int = self.corpus.event_closest(peak.time).state_index
-        #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
         self.target.send_simple("num_peaks", [peak_group, self._previous_peaks.size()])
-        # self.logger.debug(f"[send_peaks] sending raw peaks...")
         # TODO: Does not handle nested streamviews
         for streamview in self.streamviews.values():
             for atom in streamview.atoms.values():
-                peak_group = "::".join([streamview.name, atom.name])
                 peaks: Peaks = atom.activity_pattern.peaks
-                # for peak in peaks:
-                #     state_index: int = self.corpus.event_closest(peak.time).state_index
-                #     self.target.send_simple("peak", [peak_group, state_index, peak.score])
                 self.target.send_simple("num_peaks", [atom.name, peaks.size()])
-
-    def clear(self):
-        self.improvisation_memory = ImprovisationMemory()
-        for streamview in self.streamviews.values():
-            streamview.clear()
-
-
-    # TODO: Reimplement as activity
-    # def jump(self):
-    #     self.logger.debug("[jump] Jump set to True.")
-    #     self.waiting_to_jump = True
-
-    # TODO: Reimplement
-    # def delete_atom(self, name):
-    #     '''deletes target atom'''
-    #
-    #     if not ":" in name:
-    #         del self.streamviews[name]
-    #     else:
-    #         head, tail = Tools.parse_path(name)
-    #         self.streamviews[head].delete_atom(tail)
-    #     self.logger.info("Atom {0} deleted from player {1}".format(name, self.name))
-    #     # self.send_parameter_dict()
-
-    # TODO: Reimplement
-    # def reset(self, time=None):
-    #     '''reset improvisation memory and all sub-streamview'''
-    #     time = time if time != None else self.scheduler.time
-    #     self.improvisation_memory = deque('', self.max_history_len)
-    #     self.self_streamview.reset(time)
-    #     for s in self.streamviews.keys():
-    #         self.streamviews[s]._reset(time)
-
-    # TODO: Reimplement
-    # '''def update_parameter_dictionary(self):
-    #     if self.streamviews!=dict():
-    #         self.parameter_dictionary["streamviews"] = OrderedDict()
-    #         tmp_dic = dict()
-    #         for k,v in self.streamviews.iteritems():
-    #             tmp_dic[k] = dict()
-    #             tmp_dic[k]["class"] = v[0].__desc__()
-    #             tmp_dic[k]["weight"] = v[1]
-    #             tmp_dic[k]["file"] = v[2]
-    #             tmp_dic[k]["size"] = v[0].get_length()
-    #             tmp_dic[k]["length_beat"] = v[0].metadata["duration_b"]
-    #             if k==self.current_streamview:
-    #                 self.parameter_dictionary["streamviews"][k] = dict(tmp_dic[k])
-    #         for k,v in tmp_dic.iteritems():
-    #             if k!=self.current_streamview:
-    #                 self.parameter_dictionary["streamviews"][k] = dict(tmp_dic[k])
-    #     else:
-    #         self.parameter_dictionary["streamviews"] = "empty"
-    #     self.parameter_dictionary["current_streamview"] = str(self.current_streamview)'''
-
-    # TODO: Reimplement
-    # def send_buffer(self, atom):
-    #     ''' sending buffers in case of audio contents'''
-    #     filez = atom.memorySpace.current_file
-    #     with open(filez) as f:
-    #         name, _ = os.path.splitext(filez)
-    #         name = name.split('/')[-1]
-    #         g = os.walk('../')
-    #         filepath = None
-    #         for r, d, fs in g:
-    #             for f in fs:
-    #                 n, e = os.path.splitext(f)
-    #                 if n == name and e != '.json':
-    #                     filepath = r + '/' + f
-    #         if filepath != None:
-    #             self.send('buffer ' + os.path.realpath(filepath))
-    #         else:
-    #             raise Exception("[ERROR] couldn't find audio file associated with file", filez)
-
-    # TODO: Reimplement as activity
-    # def set_nextstate_mod(self, ns):
-    #     self.nextstate_mod = ns
-
-    # TODO: Reimplement
-    # def get_parameter_dict(self):
-    #     '''returns the dictionary containing all information of the player'''
-    #     infodict = {"decide": str(self.decide), "self_influence": str(self.self_influence), "port": self.out_port}
-    #     try:
-    #         infodict["current_file"] = str(self.current_streamview.atoms["_self"].current_file)
-    #     except:
-    #         pass
-    #     infodict["streamviews"] = dict()
-    #     for s, v in self.streamviews.items():
-    #         infodict["streamviews"][s] = v.get_parameter_dict()
-    #         infodict["current_atom"] = self.current_atom
-    #     infodict["current_streamview"] = self.current_streamview.get_parameter_dict()
-    #     if self.current_streamview.atoms != dict():
-    #         if len(self.current_streamview.atoms["_self"].memorySpace) != 0:
-    #             self_contents = self.current_streamview.atoms["_self"].memorySpace[-1][1].get_contents()
-    #             infodict["current_streamview"]["length_beat"] = \
-    #                 self_contents.get_zeta("relative") + self_contents.get_state_length("relative")
-    #             infodict["current_streamview"]["length_time"] = \
-    #                 self_contents.get_zeta("absolute") + self_contents.get_state_length("absolute")
-    #     infodict["subweights"] = self.get_normalized_subweights()
-    #     infodict["nextstate_mod"] = self.nextstate_mod
-    #     infodict["phase_selectivity"] = self.merge_actions[1].selectivity
-    #     infodict["triggering_mode"] = self.scheduler.triggers[self.name]
-    #     return infodict
-
-    # TODO: Reimplement
-    # def send_parameter_dict(self):
-    #     '''sending the info dictionary of the player'''
-    #     infodict = self.get_parameter_dict()
-    #     str_dic = Tools.dic_to_strout(infodict)
-    #     self.send("clear", "/infodict")
-    #     self.send(self.streamviews.keys(), "/streamviews")
-    #     for s in str_dic:
-    #         self.send(s, "/infodict")
-    #     self.send(self.name, "/infodict-update")
-    #     self.logger.debug("[send_parameter_dict] Updating infodict for player {}.".format(self.name))
-
-    # TODO: Reimplement
-    # def set_weight(self, streamview: str, weight: float):
-    #     '''setting the weight at target path'''
-    #     if not ":" in streamview:
-    #         if streamview != "_self":
-    #             self.streamviews[streamview].weight = weight
-    #         else:
-    #             self.self_streamview._atoms["_self"].weight = weight
-    #     else:
-    #         head, tail = Tools.parse_path(streamview)
-    #         self.streamviews[head].set_weight(tail, weight)
-    #     self.send_parameter_dict()
-    #     return True

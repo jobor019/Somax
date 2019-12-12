@@ -18,12 +18,3 @@ class ImprovisationMemory:
 
     def get_latest(self) -> (CorpusEvent, float, (AbstractTransform, ...)):
         return self._history[len(self._history) - 1]
-
-    # def get_trigger_time(self, index) -> float:
-    #     return self._history[index][1]
-    #
-    # def get_event(self, index) -> CorpusEvent:
-    #     return self._history[index][0]
-    #
-    # def get_transforms(self, index) -> CorpusEvent:
-    #     return self._history[index][2]

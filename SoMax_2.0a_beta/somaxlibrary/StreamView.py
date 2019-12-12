@@ -1,8 +1,6 @@
 import logging
 from typing import Callable, Tuple, ClassVar
 
-import numpy as np
-
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Atom import Atom
 from somaxlibrary.Corpus import Corpus
@@ -14,7 +12,6 @@ from somaxlibrary.MergeActions import AbstractMergeAction
 from somaxlibrary.Parameter import Parameter
 from somaxlibrary.Parameter import Parametric
 from somaxlibrary.Peaks import Peaks
-
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -37,7 +34,7 @@ class StreamView(Parametric):
             self.add_merge_action(merge_action())
 
     def __repr__(self):
-        return "Streamview with name {0} and atoms {1}.".format(self.name, self.atoms)
+        return "Streamview(name={0},...)".format(self.name)
 
     def add_merge_action(self, merge_action: AbstractMergeAction, override: bool = False):
         name: str = type(merge_action).__name__
@@ -45,26 +42,6 @@ class StreamView(Parametric):
             raise DuplicateKeyError("A merge action of this type already exists.")
         else:
             self._merge_actions[name] = merge_action
-
-    # def update_parameter_dict(self) -> Dict[str, Union[Parametric, Parameter, Dict]]:
-    #     streamviews = {}
-    #     atoms = {}
-    #     merge_actions = {}
-    #     parameters = {}
-    #     for name, streamview in self.streamviews.items():
-    #         streamviews[name] = streamview.update_parameter_dict()
-    #     for name, atom in self.atoms.items():
-    #         atoms[name] = atom.update_parameter_dict()
-    #     for merge_action in self._merge_actions:
-    #         key: str = type(merge_action).__name__
-    #         merge_actions[key] = merge_action.update_parameter_dict()
-    #     for name, parameter in self._parse_parameters().items():
-    #         parameters[name] = parameter.update_parameter_dict()
-    #     self.parameter_dict = {"streamviews": streamviews,
-    #                            "atoms": atoms,
-    #                            "merge_actions": merge_actions,
-    #                            "parameters": parameters}
-    #     return self.parameter_dict
 
     def get_streamview(self, path: [str]) -> 'StreamView':
         """ Raises: KeyError. Technically also IndexError, but should not occur if input is well-formatted (expected)"""
@@ -87,8 +64,7 @@ class StreamView(Parametric):
     def create_atom(self, path: [str], weight: float, label_type: ClassVar[AbstractLabel],
                     activity_type: ClassVar[AbstractActivityPattern], memory_type: ClassVar[NGramMemorySpace],
                     corpus: Corpus, self_influenced: bool, transforms: [(ClassVar[AbstractTransform], ...)]):
-        """creating an atom at required path
-        Raises: KeyError, InvalidPath, DuplicateKeyError"""
+        """Raises: KeyError, InvalidPath, DuplicateKeyError"""
         self.logger.debug("[create_atom] Attempting to create atom with path {}.".format(path))
 
         new_atom_name: str = path.pop(-1)
@@ -103,8 +79,7 @@ class StreamView(Parametric):
         del self.atoms[name]
 
     def create_streamview(self, path: [str], weight: float, merge_actions: (ClassVar, ...)):
-        """creating a streamview at required path
-        Raises: KeyError, InvalidPath, DuplicateKeyError"""
+        """Raises: KeyError, InvalidPath, DuplicateKeyError"""
         self.logger.debug("[create_streamview] Attempting to create streamview with path {}.".format(path))
 
         new_streamview_name: str = path.pop(-1)
@@ -167,51 +142,3 @@ class StreamView(Parametric):
             streamview.clear()
         for atom in self.atoms.values():
             atom.clear()
-
-    # TODO: Reimplement
-    # def delete_atom(self, name):
-    #     '''deleting an atom'''
-    #     if not ":" in name:
-    #         del self.atoms[name]
-    #     else:
-    #         head, tail = Tools.parse_path(name)
-
-    # TODO: Reimplement or remove
-    # def get_activities(self, date, path=None, weighted=True):
-    #     '''get separated activities of children'''
-    #     if path != None:
-    #         if ':' in path:
-    #             head, tail = Tools.split_path(head, tail)
-    #             activities = self.atoms[head].get_activities(date, path=tail)
-    #         else:
-    #             activities = self.atoms[path].get_activities(date)
-    #     else:
-    #         activities = dict()
-    #         for name, atom in self.atoms.iteritems():
-    #             activities[name] = atom.merged_peaks(date, weighted=weighted)
-    #     if issubclass(type(activities), Tools.SequencedList):
-    #         activities = {path: activities}
-    #     return activities
-
-    # TODO: Reimplement
-    # def set_weight(self, path, weight):
-    #     '''set weight of atom addressed at path'''
-    #     if not ":" in path:
-    #         self.atoms[path].set_weight(weight)
-    #     else:
-    #         head, tail = Tools.parse_path(path)
-    #         self.atoms[head].set_weight(tail, weight)
-
-    # TODO: Reimplement
-    # def get_parameter_dict(self):
-    #     '''returns info dictionary'''
-    #     infodict = {"activity type": str(type(self)), "weight": self.weight, "type": "Streamview"}
-    #     infodict["atoms"] = dict()
-    #     for a, v in self.atoms.items():
-    #         infodict["atoms"][a] = v.get_parameter_dict()
-    #     return infodict
-
-    # TODO: reimplement
-    # def reset(self, time):
-    #     for f in self.atoms.values():
-    #         f._reset(time)

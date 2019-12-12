@@ -13,7 +13,6 @@ from somaxlibrary.Influence import AbstractInfluence, ClassicInfluence
 from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.Parameter import Parameter, ParamWithSetter
 from somaxlibrary.Parameter import Parametric
-
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -78,15 +77,6 @@ class AbstractMemorySpace(Parametric):
                 self.logger.warning(f"Transform {transform_tuple} was not added as it already exists in memspace.")
             else:
                 self.transforms.append(transform_tuple)
-
-    # TODO: Implement if needed
-    # def is_available(self):
-    #     return bool(self.available)
-
-    # TODO: Implement when needed
-    # @abstractmethod
-    # def _reset(self) -> None:
-    #     pass
 
 
 class NGramMemorySpace(AbstractMemorySpace):

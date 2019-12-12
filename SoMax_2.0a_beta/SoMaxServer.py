@@ -163,7 +163,7 @@ class SoMaxServer(Caller):
             self.logger.error(f"Could not delete atom at path {path}. The parent streamview/player does not exist.")
 
     ######################################################
-    # MAIN RUNTIME CALLS
+    # MAIN RUNTIME FUNCTIONS
     ######################################################
 
     def influence(self, player: str, path: str, label_keyword: str, value: Any, **kwargs):
@@ -365,7 +365,7 @@ class SoMaxServer(Caller):
     def get_peaks(self, player: str):
         # TODO: IO Error handling
         try:
-            self.players[player].send_peaks(self.scheduler.time)
+            self.players[player].send_peaks()
         except KeyError:
             return
 

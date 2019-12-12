@@ -1,7 +1,6 @@
 from abc import ABC
 
 from somaxlibrary.CorpusEvent import CorpusEvent
-from somaxlibrary.Transforms import AbstractTransform
 
 
 class AbstractInfluence(ABC):
@@ -16,6 +15,3 @@ class ClassicInfluence(AbstractInfluence):
 
     def __init__(self, event: CorpusEvent, transform_hash: int, **_kwargs):
         super(ClassicInfluence, self).__init__(event, transform_hash)
-
-    # def __repr__(self):
-    #     return f"ClassicInfluence(onset={self.event.onset},time={self.time_of_influence})"

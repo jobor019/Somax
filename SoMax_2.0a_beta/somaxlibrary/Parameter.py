@@ -13,11 +13,6 @@ class HasParameterDict(ABC):
     def __init__(self):
         self.parameter_dict: Dict[str, Union[Parametric, Parameter, Dict]] = {}
 
-    # @abstractmethod
-    # def update_parameter_dict(self) -> Dict[str, Union['Parametric', 'Parameter', Dict]]:
-    #     """ Update and return parameter dict """
-    #     raise NotImplementedError("HasParameterDict.update_parameter_dict is abstract.")
-
 
 class Parameter(HasParameterDict):
 
@@ -31,12 +26,6 @@ class Parameter(HasParameterDict):
     def max_representation(self) -> Dict:
         # TODO: Remove value from this
         return vars(self)
-
-    # def update_parameter_dict(self) -> Dict[str, str]:
-    #     return {"value": self.value,
-    #             "range": str(self.scope),
-    #             "type": self.type_str,
-    #             "description": self.description}
 
     def set_value(self, value):
         # TODO: Check range

@@ -86,7 +86,7 @@ class NoTransform(AbstractTransform):
 
     @staticmethod
     def valid_labels() -> [ClassVar[AbstractLabel]]:
-        return list(AbstractLabel.classes().values())     # all transforms are valid
+        return list(AbstractLabel.classes().values())  # all transforms are valid
 
     def _transform_label(self, obj: AbstractLabel) -> AbstractLabel:
         return obj
@@ -147,97 +147,3 @@ class TransposeTransform(AbstractTransform):
         for note in obj.notes:
             note.pitch -= self.semitones
         return obj
-
-# TODO: Implement at a later stage
-# class TransposeTransform(NoTransform):
-#     transposition_range = [-3, 3]
-#
-#     def __init__(self, semitone: int, mod12: bool=True):
-#         super(TransposeTransform, self).__init__()
-#         self.semitone: int = semitone    # Number of semitones to transpose
-#         self.mod12: bool = mod12
-#         # self.admitted_types = [DeprecatedEvents.MelodicLabel, DeprecatedEvents.HarmonicLabel,
-#         #                        DeprecatedEvents.ClassicMIDIContents,
-#         #                        DeprecatedEvents.ClassicAudioContents]
-#
-#     def __repr__(self):
-#         return "Transposition of " + str(self.semitone) + " semi-tones"
-#
-#     def __hash__(self):
-#         return hash((__class__, self.semitone, self.mod12))
-#
-#     def __eq__(self, other):
-#         if type(other) == NoTransform:
-#             return self.semitone == 0
-#         if type(other) == TransposeTransform:
-#             return self.semitone == other.semitone and self.mod12 == other.mod12
-#         return False
-#
-#
-#     def encode(self, obj: Union[CorpusEvent, AbstractLabel]):
-#         if isinstance(obj, DeprecatedEvents.AbstractEvent):
-#             new_thing = deepcopy(obj)
-#             new_thing.label = self.encode(new_thing.label)
-#             new_thing.contents = self.encode(new_thing.contents)
-#             return new_thing
-#         if type(obj) is DeprecatedEvents.MelodicLabel:
-#             new_label = deepcopy(obj)
-#             new_label.label += self.semitone  # pas precis : rajouter les bornes et les accords
-#             return new_label
-#         elif type(obj) is DeprecatedEvents.HarmonicLabel:
-#             chromas = list(obj.chroma)
-#             new_label = DeprecatedEvents.HarmonicLabel(roll(obj.chroma, self.semitone))
-#         elif type(obj) is DeprecatedEvents.ClassicMIDIContents:
-#             new_content = deepcopy(obj)
-#             for u in new_content.contents["notes"]:
-#                 u["pitch"] += float(self.semitone)
-#             return new_content
-#         elif type(obj) is DeprecatedEvents.ClassicAudioContents:
-#             new_content = deepcopy(obj)
-#             new_content.transpose += float(self.semitone * 100.0)
-#             return new_content
-#         else:
-#             raise TransformError(obj, self)
-#
-#     def _transform_event(self, event: CorpusEvent, semitones: int) -> CorpusEvent:
-#         pass
-#
-#     def _transform_label(self):
-#
-#     def decode(self, obj):
-#         if isinstance(obj, DeprecatedEvents.AbstractEvent):
-#             new_thing = deepcopy(obj)
-#             new_thing.label = self.decode(new_thing.label)
-#             new_thing.contents = self.decode(new_thing.contents)
-#             return new_thing
-#         if type(obj) is DeprecatedEvents.MelodicLabel:
-#             new_label = deepcopy(obj)
-#             new_label.label -= self.semitone  # pas precis : rajouter les bornes et les accords
-#             return new_label
-#         elif type(obj) is DeprecatedEvents.HarmonicLabel:
-#             chromas = list(obj.chroma)
-#             new_label = DeprecatedEvents.HarmonicLabel(roll(obj.chroma, -self.semitone))
-#         elif type(obj) is DeprecatedEvents.ClassicMIDIContents:
-#             new_content = deepcopy(obj)
-#             for u in new_content.contents["notes"]:
-#                 u["pitch"] -= float(self.semitone)
-#             return new_content
-#         elif type(obj) is DeprecatedEvents.ClassicAudioContents:
-#             new_content = deepcopy(obj)
-#             new_content.transpose -= float(self.semitone * 100)
-#             return new_content
-#         else:
-#             raise TransformError(obj, self)
-#
-#     @classmethod
-#     def get_transformation_patterns(cls, r=None):
-#         r = r if r != None else TransposeTransform.transposition_range
-#         transforms = []
-#         for s in range(r[0], r[1] + 1):
-#             transforms.append(cls(s))
-#         return transforms
-#
-#     @classmethod
-#     def set_transformation_range(cls, minim, maxim):
-#         cls.transposition_range = [minim, maxim]
-#         print("[INFO] Default transposition range set to", cls.transposition_range)

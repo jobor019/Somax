@@ -1,16 +1,12 @@
-import copy
 import logging
 from typing import ClassVar, Dict, Union
-
-import numpy as np
 
 from somaxlibrary.ActivityPattern import AbstractActivityPattern
 from somaxlibrary.Corpus import Corpus
 from somaxlibrary.Influence import AbstractInfluence
-from somaxlibrary.Labels import MelodicLabel, AbstractLabel
+from somaxlibrary.Labels import AbstractLabel
 from somaxlibrary.MemorySpaces import AbstractMemorySpace
-from somaxlibrary.Parameter import Parametric, Parameter, ParamWithSetter
-
+from somaxlibrary.Parameter import Parametric, Parameter
 from somaxlibrary.Transforms import AbstractTransform
 
 
@@ -70,7 +66,6 @@ class Atom(Parametric):
     def update_peaks(self, time: float) -> None:
         self.activity_pattern.update_peaks(time)
 
-
     @property
     def weight(self) -> float:
         return self._weight.value
@@ -93,26 +88,3 @@ class Atom(Parametric):
 
     def is_enabled(self):
         return self.enabled.value
-
-    # TODO: Reimplement
-    # external method to fetch properties of the atom
-    # def get_parameter_dict(self):
-    #     infodict = {"activity": self.activityPattern.__desc__(), "memory": self.memory_space.__desc__(),
-    #                 "event_type": self.memory_space.event_type.__desc__(),
-    #                 "label_type": self.memory_space.label_type.__desc__(),
-    #                 "contents_type": self.memory_space.contents_type.__desc__(), "name": self.name,
-    #                 "weight": self.weight, "type": "Atom", "active": self.active}
-    #     if self.current_file != None:
-    #         infodict["current_file"] = str(self.current_file)
-    #         infodict["length"] = len(self.memory_space)
-    #     else:
-    #         infodict["current_file"] = "None"
-    #         infodict["length"] = 0
-    #     return infodict
-
-    # def isAvailable(self):
-    #     return self.activityPattern.isAvailable() and self.memory_space.is_available()
-
-    # TODO: Reimplement
-    # def reset(self, time):
-    #     self.activity_pattern.reset(time)

@@ -116,7 +116,6 @@ class PitchClassLabel(MelodicLabel):
 
 
 class HarmonicLabel(AbstractLabel):
-    # Static variables
     SOM_DATA = np.loadtxt(os.path.join(os.path.dirname(__file__), '../tables/misc_hsom'), dtype=float, delimiter=",")
     SOM_CLASSES = np.loadtxt(os.path.join(os.path.dirname(__file__), '../tables/misc_hsom_c'), dtype=int, delimiter=",")
     NODE_SPECIFICITY = 2.0
