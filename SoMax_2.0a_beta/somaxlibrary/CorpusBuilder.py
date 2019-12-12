@@ -136,10 +136,11 @@ class CorpusBuilder(object):
                             previousSliceDuration[0])
                         note_to_add["time"]["absolute"][0] = note_to_add["time"]["absolute"][0] - float(
                             previousSliceDuration[1])
-                        if note_to_add["time"]["absolute"][0] > 0:
-                            note_to_add["velocity"] = int(corpus["data"][state_nb - 1]["notes"][k]["velocity"])
-                        else:
-                            note_to_add["velocity"] = 0
+                        # if note_to_add["time"]["absolute"][0] > 0:
+                        #     note_to_add["velocity"] = int(corpus["data"][state_nb - 1]["notes"][k]["velocity"])
+                        # else:
+                        #     note_to_add["velocity"] = 0
+                        note_to_add["velocity"] = int(corpus["data"][state_nb - 1]["notes"][k]["velocity"])
                         tmp["notes"].append(note_to_add)
                 # adding the new note
                 tmp["notes"].append(dict())

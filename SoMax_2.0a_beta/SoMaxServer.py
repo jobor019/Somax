@@ -208,8 +208,8 @@ class SoMaxServer(Caller):
     def stop(self):
         """stops the scheduler and reset all players"""
         # TODO: IO Error handling
-        self.scheduler.stop()
         self.clear_all()
+        self.scheduler.stop()
         self.logger.info("Scheduler was stopped.")
 
     def clear_all(self):
