@@ -81,6 +81,7 @@ class Scheduler:
             event: CorpusEvent = player.new_event(trigger_event.target_time)
         except InvalidCorpus as e:
             self.logger.error(str(e))
+            self._requeue_trigger_event(trigger_event)
             return
         self.add_corpus_event(player, trigger_event.target_time, event)
 
@@ -88,10 +89,15 @@ class Scheduler:
             if event.duration > 0:
                 next_trigger_time: float = trigger_event.trigger_time + event.duration
                 next_target_time: float = trigger_event.target_time + event.duration
+                self._add_automatic_trigger_event(player, next_trigger_time, next_target_time)
             else:
-                next_trigger_time: float = trigger_event.trigger_time + 1
-                next_target_time: float = trigger_event.target_time + 1
-            self._add_automatic_trigger_event(player, next_trigger_time, next_target_time)
+                self._requeue_trigger_event(trigger_event)
+
+    def _requeue_trigger_event(self, trigger_event: AbstractTriggerEvent) -> None:
+        player: Player = trigger_event.player
+        next_trigger_time: float = trigger_event.trigger_time + 1
+        next_target_time: float = trigger_event.target_time + 1
+        self._add_automatic_trigger_event(player, next_trigger_time, next_target_time)
 
     def _process_osc_event(self, osc_event: OscEvent) -> None:
         pass
@@ -132,7 +138,8 @@ class Scheduler:
                     onset: float = trigger_time
                 else:
                     onset: float = trigger_time + max(0.0, note.onset)
-                self.queue.append(MidiEvent(onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
+                self.queue.append(
+                    MidiEvent(onset, player, note.pitch, note.velocity, note.channel, corpus_event.state_index))
             if player.hold_notes_artificially:
                 player.artificially_held_notes = note_offs
             else:

@@ -3,6 +3,7 @@ import asyncio
 import logging
 import logging.config
 import os
+import sys
 from typing import ClassVar, Any, Dict, Union
 
 from maxosc.MaxOsc import Caller
@@ -506,7 +507,11 @@ if __name__ == "__main__":
 
     try:
         asyncio.run(gather())
+    except KeyboardInterrupt as e:
+        somax_server.logger.info("SoMaxServer Terminated.")
+        sys.exit(1)
     except Exception as e:
-        logging.error(e)
+        somax_server.logger.error(e)
         raise
+
 
